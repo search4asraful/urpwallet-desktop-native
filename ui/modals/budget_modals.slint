@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { BudgetItem } from "../models.slint";
-import { AppButton, Badge, ProgressBar, AppInput } from "../components.slint";
+import { AppButton, Badge, ProgressBar, AppInput, CloseButton } from "../components.slint";
 
 export component AddBudgetModal inherits Rectangle {
     width: 100%;
@@ -50,11 +50,7 @@ export component AddBudgetModal inherits Rectangle {
                     font-weight: 700;
                     vertical-alignment: center;
                 }
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }
@@ -145,11 +141,7 @@ export component BudgetDetailModal inherits Rectangle {
                     font-weight: 800;
                     vertical-alignment: center;
                 }
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }

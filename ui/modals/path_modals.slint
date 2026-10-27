@@ -1,5 +1,5 @@
 import { Theme } from "../theme.slint";
-import { AppButton, AppInput } from "../components.slint";
+import { AppButton, AppInput, CloseButton } from "../components.slint";
 
 export component ChangeDbPathModal inherits Rectangle {
     width: 100%;
@@ -58,11 +58,7 @@ export component ChangeDbPathModal inherits Rectangle {
                     }
                 }
 
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }
@@ -257,11 +253,7 @@ export component ChangeExportPathModal inherits Rectangle {
                     }
                 }
 
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }

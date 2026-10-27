@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { AccountItem } from "../models.slint";
-import { AppButton, Badge, AppInput, CurrencySelector } from "../components.slint";
+import { AppButton, Badge, AppInput, CurrencySelector, CloseButton } from "../components.slint";
 
 export component AddAccountModal inherits Rectangle {
     width: 100%;
@@ -51,11 +51,7 @@ export component AddAccountModal inherits Rectangle {
                     font-weight: 700;
                     vertical-alignment: center;
                 }
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }
@@ -200,11 +196,7 @@ export component AccountDetailModal inherits Rectangle {
                     font-weight: 800;
                     vertical-alignment: center;
                 }
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }

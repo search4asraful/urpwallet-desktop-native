@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { BillItem } from "../models.slint";
-import { AppButton, Badge, AppInput } from "../components.slint";
+import { AppButton, Badge, AppInput, CloseButton } from "../components.slint";
 
 export component AddBillModal inherits Rectangle {
     width: 100%;
@@ -55,11 +55,7 @@ export component AddBillModal inherits Rectangle {
                     font-weight: 700;
                     vertical-alignment: center;
                 }
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }
@@ -198,11 +194,7 @@ export component BillDetailModal inherits Rectangle {
                     font-weight: 800;
                     vertical-alignment: center;
                 }
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }

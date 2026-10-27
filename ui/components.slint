@@ -259,7 +259,7 @@ export component Badge inherits Rectangle {
         Text {
             text: root.text;
             color: root.badge-color;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 700;
             horizontal-alignment: center;
             vertical-alignment: center;
@@ -302,6 +302,35 @@ export component AppButton inherits Rectangle {
             horizontal-alignment: center;
             vertical-alignment: center;
         }
+    }
+}
+
+export component CloseButton inherits Rectangle {
+    in property <bool> small: true;
+    callback clicked();
+
+    width: small ? 26px : 30px;
+    height: small ? 26px : 30px;
+    border-radius: 5px;
+    background: touch.pressed ? Theme.surface-hover.darker(15%) : (touch.has-hover ? Theme.surface-hover : Colors.transparent);
+
+    touch := TouchArea {
+        mouse-cursor: MouseCursor.pointer;
+        clicked => { root.clicked(); }
+    }
+
+    Path {
+        width: 10px;
+        height: 10px;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        stroke: touch.has-hover ? Theme.text-primary : Theme.text-muted;
+        stroke-width: 1.75px;
+
+        MoveTo { x: 0; y: 0; }
+        LineTo { x: 10; y: 10; }
+        MoveTo { x: 10; y: 0; }
+        LineTo { x: 0; y: 10; }
     }
 }
 

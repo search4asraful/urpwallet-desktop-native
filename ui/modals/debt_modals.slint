@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { DebtItem } from "../models.slint";
-import { AppButton, Badge, AppInput } from "../components.slint";
+import { AppButton, Badge, AppInput, CloseButton } from "../components.slint";
 
 export component AddDebtModal inherits Rectangle {
     width: 100%;
@@ -51,11 +51,7 @@ export component AddDebtModal inherits Rectangle {
                     font-weight: 700;
                     vertical-alignment: center;
                 }
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }
@@ -173,11 +169,7 @@ export component RepayDebtModal inherits Rectangle {
                     font-weight: 700;
                     vertical-alignment: center;
                 }
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }
@@ -262,11 +254,7 @@ export component DebtDetailModal inherits Rectangle {
                     font-weight: 800;
                     vertical-alignment: center;
                 }
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }

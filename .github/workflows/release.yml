@@ -413,10 +413,26 @@ jobs:
           pattern: artifacts-*
           path: artifacts
           merge-multiple: true
-      - name: Cleanup
+      - name: Cleanup unwanted release artifacts
         run: |
-          # Remove the granular manifests
-          rm -f artifacts/*-dist-manifest.json
+          cd artifacts
+          # Remove internal dist manifests and individual .sha256 files
+          rm -f *-dist-manifest.json dist-manifest.json
+          rm -f *.sha256
+          # Remove redundant raw linux archives (since .deb and .AppImage are provided)
+          rm -f *unknown-linux-gnu*
+          # Remove redundant windows zip (since .msi is provided)
+          rm -f *windows*.zip
+          # Remove shell installer if present
+          rm -f *installer.sh
+          # Remove source.tar.gz if present (GitHub provides Source code zip and tar.gz)
+          rm -f source.tar.gz
+
+          # Generate a single consolidated sha256.sum for all final release files
+          rm -f sha256.sum
+          sha256sum * > sha256.sum
+          echo "=== Final Release Artifacts ==="
+          ls -lh
       - name: Create GitHub Release
         env:
           PRERELEASE_FLAG: "${{ fromJson(steps.host.outputs.manifest).announcement_is_prerelease && '--prerelease' || '' }}"

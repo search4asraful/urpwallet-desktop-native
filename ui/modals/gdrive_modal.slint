@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { GDriveBackupItem } from "../models.slint";
-import { AppButton, Badge, AppInput, TabButton } from "../components.slint";
+import { AppButton, Badge, AppInput, TabButton, CloseButton } from "../components.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component GoogleDriveModal inherits Rectangle {
@@ -93,11 +93,7 @@ export component GoogleDriveModal inherits Rectangle {
                     }
                 }
 
-                AppButton {
-                    text: "✕";
-                    small: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
+                CloseButton {
                     clicked => { root.close(); }
                 }
             }
