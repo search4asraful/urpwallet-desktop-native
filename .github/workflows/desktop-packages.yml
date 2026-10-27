@@ -1,0 +1,144 @@
+name: Desktop Packages (Linux & macOS)
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to attach packages to (e.g. v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  linux-packages:
+    name: Build Linux .deb & .AppImage
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libwayland-dev
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Install cargo-deb & build Debian package (.deb)
+        run: |
+          curl -sL https://github.com/kornelski/cargo-deb/releases/download/v3.8.0/cargo-deb_3.8.0-1_amd64.deb -o /tmp/cargo-deb.deb
+          sudo dpkg -i /tmp/cargo-deb.deb
+          cargo deb --no-build
+
+      - name: Package AppImage (.AppImage)
+        run: |
+          mkdir -p target/AppDir/usr/bin target/AppDir/usr/share/applications target/AppDir/usr/share/icons/hicolor/scalable/apps target/AppDir/usr/share/icons/hicolor/256x256/apps
+          cp target/release/urpwallet target/AppDir/usr/bin/urpwallet
+          cp urpwallet.desktop target/AppDir/urpwallet.desktop
+          cp urpwallet.desktop target/AppDir/usr/share/applications/urpwallet.desktop
+          cp assets/icon.svg target/AppDir/usr/share/icons/hicolor/scalable/apps/urpwallet.svg
+          cp assets/icon-256.png target/AppDir/usr/share/icons/hicolor/256x256/apps/urpwallet.png
+          cp assets/icon-256.png target/AppDir/urpwallet.png
+          ln -sf urpwallet.png target/AppDir/.DirIcon
+
+          cat << 'EOF' > target/AppDir/AppRun
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "${0}")")"
+          exec "${HERE}/usr/bin/urpwallet" "$@"
+          EOF
+          chmod +x target/AppDir/AppRun
+
+          curl -sL https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -o /tmp/appimagetool
+          chmod +x /tmp/appimagetool
+          /tmp/appimagetool --appimage-extract-and-run target/AppDir target/urpwallet-x86_64.AppImage
+
+      - name: Upload Linux assets to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          echo "Uploading Linux desktop packages to release: $TAG"
+          gh release upload "$TAG" target/debian/*.deb target/urpwallet-x86_64.AppImage --clobber
+
+  macos-dmg:
+    name: Build macOS DMG (.dmg)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Create macOS .app Bundle
+        run: |
+          APP_DIR="target/urpwallet.app"
+          mkdir -p "$APP_DIR/Contents/MacOS"
+          mkdir -p "$APP_DIR/Contents/Resources"
+          cp target/release/urpwallet "$APP_DIR/Contents/MacOS/urpwallet"
+          cp assets/icon.icns "$APP_DIR/Contents/Resources/urpwallet.icns"
+
+          cat << 'EOF' > "$APP_DIR/Contents/Info.plist"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>urpwallet</string>
+              <key>CFBundleIconFile</key>
+              <string>urpwallet.icns</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.urpwallet.desktop</string>
+              <key>CFBundleName</key>
+              <string>urpwallet</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>0.1.0</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>10.15</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Install create-dmg
+        run: brew install create-dmg || true
+
+      - name: Build DMG
+        run: |
+          DMG_NAME="urpwallet-macOS.dmg"
+          create-dmg \
+            --volname "urpwallet Installer" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "urpwallet.app" 175 190 \
+            --app-drop-link 425 190 \
+            "$DMG_NAME" \
+            "target/urpwallet.app" || (hdiutil create -volname "urpwallet" -srcfolder "target/urpwallet.app" -ov -format UDZO "$DMG_NAME")
+
+      - name: Upload macOS asset to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          echo "Uploading macOS DMG to release: $TAG"
+          gh release upload "$TAG" urpwallet-macOS.dmg --clobber

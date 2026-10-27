@@ -20,6 +20,33 @@ A local-first, lightweight native personal finance tracker and budget planner bu
 
 ---
 
+## Installation
+
+Download the installer or package for your operating system from the [Releases](https://github.com/search4asraful/urpwallet-desktop-native/releases) page:
+
+### Linux
+- **Debian / Ubuntu / Mint / Pop!_OS (`.deb`)**:
+  Download `urpwallet_0.1.0_amd64.deb` and double-click to install via your Software Center, or run:
+  ```bash
+  sudo apt install ./urpwallet_0.1.0_amd64.deb
+  ```
+  *Installs automatically to your Application Menu with full icon and desktop search integration.*
+- **Universal Linux (`.AppImage`)**:
+  Download `urpwallet-x86_64.AppImage`, make it executable, and run:
+  ```bash
+  chmod +x urpwallet-x86_64.AppImage
+  ./urpwallet-x86_64.AppImage
+  ```
+
+### Windows
+- Download and run `urpwallet-x86_64-pc-windows-msvc.msi`.
+- The setup wizard will install the app and automatically create **Start Menu** and **Desktop** shortcuts.
+
+### macOS
+- Download `urpwallet-macOS.dmg`, open it, and drag **urpwallet** to your `Applications` folder.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |

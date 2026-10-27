@@ -86,6 +86,10 @@
         <Property Id='DiskPrompt' Value='urpwallet Installation'/>
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
+            <Directory Id='ProgramMenuFolder'>
+                <Directory Id='ApplicationProgramsFolder' Name='urpwallet'/>
+            </Directory>
+            <Directory Id='DesktopFolder' Name='Desktop'/>
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
                 <Directory Id='APPLICATIONFOLDER' Name='urpwallet'>
                     
@@ -133,6 +137,30 @@
             </Directory>
         </Directory>
 
+        <DirectoryRef Id="ApplicationProgramsFolder">
+            <Component Id="ApplicationShortcut" Guid="*">
+                <Shortcut Id="ApplicationStartMenuShortcut"
+                          Name="urpwallet"
+                          Description="Local-first native personal finance tracker"
+                          Target="[!exe0]"
+                          WorkingDirectory="Bin"
+                          Icon="ProductICO"/>
+                <RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+                <RegistryValue Root="HKCU" Key="Software\urpwallet team\urpwallet" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+        <DirectoryRef Id="DesktopFolder">
+            <Component Id="ApplicationDesktopShortcut" Guid="*">
+                <Shortcut Id="ApplicationDesktopShortcut"
+                          Name="urpwallet"
+                          Description="Local-first native personal finance tracker"
+                          Target="[!exe0]"
+                          WorkingDirectory="Bin"
+                          Icon="ProductICO"/>
+                <RegistryValue Root="HKCU" Key="Software\urpwallet team\urpwallet" Name="desktop_installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+
         <Feature
             Id='Binaries'
             Title='Application'
@@ -150,6 +178,8 @@
             <!--<ComponentRef Id='License'/>-->
 
             <ComponentRef Id='binary0'/>
+            <ComponentRef Id='ApplicationShortcut'/>
+            <ComponentRef Id='ApplicationDesktopShortcut'/>
 
             <Feature
                 Id='Environment'
@@ -165,13 +195,11 @@
 
         
         <!--
-          Uncomment the following `Icon` and `Property` tags to change the product icon.
-
           The product icon is the graphic that appears in the Add/Remove
           Programs control panel for the application.
         -->
-        <!--<Icon Id='ProductICO' SourceFile='wix\Product.ico'/>-->
-        <!--<Property Id='ARPPRODUCTICON' Value='ProductICO' />-->
+        <Icon Id='ProductICO' SourceFile='wix\Product.ico'/>
+        <Property Id='ARPPRODUCTICON' Value='ProductICO' />
 
         <Property Id='ARPHELPLINK' Value='https://github.com/search4asraful/urpwallet-desktop-native'/>
         
