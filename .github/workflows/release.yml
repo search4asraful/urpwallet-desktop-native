@@ -174,13 +174,23 @@ jobs:
     needs: [build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download all release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p release-files
           cd release-files
-          gh release download "$GITHUB_REF_NAME" --pattern "*" || true
+          # Give GitHub a few seconds to process assets
+          sleep 10
+          
+          # Explicitly pass owner/repo and tag to avoid git ambiguity
+          gh release download "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "*"
+            
           rm -f sha256.sum
           sha256sum * > ../sha256.sum
           echo "=== Final Release Checksums ==="
