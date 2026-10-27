@@ -26,9 +26,9 @@ Download the installer or package for your operating system from the [Releases](
 
 ### Linux
 - **Debian / Ubuntu / Mint / Pop!_OS (`.deb`)**:
-  Download `urpwallet_0.1.0_amd64.deb` and double-click to install via your Software Center, or run:
+  Download `urpwallet_0.1.3-1_amd64.deb` and double-click to install via your Software Center, or run:
   ```bash
-  sudo apt install ./urpwallet_0.1.0_amd64.deb
+  sudo apt install ./urpwallet_0.1.3-1_amd64.deb
   ```
   *Installs automatically to your Application Menu with full icon and desktop search integration.*
 - **Universal Linux (`.AppImage`)**:

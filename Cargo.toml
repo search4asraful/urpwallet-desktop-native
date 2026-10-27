@@ -1,6 +1,6 @@
 [package]
 name = "urpwallet"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 authors = ["urpwallet team"]
 description = "Local-first native personal finance tracker and budget planner"
@@ -60,6 +60,7 @@ depends = "$auto, libfontconfig1, libfreetype6, libxkbcommon0"
 assets = [
     ["target/release/urpwallet", "usr/bin/urpwallet", "755"],
     ["assets/icon.svg", "usr/share/icons/hicolor/scalable/apps/urpwallet.svg", "644"],
+    ["assets/icon-256.png", "usr/share/icons/hicolor/256x256/apps/urpwallet.png", "644"],
     ["assets/icon.png", "usr/share/pixmaps/urpwallet.png", "644"],
     ["urpwallet.desktop", "usr/share/applications/urpwallet.desktop", "644"],
 ]
