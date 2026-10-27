@@ -22,7 +22,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install cargo-wix
-        uses: taiki-e/install-action@cargo-wix
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-wix
 
       - name: Build MSI Installer
         run: cargo wix --nocapture
