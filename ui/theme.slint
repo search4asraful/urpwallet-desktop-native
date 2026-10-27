@@ -1,0 +1,40 @@
+export global Theme {
+    // 0: Light, 1: Dark Obsidian, 2: Midnight OLED, 3: Emerald Forest
+    in-out property <int> mode: 1;
+
+    // Background colors
+    out property <color> background: mode == 0 ? #F4F5F8 : (mode == 1 ? #090A0F : (mode == 2 ? #000000 : #06110D));
+    out property <color> surface: mode == 0 ? #FFFFFF : (mode == 1 ? #12151C : (mode == 2 ? #09090B : #0B1A14));
+    out property <color> surface-hover: mode == 0 ? #F8FAFC : (mode == 1 ? #171B24 : (mode == 2 ? #121215 : #10241C));
+    out property <color> surface-subtle: mode == 0 ? #F1F5F9 : (mode == 1 ? #141720 : (mode == 2 ? #151518 : #0E221A));
+    out property <color> border: mode == 0 ? #E2E8F0 : (mode == 1 ? #222734 : (mode == 2 ? #1C1C22 : #163629));
+    out property <color> border-strong: mode == 0 ? #CBD5E1 : (mode == 1 ? #2E3546 : (mode == 2 ? #2C2C36 : #1E4A38));
+
+    // Text colors
+    out property <color> text-primary: mode == 0 ? #020617 : #FFFFFF;
+    out property <color> text-secondary: mode == 0 ? #334155 : (mode == 1 ? #D4D4D8 : (mode == 2 ? #E2E8F0 : #A7F3D0));
+    out property <color> text-muted: mode == 0 ? #64748B : (mode == 1 ? #A1A1AA : (mode == 2 ? #94A3B8 : #6EE7B7));
+
+    // Accents
+    out property <color> primary: mode == 3 ? #34D399 : #10B981;
+    out property <color> primary-hover: mode == 3 ? #10B981 : #059669;
+    out property <color> primary-subtle: mode == 0 ? #ECFDF5 : (mode == 1 ? #064E3B : (mode == 2 ? #052E16 : #0B291D));
+    
+    // Inputs
+    out property <color> input-background: mode == 0 ? #FFFFFF : (mode == 1 ? #0D1017 : (mode == 2 ? #050507 : #081611));
+    out property <color> input-border: mode == 0 ? #CBD5E1 : (mode == 1 ? #222734 : (mode == 2 ? #1C1C22 : #163629));
+    out property <color> input-border-hover: mode == 0 ? #94A3B8 : (mode == 1 ? #2E3546 : (mode == 2 ? #2C2C36 : #1E4A38));
+
+    out property <color> danger: #F43F5E;
+    out property <color> danger-hover: #E11D48;
+    out property <color> danger-subtle: mode == 0 ? #FFF1F2 : (mode == 1 ? #4C0519 : (mode == 2 ? #3B0312 : #30030E));
+
+    out property <color> info: #0284C7;
+    out property <color> info-subtle: mode == 0 ? #F0F9FF : (mode == 1 ? #082F49 : (mode == 2 ? #051F31 : #05232A));
+
+    out property <color> warning: #F59E0B;
+    out property <color> warning-subtle: mode == 0 ? #FFFBEB : (mode == 1 ? #451A03 : (mode == 2 ? #301202 : #2E1903));
+
+    out property <color> purple: #8B5CF6;
+    out property <color> accent: mode == 3 ? #34D399 : #8B5CF6;
+}

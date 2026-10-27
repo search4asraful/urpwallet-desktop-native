@@ -1,0 +1,163 @@
+import { Theme } from "../theme.slint";
+import { CategorySpendingItem } from "../models.slint";
+import { StatCard, Badge, ProgressBar } from "../components.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component ReportsView inherits ScrollView {
+    in property <string> monthly-income: "$0.00";
+    in property <string> monthly-expense: "$0.00";
+    in property <string> savings-rate: "0%";
+    in property <string> balance-change: "$0.00";
+    in property <[CategorySpendingItem]> category-breakdown: [];
+
+    VerticalLayout {
+        spacing: 10px;
+
+        HorizontalLayout {
+            height: 80px;
+            spacing: 10px;
+
+            StatCard {
+                title: "TOTAL INCOME";
+                value: root.monthly-income;
+                subtitle: "Current month earnings";
+                accent-color: Theme.primary;
+            }
+            StatCard {
+                title: "TOTAL EXPENSES";
+                value: root.monthly-expense;
+                subtitle: "Current month expenses";
+                accent-color: Theme.danger;
+            }
+            StatCard {
+                title: "SAVINGS RATE";
+                value: root.savings-rate;
+                subtitle: "Retained Capital Ratio";
+                accent-color: Theme.info;
+            }
+        }
+
+        // Monthly Financial Performance Summary Card
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 8px;
+
+            VerticalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-top: 12px;
+                padding-bottom: 12px;
+                spacing: 8px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: "Monthly Flow & Performance Overview";
+                        color: Theme.text-primary;
+                        font-size: 13px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                    }
+                    Badge {
+                        text: "Net Savings: " + root.balance-change;
+                        badge-color: Theme.primary;
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    Rectangle {
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 5px;
+                        height: 48px;
+                        VerticalLayout {
+                            alignment: center;
+                            padding-left: 10px;
+                            Text { text: "INCOME GENERATED"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: root.monthly-income; font-size: 14px; font-weight: 800; color: Theme.primary; }
+                        }
+                    }
+                    Rectangle {
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 5px;
+                        height: 48px;
+                        VerticalLayout {
+                            alignment: center;
+                            padding-left: 10px;
+                            Text { text: "TOTAL EXPENDITURES"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: root.monthly-expense; font-size: 14px; font-weight: 800; color: Theme.danger; }
+                        }
+                    }
+                    Rectangle {
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 5px;
+                        height: 48px;
+                        VerticalLayout {
+                            alignment: center;
+                            padding-left: 10px;
+                            Text { text: "NET SAVINGS DELTA"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: root.balance-change; font-size: 14px; font-weight: 800; color: Theme.info; }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Category Breakdown Card
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 8px;
+
+            VerticalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-top: 12px;
+                padding-bottom: 12px;
+                spacing: 10px;
+                Text {
+                    height: 10px;
+                    text: "Spending Breakdown by Category";
+                    color: Theme.text-primary;
+                    font-size: 13px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+
+                for item in root.category-breakdown: VerticalLayout {
+                    height: 40px;
+                    spacing: 3px;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text {
+                            text: item.name;
+                            color: Theme.text-primary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: item.total + " (" + Math.round(item.percentage) + "%)";
+                            color: Theme.text-secondary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+                    ProgressBar {
+                        progress: item.percentage / 100.0;
+                    }
+                }
+            }
+        }
+    }
+}

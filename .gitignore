@@ -1,0 +1,18 @@
+# Rust build artifacts
+/target/
+
+# Local databases and exports (fallback or local testing)
+*.db
+*.db-shm
+*.db-wal
+/data/
+/exports/
+
+# Operating System & Editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

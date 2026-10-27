@@ -1,0 +1,505 @@
+import { Theme } from "../theme.slint";
+import { AccountItem, TransactionItem, BudgetItem, BillItem } from "../models.slint";
+import { StatCard, Badge, AppButton, ProgressBar } from "../components.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component DashboardView inherits ScrollView {
+    in property <string> net-worth: "$0.00";
+    in property <string> safe-to-spend: "$0.00";
+    in property <int> safe-days-left: 1;
+    in property <string> balance-change: "$0.00";
+    in property <string> monthly-income: "$0.00";
+    in property <string> monthly-expense: "$0.00";
+    in property <string> savings-rate: "0%";
+    in property <[AccountItem]> accounts: [];
+    in property <[BudgetItem]> budgets: [];
+    in property <[BillItem]> bills: [];
+    in property <[TransactionItem]> recent-transactions: [];
+
+    callback switch-tab(int);
+    callback select-account(AccountItem);
+    callback execute-bill-payment(string);
+    callback open-tx-details(string);
+    callback open-new-account();
+
+    VerticalLayout {
+        spacing: 12px;
+
+        // 4 Key Stat Cards
+        HorizontalLayout {
+            height: 80px;
+            spacing: 10px;
+
+            StatCard {
+                title: "TOTAL NET WORTH";
+                value: root.net-worth;
+                subtitle: "Active Assets & Capital";
+                accent-color: Theme.primary;
+            }
+            StatCard {
+                title: "SAFE TO SPEND";
+                value: root.safe-to-spend;
+                subtitle: root.safe-days-left + " Days Left in Month";
+                accent-color: Theme.info;
+            }
+            StatCard {
+                title: "MONTHLY CASHFLOW";
+                value: root.balance-change;
+                subtitle: "Income: " + root.monthly-income;
+                accent-color: Theme.primary;
+            }
+            StatCard {
+                title: "MONTHLY EXPENSES";
+                value: root.monthly-expense;
+                subtitle: "Savings Rate: " + root.savings-rate;
+                accent-color: Theme.warning;
+            }
+        }
+
+        // Accounts Grid
+        VerticalLayout {
+            spacing: 6px;
+            HorizontalLayout {
+                height: 20px;
+                alignment: space-between;
+                Text {
+                    text: "ACCOUNTS & VAULTS";
+                    color: Theme.text-muted;
+                    font-size: 10px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+                TouchArea {
+                    clicked => { root.switch-tab(2); }
+                    Text {
+                        text: "Manage All Accounts →";
+                        color: Theme.primary;
+                        font-size: 10px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Two-Column Grid replacing the ScrollView
+            GridLayout {
+                spacing: 6px;
+                for acc[i] in root.accounts: Rectangle {
+                    row: floor(i / 3);
+                    col: mod(i, 3);
+                    height: 54px;
+                    background: acc-card-touch.has-hover ? Theme.surface-hover : Theme.surface;
+                    border-color: acc-card-touch.has-hover ? Theme.primary : Theme.border;
+                    border-width: 1px;
+                    border-radius: 6px;
+
+                    acc-card-touch := TouchArea {
+                        clicked => {
+                            root.select-account(acc);
+                        }
+                    }
+
+                    VerticalLayout {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        padding-top: 6px;
+                        padding-bottom: 6px;
+                        spacing: 2px;
+                        
+                        Text {
+                            text: acc.name;
+                            color: Theme.text-primary;
+                            font-size: 10px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                        
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text {
+                                text: acc.balance;
+                                color: acc.is_liability ? Theme.danger : Theme.text-primary;
+                                font-size: 12px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+                            Badge {
+                                text: acc.acc_type;
+                                badge-color: acc.is_liability ? Theme.danger : Theme.primary;
+                            }
+                        }
+                    }
+                }
+
+                // Add Account Card (Trigger Create Account Modal)
+                dash-card := Rectangle {
+                    row: floor(root.accounts.length / 3);
+                    col: mod(root.accounts.length, 3);
+                    height: 54px;
+                    border-radius: 6px;
+                    background: add-acc-touch.has-hover ?
+                        (Theme.mode == 0 ? Theme.primary.transparentize(88%) : Theme.primary.transparentize(82%)) :
+                        (Theme.mode == 0 ? Theme.surface.transparentize(50%) : Theme.surface.transparentize(65%));
+
+                    property <color> dash-color: add-acc-touch.has-hover ? Theme.primary : Theme.border-strong;
+
+                    // Dashed Top Border
+                    HorizontalLayout {
+                        y: 0;
+                        x: 4px;
+                        width: parent.width - 8px;
+                        height: 1px;
+                        alignment: space-between;
+                        for i in 24: Rectangle {
+                            width: 5px;
+                            height: 1px;
+                            background: dash-card.dash-color;
+                        }
+                    }
+
+                    // Dashed Bottom Border
+                    HorizontalLayout {
+                        y: parent.height - 1px;
+                        x: 4px;
+                        width: parent.width - 8px;
+                        height: 1px;
+                        alignment: space-between;
+                        for i in 24: Rectangle {
+                            width: 5px;
+                            height: 1px;
+                            background: dash-card.dash-color;
+                        }
+                    }
+
+                    // Dashed Left Border
+                    VerticalLayout {
+                        x: 0;
+                        y: 4px;
+                        height: parent.height - 8px;
+                        width: 1px;
+                        alignment: space-between;
+                        for i in 6: Rectangle {
+                            width: 1px;
+                            height: 4px;
+                            background: dash-card.dash-color;
+                        }
+                    }
+
+                    // Dashed Right Border
+                    VerticalLayout {
+                        x: parent.width - 1px;
+                        y: 4px;
+                        height: parent.height - 8px;
+                        width: 1px;
+                        alignment: space-between;
+                        for i in 6: Rectangle {
+                            width: 1px;
+                            height: 4px;
+                            background: dash-card.dash-color;
+                        }
+                    }
+
+                    add-acc-touch := TouchArea {
+                        mouse-cursor: MouseCursor.pointer;
+                        clicked => {
+                            root.open-new-account();
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 6px;
+
+                        Text {
+                            text: "+";
+                            color: add-acc-touch.has-hover ? Theme.primary : Theme.text-muted;
+                            font-size: 14px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: "Add new";
+                            color: add-acc-touch.has-hover ? Theme.primary : Theme.text-secondary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2 Columns: Budgets Pacing + Upcoming Bills
+        HorizontalLayout {
+            spacing: 10px;
+
+            // Left: Budgets Pacing
+            Rectangle {
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 8px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 8px;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text {
+                            text: "Budget Pacing";
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        TouchArea {
+                            clicked => { root.switch-tab(3); }
+                            Text {
+                                text: "View All →";
+                                color: Theme.primary;
+                                font-size: 10px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+
+                    for b in root.budgets: VerticalLayout {
+                        spacing: 3px;
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text {
+                                text: b.name;
+                                color: Theme.text-primary;
+                                font-size: 11px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                text: b.spent + " / " + b.total;
+                                color: Theme.text-secondary;
+                                font-size: 10px;
+                                vertical-alignment: center;
+                            }
+                        }
+                        ProgressBar {
+                            progress: b.percentage / 100.0;
+                        }
+                    }
+                }
+            }
+
+            // Right: Upcoming Bills
+            Rectangle {
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 8px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 8px;
+                    HorizontalLayout {
+                        height: 20px;
+                        alignment: space-between;
+                        Text {
+                            text: "Upcoming Scheduled Bills";
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        TouchArea {
+                            clicked => { root.switch-tab(4); }
+                            Text {
+                                text: "View Bills →";
+                                color: Theme.primary;
+                                font-size: 10px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+
+                    for bill in root.bills: Rectangle {
+                        height: 38px;
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 5px;
+
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            alignment: space-between;
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 8px;
+                                VerticalLayout {
+                                    alignment: center;
+                                    spacing: 1px;
+                                    Text {
+                                        text: bill.name;
+                                        color: Theme.text-primary;
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                        vertical-alignment: center;
+                                    }
+                                    Text {
+                                        text: "Due: " + bill.due_date;
+                                        color: Theme.text-muted;
+                                        font-size: 9px;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                                VerticalLayout {
+                                    alignment: center;
+                                    Badge {
+                                        text: bill.frequency;
+                                        badge-color: Theme.info;
+                                    }
+                                }
+                            }
+
+                            HorizontalLayout {
+                                alignment: center;
+                                spacing: 8px;
+                                Text {
+                                    text: bill.amount;
+                                    color: bill.is_expense ? Theme.danger : Theme.primary;
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                    vertical-alignment: center;
+                                }
+                                VerticalLayout {
+                                    alignment: center;
+                                    AppButton {
+                                        text: "Pay";
+                                        small: true;
+                                        btn-color: Theme.primary;
+                                        clicked => { root.execute-bill-payment(bill.id); }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Recent Ledger Activity
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 8px;
+
+            VerticalLayout {
+                padding: 12px;
+                spacing: 6px;
+                HorizontalLayout {
+                    height: 20px;
+                    alignment: space-between;
+                    Text {
+                        text: "Recent Ledger Activity";
+                        color: Theme.text-primary;
+                        font-size: 13px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                    }
+                    TouchArea {
+                        clicked => { root.switch-tab(1); }
+                        Text {
+                            text: "Full Ledger →";
+                            color: Theme.primary;
+                            font-size: 10px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                if root.recent-transactions.length == 0: Rectangle {
+                    height: 42px;
+                    HorizontalLayout {
+                        alignment: center;
+                        Text { text: "No recent transactions found."; font-size: 11px; color: Theme.text-muted; vertical-alignment: center; }
+                    }
+                }
+
+                for tx in root.recent-transactions: Rectangle {
+                    height: 44px;
+                    background: tx-dash-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
+                    border-color: tx-dash-touch.has-hover ? Theme.primary : Theme.border;
+                    border-width: 1px;
+                    border-radius: 5px;
+
+                    tx-dash-touch := TouchArea { clicked => { root.open-tx-details(tx.id); } }
+
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        alignment: space-between;
+                        HorizontalLayout {
+                            alignment: center;
+                            spacing: 10px;
+                            Text {
+                                text: tx.date;
+                                color: Theme.text-muted;
+                                font-size: 10px;
+                                vertical-alignment: center;
+                            }
+                            VerticalLayout {
+                                alignment: center;  
+                                spacing: 1px;
+                                Text {
+                                    text: tx.title;
+                                    color: Theme.text-primary;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                }
+                                HorizontalLayout {
+                                    spacing: 4px;
+                                    Badge {
+                                        text: tx.is_transfer ? (tx.account_name + " ➔ " + tx.to_account_name) : tx.account_name;
+                                        badge-color: Theme.info;
+                                    }
+                                    if tx.category_name != "": Badge {
+                                        text: tx.category_name;
+                                        badge-color: Theme.accent;
+                                    }
+                                }
+                            }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            HorizontalLayout {
+                                spacing: 8px;
+                                Text {
+                                    width: 90px;
+                                    horizontal-alignment: right;
+                                    vertical-alignment: center;
+                                    text: tx.amount;
+                                    color: tx.is_transfer ? Theme.info : (tx.is_income ? Theme.primary : Theme.danger);
+                                    font-size: 12px;
+                                    font-weight: 700;
+                                }
+                                AppButton {
+                                    width: 52px;
+                                    text: "View";
+                                    small: true;
+                                    outline: true;
+                                    btn-color: Theme.info;
+                                    clicked => { root.open-tx-details(tx.id); }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

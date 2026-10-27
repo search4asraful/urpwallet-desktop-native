@@ -1,0 +1,180 @@
+import { Theme } from "../theme.slint";
+import { TransactionItem } from "../models.slint";
+import { Badge, AppButton, TabButton, AppInput } from "../components.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component TransactionsView inherits VerticalLayout {
+    spacing: 8px;
+
+    in property <string> tx-search-query: "";
+    in property <int> tx-filter-type: 0;
+    in property <[TransactionItem]> all-transactions: [];
+
+    callback search-transactions(string, int);
+    callback open-add-tx(int);
+    callback open-tx-details(string);
+    callback open-edit-tx(string);
+    callback delete-transaction(string);
+
+    // Search & Filters Bar
+    HorizontalLayout {
+        spacing: 8px;
+        height: 28px;
+
+        search-edit := AppInput {
+            placeholder-text: "Search by payee, category, note...";
+            text: root.tx-search-query;
+            edited => { root.search-transactions(self.text, root.tx-filter-type); }
+            accepted => { root.search-transactions(self.text, root.tx-filter-type); }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            HorizontalLayout {
+                spacing: 4px;
+                TabButton {
+                    text: "All";
+                    active: root.tx-filter-type == 0;
+                    clicked => { root.search-transactions(search-edit.text, 0); }
+                }
+                TabButton {
+                    text: "Expenses";
+                    active: root.tx-filter-type == 1;
+                    clicked => { root.search-transactions(search-edit.text, 1); }
+                }
+                TabButton {
+                    text: "Income";
+                    active: root.tx-filter-type == 2;
+                    clicked => { root.search-transactions(search-edit.text, 2); }
+                }
+                TabButton {
+                    text: "Transfers";
+                    active: root.tx-filter-type == 3;
+                    clicked => { root.search-transactions(search-edit.text, 3); }
+                }
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            AppButton {
+                text: "+ New Entry";
+                small: true;
+                btn-color: Theme.primary;
+                clicked => { root.open-add-tx(0); }
+            }
+        }
+    }
+
+    // Transactions Full Ledger List
+    ScrollView {
+        VerticalLayout {
+            spacing: 4px;
+
+            if root.all-transactions.length == 0: Rectangle {
+                height: 90px;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 4px;
+                    Text { text: "No Transactions Found"; font-size: 13px; font-weight: 700; color: Theme.text-primary; horizontal-alignment: center; }
+                    Text { text: "Adjust search filter or click '+ New Entry' to record a transaction."; font-size: 11px; color: Theme.text-muted; horizontal-alignment: center; }
+                }
+            }
+
+            for tx in root.all-transactions: Rectangle {
+                height: 48px;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 5px;
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    alignment: space-between;
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 10px;
+                        Text {
+                            text: tx.date;
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                            vertical-alignment: center;
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 1px;
+                            Text {
+                                text: tx.title;
+                                color: Theme.text-primary;
+                                font-size: 12px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                            }
+                            HorizontalLayout {
+                                spacing: 4px;
+                                Badge {
+                                    text: tx.is_transfer ? (tx.account_name + " ➔ " + tx.to_account_name) : tx.account_name;
+                                    badge-color: Theme.info;
+                                }
+                                if tx.category_name != "": Badge {
+                                    text: tx.category_name;
+                                    badge-color: Theme.accent;
+                                }
+                                if tx.note != "": Text {
+                                    text: tx.note;
+                                    color: Theme.text-muted;
+                                    font-size: 9px;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        HorizontalLayout {
+                            spacing: 6px;
+                            Text {
+                                width: 95px;
+                                horizontal-alignment: right;
+                                vertical-alignment: center;
+                                text: tx.amount;
+                                color: tx.is_transfer ? Theme.info : (tx.is_income ? Theme.primary : Theme.danger);
+                                font-size: 13px;
+                                font-weight: 700;
+                            }
+                            AppButton {
+                                width: 54px;
+                                text: "Details";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.info;
+                                clicked => { root.open-tx-details(tx.id); }
+                            }
+                            AppButton {
+                                width: 46px;
+                                text: "Edit";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.primary;
+                                clicked => { root.open-edit-tx(tx.id); }
+                            }
+                            AppButton {
+                                width: 54px;
+                                text: "Delete";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.danger;
+                                clicked => { root.delete-transaction(tx.id); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

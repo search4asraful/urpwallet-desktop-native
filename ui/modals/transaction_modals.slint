@@ -1,0 +1,533 @@
+import { Theme } from "../theme.slint";
+import { AccountItem, CategoryItem, TransactionItem } from "../models.slint";
+import { AppButton, Badge, AppInput } from "../components.slint";
+
+export component AddTransactionModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(35%);
+
+    in property <bool> is-editing: false;
+    in property <string> tx-id: "";
+    in-out property <int> tx-type: 0;
+    in property <string> amount: "";
+    in-out property <string> account-id: "";
+    in-out property <string> account-name: "";
+    in-out property <string> to-account-id: "";
+    in-out property <string> to-account-name: "";
+    in-out property <string> category-id: "";
+    in-out property <string> category-name: "";
+    in property <string> payee: "";
+    in property <string> note: "";
+    in property <string> date: "";
+    in property <string> modal-error: "";
+    in-out property <bool> cat-show-all: false;
+
+    in property <[AccountItem]> accounts: [];
+    in property <[CategoryItem]> categories: [];
+    in property <[CategoryItem]> modal-categories: [];
+
+    callback close();
+    callback tx-type-changed(int);
+    callback toggle-cat-filter();
+    callback submit(bool, string, int, string, string, string, string, string, string, string);
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 640px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 12px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 18px;
+            spacing: 12px;
+
+            // Header
+            HorizontalLayout {
+                alignment: space-between;
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: root.is-editing ? "Edit Transaction" :
+                              (root.tx-type == 0 ? "New Expense" : (root.tx-type == 1 ? "New Income" : "Transfer Funds"));
+                        color: Theme.text-primary;
+                        font-size: 15px;
+                        font-weight: 700;
+                    }
+                }
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            // Type Segment Selector
+            HorizontalLayout {
+                spacing: 8px;
+                AppButton {
+                    text: "Expense";
+                    small: true;
+                    btn-color: Theme.danger;
+                    outline: root.tx-type != 0;
+                    clicked => {
+                        root.tx-type = 0;
+                        root.tx-type-changed(0);
+                    }
+                }
+                AppButton {
+                    text: "Income";
+                    small: true;
+                    btn-color: Theme.primary;
+                    outline: root.tx-type != 1;
+                    clicked => {
+                        root.tx-type = 1;
+                        root.tx-type-changed(1);
+                    }
+                }
+                AppButton {
+                    text: "Transfer";
+                    small: true;
+                    btn-color: Theme.info;
+                    outline: root.tx-type != 2;
+                    clicked => {
+                        root.tx-type = 2;
+                        root.tx-type-changed(2);
+                    }
+                }
+            }
+
+            // Two-Column Form Body
+            HorizontalLayout {
+                spacing: 16px;
+
+                // Column 1: Financial Inputs & Details
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 8px;
+
+                    HorizontalLayout {
+                        height: 50px;
+                        spacing: 8px;
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 3px;
+                            Text { text: "Amount"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                            input-amount := AppInput {
+                                placeholder-text: "0.00";
+                                text: root.amount;
+                            }
+                        }
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 3px;
+                            Text { text: "Date"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                            input-date := AppInput {
+                                placeholder-text: "YYYY-MM-DD";
+                                text: root.date;
+                            }
+                        }
+                    }
+
+                    VerticalLayout {
+                        height: 50px;
+                        spacing: 3px;
+                        Text { text: "Payee / Merchant"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                        input-payee := AppInput {
+                            placeholder-text: "Merchant, store, or employer...";
+                            text: root.payee;
+                        }
+                    }
+
+                    VerticalLayout {
+                        height: 50px;
+                        spacing: 3px;
+                        Text { text: "Note / Description"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                        input-note := AppInput {
+                            placeholder-text: "Optional note...";
+                            text: root.note;
+                        }
+                    }
+
+                    if root.modal-error != "": Text {
+                        text: root.modal-error;
+                        color: Theme.danger;
+                        font-size: 10px;
+                        font-weight: 600;
+                    }
+                }
+
+                // Column 2: Account & Category Selectors
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 10px;
+
+                    // 1. Source Account Selector
+                    VerticalLayout {
+                        spacing: 4px;
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Source Account"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                            if root.account-name != "": Text {
+                                text: root.account-name;
+                                font-size: 10px;
+                                color: Theme.primary;
+                                font-weight: 700;
+                            }
+                        }
+                        GridLayout {
+                            spacing: 4px;
+                            for acc[i] in root.accounts: Rectangle {
+                                row: floor(i / 2);
+                                col: mod(i, 2);
+                                height: 26px;
+                                border-radius: 4px;
+                                background: acc.id == root.account-id ? Theme.primary : Theme.surface-subtle;
+                                border-color: acc.id == root.account-id ? Theme.primary : Theme.border;
+                                border-width: 1px;
+
+                                TouchArea {
+                                    clicked => {
+                                        root.account-id = acc.id;
+                                        root.account-name = acc.name;
+                                    }
+                                }
+                                HorizontalLayout {
+                                    padding: 4px;
+                                    alignment: center;
+                                    Text {
+                                        text: acc.name;
+                                        font-size: 10px;
+                                        color: acc.id == root.account-id ? #ffffff : Theme.text-primary;
+                                        font-weight: 600;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 2A. Destination Account (If Transfer)
+                    if root.tx-type == 2: VerticalLayout {
+                        spacing: 4px;
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Destination Account"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                            if root.to-account-name != "": Text {
+                                text: root.to-account-name;
+                                font-size: 10px;
+                                color: Theme.info;
+                                font-weight: 700;
+                            }
+                        }
+                        GridLayout {
+                            spacing: 4px;
+                            for acc[i] in root.accounts: Rectangle {
+                                row: floor(i / 2);
+                                col: mod(i, 2);
+                                height: 26px;
+                                border-radius: 4px;
+                                background: acc.id == root.to-account-id ? Theme.info : Theme.surface-subtle;
+                                border-color: acc.id == root.to-account-id ? Theme.info : Theme.border;
+                                border-width: 1px;
+
+                                TouchArea {
+                                    clicked => {
+                                        root.to-account-id = acc.id;
+                                        root.to-account-name = acc.name;
+                                    }
+                                }
+                                HorizontalLayout {
+                                    padding: 4px;
+                                    alignment: center;
+                                    Text {
+                                        text: acc.name;
+                                        font-size: 10px;
+                                        color: acc.id == root.to-account-id ? #ffffff : Theme.text-primary;
+                                        font-weight: 600;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 2B. Category Grid (If Expense or Income)
+                    if root.tx-type != 2: VerticalLayout {
+                        spacing: 4px;
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Category"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                            Rectangle {
+                                height: 18px;
+                                border-radius: 4px;
+                                background: Theme.surface-subtle;
+                                border-color: Theme.border;
+                                border-width: 1px;
+                                TouchArea {
+                                    clicked => { root.toggle-cat-filter(); }
+                                }
+                                HorizontalLayout {
+                                    padding-left: 6px;
+                                    padding-right: 6px;
+                                    alignment: center;
+                                    Text {
+                                        text: root.cat-show-all ? "All Types ▾" : (root.tx-type == 0 ? "Expense ▾" : "Income ▾");
+                                        font-size: 9px;
+                                        color: Theme.text-secondary;
+                                        font-weight: 600;
+                                    }
+                                }
+                            }
+                        }
+
+                        GridLayout {
+                            spacing: 4px;
+                            for cat[i] in root.modal-categories: Rectangle {
+                                row: floor(i / 2);
+                                col: mod(i, 2);
+                                height: 26px;
+                                border-radius: 4px;
+                                background: cat.id == root.category-id ? Theme.primary-subtle : Theme.surface-subtle;
+                                border-color: cat.id == root.category-id ? Theme.primary : Theme.border;
+                                border-width: cat.id == root.category-id ? 1.5px : 1px;
+
+                                TouchArea {
+                                    clicked => {
+                                        root.category-id = cat.id;
+                                        root.category-name = cat.name;
+                                    }
+                                }
+                                HorizontalLayout {
+                                    padding-left: 6px;
+                                    padding-right: 6px;
+                                    spacing: 5px;
+                                    alignment: start;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Rectangle {
+                                            width: 6px;
+                                            height: 6px;
+                                            border-radius: 3px;
+                                            background: cat.cat_type == "income" ? Theme.primary : Theme.accent;
+                                        }
+                                    }
+                                    Text {
+                                        text: cat.name;
+                                        font-size: 10px;
+                                        color: cat.id == root.category-id ? Theme.primary : Theme.text-primary;
+                                        font-weight: cat.id == root.category-id ? 700 : 500;
+                                        overflow: elide;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Modal Footer
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: end;
+
+                AppButton {
+                    text: "Cancel";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+
+                AppButton {
+                    text: root.is-editing ? "Save Changes" : "Save Transaction";
+                    small: true;
+                    btn-color: root.tx-type == 0 ? Theme.danger : (root.tx-type == 1 ? Theme.primary : Theme.info);
+                    clicked => {
+                        root.submit(
+                            root.is-editing,
+                            root.tx-id,
+                            root.tx-type,
+                            input-amount.text,
+                            root.account-id,
+                            root.to-account-id,
+                            root.category-id,
+                            input-payee.text,
+                            input-note.text,
+                            input-date.text
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component TransactionDetailModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(40%);
+
+    in property <TransactionItem> detail-tx;
+
+    callback close();
+    callback open-edit-tx(string);
+    callback delete-transaction(string);
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 380px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 10px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 12px;
+
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: "Transaction Details";
+                    color: Theme.text-primary;
+                    font-size: 14px;
+                    font-weight: 800;
+                    vertical-alignment: center;
+                }
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            // Amount Hero
+            Rectangle {
+                background: Theme.surface-subtle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+                height: 52px;
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 2px;
+                    Text {
+                        text: root.detail-tx.amount;
+                        color: root.detail-tx.is_transfer ? Theme.info : (root.detail-tx.is_income ? Theme.primary : Theme.danger);
+                        font-size: 20px;
+                        font-weight: 900;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: root.detail-tx.title;
+                        color: Theme.text-secondary;
+                        font-size: 11px;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+
+            // Details Rows
+            VerticalLayout {
+                spacing: 8px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Account:"; color: Theme.text-muted; font-size: 11px; }
+                    Text {
+                        text: root.detail-tx.is_transfer ? (root.detail-tx.account_name + " ➔ " + root.detail-tx.to_account_name) : root.detail-tx.account_name;
+                        color: Theme.text-primary;
+                        font-size: 11px;
+                        font-weight: 700;
+                    }
+                }
+
+                if root.detail-tx.category_name != "": HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Category:"; color: Theme.text-muted; font-size: 11px; }
+                    Badge {
+                        text: root.detail-tx.category_name;
+                        badge-color: Theme.accent;
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Date & Time:"; color: Theme.text-muted; font-size: 11px; }
+                    Text { text: root.detail-tx.date + " " + root.detail-tx.time; color: Theme.text-primary; font-size: 11px; font-weight: 600; }
+                }
+
+                if root.detail-tx.note != "": HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Note:"; color: Theme.text-muted; font-size: 11px; }
+                    Text { text: root.detail-tx.note; color: Theme.text-secondary; font-size: 11px; }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Status:"; color: Theme.text-muted; font-size: 11px; }
+                    Badge { text: root.detail-tx.status; badge-color: Theme.primary; }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: end;
+
+                AppButton {
+                    text: "Delete Record";
+                    small: true;
+                    btn-color: Theme.danger;
+                    outline: true;
+                    clicked => {
+                        root.delete-transaction(root.detail-tx.id);
+                        root.close();
+                    }
+                }
+
+                AppButton {
+                    text: "Edit Transaction";
+                    small: true;
+                    btn-color: Theme.primary;
+                    clicked => {
+                        root.open-edit-tx(root.detail-tx.id);
+                    }
+                }
+            }
+        }
+    }
+}

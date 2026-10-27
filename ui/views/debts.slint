@@ -1,0 +1,178 @@
+import { Theme } from "../theme.slint";
+import { DebtItem } from "../models.slint";
+import { AppButton, Badge, TabButton } from "../components.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component DebtsView inherits VerticalLayout {
+    spacing: 10px;
+
+    in-out property <int> debts-filter-tab: 0;
+    in property <[DebtItem]> debts: [];
+    in property <[DebtItem]> filtered-debts: [];
+
+    callback open-new-debt();
+    callback select-debt(DebtItem);
+    callback open-repay-debt(string, string);
+    callback open-edit-debt(string);
+    callback delete-debt(string);
+    callback filter-debts(int);
+
+    HorizontalLayout {
+        alignment: space-between;
+
+        VerticalLayout {
+            alignment: center;
+            HorizontalLayout {
+                spacing: 6px;
+                TabButton {
+                    text: "All Records";
+                    active: root.debts-filter-tab == 0;
+                    clicked => {
+                        root.debts-filter-tab = 0;
+                        root.filter-debts(0);
+                    }
+                }
+                TabButton {
+                    text: "Money Lent (Owed to Me)";
+                    active: root.debts-filter-tab == 1;
+                    clicked => {
+                        root.debts-filter-tab = 1;
+                        root.filter-debts(1);
+                    }
+                }
+                TabButton {
+                    text: "Money Borrowed (I Owe)";
+                    active: root.debts-filter-tab == 2;
+                    clicked => {
+                        root.debts-filter-tab = 2;
+                        root.filter-debts(2);
+                    }
+                }
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            AppButton {
+                text: "+ New Debt / Loan";
+                small: true;
+                btn-color: Theme.primary;
+                clicked => { root.open-new-debt(); }
+            }
+        }
+    }
+
+    ScrollView {
+        VerticalLayout {
+            spacing: 6px;
+
+            if root.filtered-debts.length == 0: Rectangle {
+                height: 90px;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 4px;
+                    Text { text: "No Debts or Loans Recorded"; font-size: 13px; font-weight: 700; color: Theme.text-primary; horizontal-alignment: center; }
+                    Text {
+                        text: root.debts-filter-tab == 1 ? "No records found for money lent to others." :
+                              (root.debts-filter-tab == 2 ? "No records found for money borrowed." :
+                              "Click '+ New Debt / Loan' to track money lent to others or borrowed loans.");
+                        font-size: 11px;
+                        color: Theme.text-muted;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+
+            for d in root.filtered-debts: Rectangle {
+                height: 52px;
+                clip: true;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    alignment: space-between;
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 2px;
+                        HorizontalLayout {
+                            spacing: 6px;
+                            Text {
+                                text: d.person;
+                                color: Theme.text-primary;
+                                font-size: 13px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+                            Badge {
+                                text: d.is_loan ? "Lent to them" : "Borrowed by me";
+                                badge-color: d.is_loan ? Theme.primary : Theme.warning;
+                            }
+                            Badge {
+                                text: d.status;
+                                badge-color: d.status == "settled" ? Theme.primary : Theme.danger;
+                            }
+                        }
+                        Text {
+                            text: "Settled: " + d.settled + " / Total: " + d.amount + " (" + d.notes + ")";
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                            vertical-alignment: center;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        HorizontalLayout {
+                            spacing: 6px;
+                            AppButton {
+                                width: 54px;
+                                text: "Details";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.info;
+                                clicked => {
+                                    root.select-debt(d);
+                                }
+                            }
+                            if d.status != "settled": AppButton {
+                                width: 58px;
+                                text: "Repay";
+                                small: true;
+                                btn-color: Theme.primary;
+                                clicked => {
+                                    root.open-repay-debt(d.id, d.person);
+                                }
+                            }
+                            if d.status == "settled": Rectangle {
+                                width: 58px;
+                            }
+                            AppButton {
+                                width: 46px;
+                                text: "Edit";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.info;
+                                clicked => { root.open-edit-debt(d.id); }
+                            }
+                            AppButton {
+                                width: 54px;
+                                text: "Delete";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.danger;
+                                clicked => { root.delete-debt(d.id); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

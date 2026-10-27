@@ -1,0 +1,1250 @@
+import { Theme } from "../theme.slint";
+import { CategoryItem } from "../models.slint";
+import { Badge, AppButton, TabButton, AppInput, SixDigitPinInput, CurrencySelector } from "../components.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component SettingsView inherits ScrollView {
+    in property <string> settings-status-msg: "";
+    in property <bool> pin-protected: false;
+    in property <string> base-currency: "BDT";
+    in-out property <bool> privacy-mode: false;
+    in property <string> date-format: "YYYY-MM-DD";
+    in property <[CategoryItem]> categories: [];
+    in property <[CategoryItem]> filtered-categories: [];
+    in property <int> cat-expense-count: 0;
+    in property <int> cat-income-count: 0;
+    in-out property <int> cat-catalog-filter: 0;
+    in-out property <bool> show-add-cat-form: false;
+    in-out property <string> new-cat-name: "";
+    in-out property <int> new-cat-type: 0;
+    in-out property <string> new-cat-color: "#10B981";
+    in property <string> db-storage-path: "";
+
+    in-out property <bool> pin-masked: true;
+    in property <bool> gdrive-connected: false;
+    in property <string> gdrive-email: "";
+    in property <string> gdrive-frequency: "daily";
+    in property <string> gdrive-last-backup: "";
+    in property <string> export-storage-path: "";
+
+    callback select-db-file();
+    callback open-edit-db-path();
+    callback reset-default-db();
+    callback select-export-folder();
+    callback open-edit-export-path();
+    callback open-export-folder();
+
+    callback set-master-pin(string);
+    callback disable-master-pin(string);
+    callback set-theme(int);
+    callback update-base-currency(string);
+    callback toggle-privacy();
+    callback update-date-format(string);
+    callback filter-categories(int);
+    callback add-category(string, int, string);
+    callback delete-category(string);
+    callback export-data(string);
+    callback import-backup();
+    callback reset-and-seed-demo();
+    callback open-gdrive-modal();
+    callback gdrive-backup-now();
+
+    VerticalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 8px;
+        padding-bottom: 28px;
+        spacing: 14px;
+
+        // STATUS MESSAGE BANNER (if present)
+        if root.settings-status-msg != "": Rectangle {
+            background: Theme.primary-subtle;
+            border-color: Theme.primary;
+            border-width: 1px;
+            border-radius: 8px;
+
+            HorizontalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                spacing: 10px;
+                alignment: start;
+
+                Badge {
+                    text: "Notification";
+                    badge-color: Theme.primary;
+                }
+
+                Text {
+                    text: root.settings-status-msg;
+                    color: Theme.text-primary;
+                    font-size: 11px;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // 1. PIN SECURITY CARD (6-Digit PIN with auto-advance)
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 10px;
+
+            VerticalLayout {
+                padding: 16px;
+                spacing: 14px;
+
+                // Header Section
+                HorizontalLayout {
+                    alignment: space-between;
+                    spacing: 12px;
+
+                    VerticalLayout {
+                        spacing: 3px;
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            Text {
+                                text: "Master PIN / Passphrase Security";
+                                color: Theme.text-primary;
+                                font-size: 13px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+                            Badge {
+                                text: "Argon2id";
+                                badge-color: Theme.purple;
+                            }
+                        }
+                        Text {
+                            text: "Cryptographic protection powered by Argon2 key derivation. Auto-locks wallet on application launch.";
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                            wrap: word-wrap;
+                        }
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+                        Badge {
+                            text: root.pin-protected ? "PIN Protected" : "Unprotected";
+                            badge-color: root.pin-protected ? Theme.primary : Theme.warning;
+                        }
+                    }
+                }
+
+                // PIN Entry Surface
+                Rectangle {
+                    background: Theme.surface-subtle;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    border-radius: 8px;
+
+                    VerticalLayout {
+                        padding: 14px;
+                        spacing: 12px;
+
+                        // Title & instructions
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text {
+                                text: root.pin-protected ? "Enter 6-digit PIN to update security or remove protection:" : "Set a new 6-digit master PIN to lock your finances on startup:";
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: Theme.text-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // 6-Digit PIN Inputs Row with Mask and Clear Controls
+                        HorizontalLayout {
+                            alignment: start;
+                            spacing: 14px;
+
+                            pin-set-edit := SixDigitPinInput {
+                                is-masked <=> root.pin-masked;
+                                accepted(pin_val) => {
+                                    if self.is-complete {
+                                        root.set-master-pin(pin_val);
+                                        self.clear();
+                                    }
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 6px;
+
+                                HorizontalLayout {
+                                    spacing: 6px;
+
+                                    AppButton {
+                                        text: root.pin-masked ? "Show PIN" : "Hide PIN";
+                                        small: true;
+                                        outline: true;
+                                        btn-color: Theme.border-strong;
+                                        clicked => {
+                                            root.pin-masked = !root.pin-masked;
+                                        }
+                                    }
+
+                                    AppButton {
+                                        text: "Clear";
+                                        small: true;
+                                        outline: true;
+                                        btn-color: Theme.border-strong;
+                                        clicked => {
+                                            pin-set-edit.clear();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Status helper and action buttons
+                        HorizontalLayout {
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                alignment: center;
+                                if pin-set-edit.is-complete: Text {
+                                    text: "✓ 6 digits entered — ready to " + (root.pin-protected ? "update or disable" : "enable protection");
+                                    color: Theme.primary;
+                                    font-size: 10px;
+                                    font-weight: 600;
+                                }
+                                if !pin-set-edit.is-complete && pin-set-edit.pin != "": Text {
+                                    text: "Fill all 6 digits to proceed (each digit moves forward automatically)";
+                                    color: Theme.warning;
+                                    font-size: 10px;
+                                }
+                                if pin-set-edit.pin == "": Text {
+                                    text: "Click any digit box or start typing on your keyboard";
+                                    color: Theme.text-muted;
+                                    font-size: 10px;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: end;
+
+                                AppButton {
+                                    text: root.pin-protected ? "Update PIN" : "Enable 6-Digit PIN";
+                                    small: true;
+                                    btn-color: Theme.primary;
+                                    enabled: pin-set-edit.is-complete;
+                                    clicked => {
+                                        if pin-set-edit.is-complete {
+                                            root.set-master-pin(pin-set-edit.pin);
+                                            pin-set-edit.clear();
+                                        }
+                                    }
+                                }
+
+                                if root.pin-protected: AppButton {
+                                    text: "Disable Protection";
+                                    small: true;
+                                    btn-color: Theme.danger;
+                                    outline: true;
+                                    enabled: pin-set-edit.is-complete;
+                                    clicked => {
+                                        if pin-set-edit.is-complete {
+                                            root.disable-master-pin(pin-set-edit.pin);
+                                            pin-set-edit.clear();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. THEME & VISUAL APPEARANCE
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 10px;
+
+            VerticalLayout {
+                padding: 16px;
+                spacing: 12px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Theme & Visual Appearance";
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "Select your preferred visual style or contrast balance across the application";
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                            vertical-alignment: center;
+                        }
+                    }
+                    Badge {
+                        text: Theme.mode == 0 ? "Clean Light" : (Theme.mode == 1 ? "Dark Obsidian" : (Theme.mode == 2 ? "Midnight OLED" : "Emerald Forest"));
+                        badge-color: Theme.primary;
+                    }
+                }
+
+                // 4 Theme Cards
+                HorizontalLayout {
+                    spacing: 10px;
+
+                    for th_item in [
+                        { name: "Clean Light", desc: "Crisp slate & pure surfaces", mode: 0, bg: #F4F5F8, card: #FFFFFF, acc: #10B981 },
+                        { name: "Dark Obsidian", desc: "Deep obsidian & emerald glow", mode: 1, bg: #090A0F, card: #12151C, acc: #10B981 },
+                        { name: "Midnight OLED", desc: "Pure #000000 for OLED panels", mode: 2, bg: #000000, card: #09090B, acc: #10B981 },
+                        { name: "Emerald Forest", desc: "Finance forest & mint accents", mode: 3, bg: #06110D, card: #0B1A14, acc: #34D399 },
+                    ]: Rectangle {
+                        width: 170px;
+                        border-radius: 8px;
+                        horizontal-stretch: 1;
+                        background: Theme.mode == th_item.mode ? Theme.primary-subtle : Theme.surface-subtle;
+                        border-color: Theme.mode == th_item.mode ? Theme.primary : Theme.border;
+                        border-width: Theme.mode == th_item.mode ? 2px : 1px;
+
+                        TouchArea {
+                            clicked => {
+                                Theme.mode = th_item.mode;
+                                root.set-theme(th_item.mode);
+                            }
+                        }
+
+                        VerticalLayout {
+                            padding: 10px;
+                            spacing: 6px;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text {
+                                    text: th_item.name;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    color: Theme.text-primary;
+                                    vertical-alignment: center;
+                                }
+                                if Theme.mode == th_item.mode: Badge {
+                                    text: "Active";
+                                    badge-color: Theme.primary;
+                                }
+                            }
+
+                            Text {
+                                text: th_item.desc;
+                                font-size: 9px;
+                                color: Theme.text-muted;
+                                wrap: word-wrap;
+                            }
+
+                            HorizontalLayout {
+                                spacing: 5px;
+                                Rectangle {
+                                    width: 14px;
+                                    height: 14px;
+                                    border-radius: 3px;
+                                    background: th_item.bg;
+                                    border-color: Theme.border;
+                                    border-width: 1px;
+                                }
+                                Rectangle {
+                                    width: 14px;
+                                    height: 14px;
+                                    border-radius: 3px;
+                                    background: th_item.card;
+                                    border-color: Theme.border;
+                                    border-width: 1px;
+                                }
+                                Rectangle {
+                                    width: 14px;
+                                    height: 14px;
+                                    border-radius: 3px;
+                                    background: th_item.acc;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. DISPLAY & REGIONAL PREFERENCES
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 10px;
+
+            VerticalLayout {
+                padding: 16px;
+                spacing: 12px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Display & Regional Preferences";
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "Set active currency symbol, calendar format, and balance privacy masking";
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 12px;
+
+                    // Base Currency Card
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 8px;
+
+                        VerticalLayout {
+                            padding: 12px;
+                            spacing: 10px;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text {
+                                    text: "Base Currency";
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    color: Theme.text-primary;
+                                    vertical-alignment: center;
+                                }
+                                Badge {
+                                    text: root.base-currency;
+                                    badge-color: Theme.primary;
+                                }
+                            }
+
+                            CurrencySelector {
+                                selected-currency: root.base-currency;
+                                selected(code) => {
+                                    root.update-base-currency(code);
+                                }
+                            }
+                        }
+                    }
+
+                    // Date Format & Privacy Mode Card
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 8px;
+
+                        VerticalLayout {
+                            padding: 12px;
+                            spacing: 10px;
+
+                            // Date format
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text {
+                                    text: "Date Presentation Format";
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    color: Theme.text-primary;
+                                    vertical-alignment: center;
+                                }
+                                Badge {
+                                    text: root.date-format;
+                                    badge-color: Theme.info;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 6px;
+                                for fmt_item in [
+                                    { fmt: "YYYY-MM-DD", label: "YYYY-MM-DD (ISO)" },
+                                    { fmt: "DD/MM/YYYY", label: "DD/MM/YYYY (EU)" },
+                                    { fmt: "MM/DD/YYYY", label: "MM/DD/YYYY (US)" },
+                                ]: Rectangle {
+                                    horizontal-stretch: 1;
+                                    height: 28px;
+                                    border-radius: 5px;
+                                    background: root.date-format == fmt_item.fmt ? Theme.info : Theme.surface;
+                                    border-color: root.date-format == fmt_item.fmt ? Theme.info : Theme.border;
+                                    border-width: 1px;
+
+                                    TouchArea {
+                                        clicked => {
+                                            root.update-date-format(fmt_item.fmt);
+                                        }
+                                    }
+
+                                    HorizontalLayout {
+                                        alignment: center;
+                                        Text {
+                                            text: fmt_item.label;
+                                            font-size: 10px;
+                                            font-weight: 600;
+                                            color: root.date-format == fmt_item.fmt ? #FFFFFF : Theme.text-primary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                height: 1px;
+                                background: Theme.border;
+                            }
+
+                            // Privacy Mode
+                            HorizontalLayout {
+                                alignment: space-between;
+                                VerticalLayout {
+                                    spacing: 1px;
+                                    Text {
+                                        text: "Balance Privacy Mode";
+                                        font-size: 11px;
+                                        font-weight: 700;
+                                        color: Theme.text-primary;
+                                        vertical-alignment: center;
+                                    }
+                                    Text {
+                                        text: "Mask balances and monetary amounts across all screens";
+                                        font-size: 9px;
+                                        color: Theme.text-muted;
+                                        vertical-alignment: center;
+                                    }
+                                }
+
+                                AppButton {
+                                    text: root.privacy-mode ? "Active (Masked)" : "Disabled (Visible)";
+                                    small: true;
+                                    btn-color: root.privacy-mode ? Theme.primary : Theme.border-strong;
+                                    outline: !root.privacy-mode;
+                                    clicked => {
+                                        root.toggle-privacy();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. CATEGORY CATALOG MANAGEMENT
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 10px;
+
+            VerticalLayout {
+                padding: 16px;
+                spacing: 12px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Category Catalog";
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "Organize spending & income ledger classifications (" + root.categories.length + " total)";
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    AppButton {
+                        text: root.show-add-cat-form ? "Close Form" : "+ New Category";
+                        small: true;
+                        btn-color: Theme.primary;
+                        clicked => {
+                            root.show-add-cat-form = !root.show-add-cat-form;
+                        }
+                    }
+                }
+
+                // Filter Tabs
+                HorizontalLayout {
+                    width: 260px;
+                    spacing: 6px;
+                    TabButton {
+                        text: "All (" + root.categories.length + ")";
+                        active: root.cat-catalog-filter == 0;
+                        clicked => {
+                            root.cat-catalog-filter = 0;
+                            root.filter-categories(0);
+                        }
+                    }
+                    TabButton {
+                        text: "Expense (" + root.cat-expense-count + ")";
+                        active: root.cat-catalog-filter == 1;
+                        clicked => {
+                            root.cat-catalog-filter = 1;
+                            root.filter-categories(1);
+                        }
+                    }
+                    TabButton {
+                        text: "Income (" + root.cat-income-count + ")";
+                        active: root.cat-catalog-filter == 2;
+                        clicked => {
+                            root.cat-catalog-filter = 2;
+                            root.filter-categories(2);
+                        }
+                    }
+                }
+
+                // Inline New Category Form
+                if root.show-add-cat-form: Rectangle {
+                    background: Theme.surface-subtle;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    border-radius: 8px;
+
+                    VerticalLayout {
+                        padding: 14px;
+                        spacing: 10px;
+
+                        HorizontalLayout {
+                            spacing: 10px;
+                            alignment: center;
+
+                            cat-name-edit := AppInput {
+                                horizontal-stretch: 1;
+                                placeholder-text: "Category Name (e.g. Freelance, Rent, Groceries)...";
+                                text: root.new-cat-name;
+                            }
+
+                            AppButton {
+                                text: "Expense";
+                                small: true;
+                                btn-color: Theme.danger;
+                                outline: root.new-cat-type != 0;
+                                clicked => {
+                                    root.new-cat-type = 0;
+                                }
+                            }
+
+                            AppButton {
+                                text: "Income";
+                                small: true;
+                                btn-color: Theme.primary;
+                                outline: root.new-cat-type != 1;
+                                clicked => {
+                                    root.new-cat-type = 1;
+                                }
+                            }
+                        }
+
+                        // Color Palette Chips
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+
+                            Text {
+                                text: "Palette Color:";
+                                font-size: 10px;
+                                font-weight: 600;
+                                color: Theme.text-muted;
+                                vertical-alignment: center;
+                            }
+
+                            for c in [
+                                { name: "#10B981", col: #10B981 },
+                                { name: "#3B82F6", col: #3B82F6 },
+                                { name: "#8B5CF6", col: #8B5CF6 },
+                                { name: "#EC4899", col: #EC4899 },
+                                { name: "#F59E0B", col: #F59E0B },
+                                { name: "#06B6D4", col: #06B6D4 },
+                                { name: "#F43F5E", col: #F43F5E },
+                                { name: "#14B8A6", col: #14B8A6 },
+                                { name: "#6366F1", col: #6366F1 },
+                                { name: "#64748B", col: #64748B }
+                            ]: Rectangle {
+                                width: 18px;
+                                height: 18px;
+                                border-radius: 9px;
+                                background: c.col;
+                                border-color: root.new-cat-color == c.name ? #FFFFFF : Colors.transparent;
+                                border-width: 2px;
+
+                                TouchArea {
+                                    clicked => {
+                                        root.new-cat-color = c.name;
+                                    }
+                                }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            alignment: end;
+                            spacing: 8px;
+
+                            AppButton {
+                                text: "Cancel";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.border-strong;
+                                text-color: Theme.text-primary;
+                                clicked => {
+                                    root.show-add-cat-form = false;
+                                }
+                            }
+
+                            AppButton {
+                                text: "Save Category";
+                                small: true;
+                                btn-color: Theme.primary;
+                                clicked => {
+                                    root.add-category(cat-name-edit.text, root.new-cat-type, root.new-cat-color);
+                                    cat-name-edit.text = "";
+                                    root.show-add-cat-form = false;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Table Header
+                Rectangle {
+                    height: 28px;
+                    background: Theme.surface-subtle;
+                    border-radius: 6px;
+
+                    HorizontalLayout {
+                        padding-left: 14px;
+                        padding-right: 14px;
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: 16px;
+                            alignment: start;
+
+                            Text {
+                                width: 220px;
+                                text: "CATEGORY NAME";
+                                color: Theme.text-muted;
+                                font-size: 9px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+
+                            Text {
+                                width: 90px;
+                                text: "SPENDING TYPE";
+                                color: Theme.text-muted;
+                                font-size: 9px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+
+                            Text {
+                                width: 150px;
+                                text: "ACTIVITY / COUNT";
+                                color: Theme.text-muted;
+                                font-size: 9px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Text {
+                            width: 100px;
+                            text: "ACTION";
+                            color: Theme.text-muted;
+                            font-size: 9px;
+                            font-weight: 700;
+                            horizontal-alignment: right;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // Categories List
+                VerticalLayout {
+                    spacing: 4px;
+
+                    if root.filtered-categories.length == 0: Rectangle {
+                        height: 70px;
+                        border-radius: 6px;
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+
+                        VerticalLayout {
+                            alignment: center;
+                            Text {
+                                text: "No categories match this filter";
+                                color: Theme.text-muted;
+                                font-size: 11px;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+
+                    for cat in root.filtered-categories: Rectangle {
+                        height: 38px;
+                        clip: true;
+                        border-radius: 6px;
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+
+                        HorizontalLayout {
+                            padding-left: 14px;
+                            padding-right: 14px;
+                            alignment: space-between;
+
+                            HorizontalLayout {
+                                spacing: 16px;
+                                alignment: start;
+
+                                // Column 1: Category Name & Dot
+                                HorizontalLayout {
+                                    width: 220px;
+                                    spacing: 8px;
+                                    alignment: start;
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Rectangle {
+                                            width: 8px;
+                                            height: 8px;
+                                            border-radius: 4px;
+                                            background: cat.cat_type == "income" ? Theme.primary : Theme.accent;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: cat.name;
+                                        color: Theme.text-primary;
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                        vertical-alignment: center;
+                                        overflow: elide;
+                                    }
+                                }
+
+                                // Column 2: Spending Type Badge
+                                VerticalLayout {
+                                    alignment: center;
+                                    Badge {
+                                        width: 80px;
+                                        text: cat.cat_type == "income" ? "Income" : "Expense";
+                                        badge-color: cat.cat_type == "income" ? Theme.primary : Theme.accent;
+                                    }
+                                }
+
+                                // Column 3: Activity / Transactions count
+                                VerticalLayout {
+                                    alignment: center;
+                                    HorizontalLayout {
+                                        width: 150px;
+                                        alignment: start;
+
+                                        if cat.tx_count > 0: Text {
+                                            text: cat.tx_count + (cat.tx_count == 1 ? " transaction" : " transactions");
+                                            color: Theme.text-secondary;
+                                            font-size: 10px;
+                                            font-weight: 500;
+                                            vertical-alignment: center;
+                                        }
+                                        if cat.tx_count == 0: Text {
+                                            text: "Unused";
+                                            color: Theme.text-muted;
+                                            font-size: 10px;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Column 4: Action (right-aligned)
+                            VerticalLayout {
+                                alignment: center;
+                                HorizontalLayout {
+                                    width: 100px;
+                                    alignment: end;
+
+                                    if cat.tx_count == 0: AppButton {
+                                        width: 70px;
+                                        text: "Delete";
+                                        small: true;
+                                        outline: true;
+                                        btn-color: Theme.danger;
+                                        clicked => {
+                                            root.delete-category(cat.id);
+                                        }
+                                    }
+                                    if cat.tx_count > 0: Badge {
+                                        width: 90px;
+                                        text: "In Use (" + cat.tx_count + ")";
+                                        badge-color: Theme.border-strong;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 5. DATA BACKUP, IMPORT & PORTABILITY
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 10px;
+
+            VerticalLayout {
+                padding: 16px;
+                spacing: 12px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Data Backup, Import & Portability";
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "Local SQLite database storage. Export full backups or restore historical ledger records.";
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                            vertical-alignment: center;
+                        }
+                    }
+                    Badge {
+                        text: "Offline SQLite (WAL Mode)";
+                        badge-color: Theme.info;
+                    }
+                }
+
+                // Active Database File Card
+                Rectangle {
+                    background: Theme.surface-subtle;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    border-radius: 8px;
+
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        padding-top: 10px;
+                        padding-bottom: 10px;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            spacing: 2px;
+                            alignment: center;
+                            HorizontalLayout {
+                                spacing: 6px;
+                                Text {
+                                    text: "SQLite Database File:";
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    color: Theme.text-primary;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            Text {
+                                text: root.db-storage-path;
+                                font-size: 10px;
+                                color: Theme.primary;
+                                font-weight: 600;
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 6px;
+                            alignment: center;
+
+                            AppButton {
+                                text: "Browse File...";
+                                small: true;
+                                btn-color: Theme.primary;
+                                clicked => { root.select-db-file(); }
+                            }
+                            AppButton {
+                                text: "Change Path";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.info;
+                                clicked => { root.open-edit-db-path(); }
+                            }
+                            AppButton {
+                                text: "Reset Default";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.surface-hover;
+                                text-color: Theme.text-secondary;
+                                clicked => { root.reset-default-db(); }
+                            }
+                        }
+                    }
+                }
+
+                // Export & Backup Destination Directory Card
+                Rectangle {
+                    background: Theme.surface-subtle;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    border-radius: 8px;
+
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        padding-top: 10px;
+                        padding-bottom: 10px;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            spacing: 2px;
+                            alignment: center;
+                            HorizontalLayout {
+                                spacing: 6px;
+                                Text {
+                                    text: "Export & Backup Destination:";
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    color: Theme.text-primary;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            Text {
+                                text: root.export-storage-path;
+                                font-size: 10px;
+                                color: Theme.info;
+                                font-weight: 600;
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 6px;
+                            alignment: center;
+
+                            AppButton {
+                                text: "Browse Folder...";
+                                small: true;
+                                btn-color: Theme.info;
+                                clicked => { root.select-export-folder(); }
+                            }
+                            AppButton {
+                                text: "Change Path";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.primary;
+                                clicked => { root.open-edit-export-path(); }
+                            }
+                            AppButton {
+                                text: "Open Folder";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.surface-hover;
+                                text-color: Theme.text-secondary;
+                                clicked => { root.open-export-folder(); }
+                            }
+                        }
+                    }
+                }
+
+                // Google Drive Cloud Backup Card
+                Rectangle {
+                    background: Theme.surface-subtle;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    border-radius: 8px;
+
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        padding-top: 10px;
+                        padding-bottom: 10px;
+                        alignment: space-between;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 3px;
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: start;
+                                Text {
+                                    text: "Google Drive Cloud Backup";
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    color: Theme.text-primary;
+                                    vertical-alignment: center;
+                                }
+                                Badge {
+                                    text: root.gdrive-connected ? ("Connected (" + root.gdrive-email + ")") : "Disconnected";
+                                    badge-color: root.gdrive-connected ? Theme.primary : Theme.warning;
+                                }
+                            }
+                            Text {
+                                text: root.gdrive-connected ? ("Schedule: " + (root.gdrive-frequency == "hourly" ? "Hourly" : (root.gdrive-frequency == "every_6h" ? "Every 6h" : (root.gdrive-frequency == "weekly" ? "Weekly" : (root.gdrive-frequency == "manual" ? "Manual" : "Daily")))) + " (in-app scheduler active, no cron needed) • Last backup: " + (root.gdrive-last-backup != "" ? root.gdrive-last-backup : "Never")) : "Sync encrypted ledger snapshots directly to your personal Google Drive.";
+                                font-size: 10px;
+                                color: Theme.text-muted;
+                            }
+                        }
+
+                        HorizontalLayout {
+                            alignment: center;
+                            spacing: 8px;
+                            if root.gdrive-connected: AppButton {
+                                text: "Backup Now";
+                                small: true;
+                                btn-color: Theme.primary;
+                                clicked => { root.gdrive-backup-now(); }
+                            }
+                            AppButton {
+                                text: root.gdrive-connected ? "Manage Drive" : "Connect Google Drive";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.primary;
+                                clicked => { root.open-gdrive-modal(); }
+                            }
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 10px;
+
+                    AppButton {
+                        text: "Export JSON Backup";
+                        small: true;
+                        btn-color: Theme.primary;
+                        clicked => {
+                            root.export-data("json");
+                        }
+                    }
+
+                    AppButton {
+                        text: "Export Transactions CSV";
+                        small: true;
+                        btn-color: Theme.info;
+                        clicked => {
+                            root.export-data("csv");
+                        }
+                    }
+
+                    AppButton {
+                        text: "Restore Ledger Backup";
+                        small: true;
+                        outline: true;
+                        btn-color: Theme.primary;
+                        clicked => {
+                            root.import-backup();
+                        }
+                    }
+                }
+            }
+        }
+
+        // 6. SAMPLE DEMO DATA
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 10px;
+
+            VerticalLayout {
+                padding: 16px;
+                spacing: 10px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Sample Demo Ledger";
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "Reset local database with rich sample transactions, recurring bills, budgets, and debts";
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    AppButton {
+                        text: "Reset & Seed Demo";
+                        small: true;
+                        btn-color: Theme.warning;
+                        clicked => {
+                            root.reset-and-seed-demo();
+                        }
+                    }
+                }
+            }
+        }
+
+        // FOOTER BRANDING
+        Rectangle {
+            background: Theme.surface-subtle;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 6px;
+            height: 32px;
+
+            HorizontalLayout {
+                alignment: center;
+                spacing: 8px;
+                VerticalLayout {
+                    alignment: center;
+                    Image {
+                        width: 16px;
+                        height: 16px;
+                        source: @image-url("../../assets/icon.svg");
+                        vertical-alignment: center;
+                    }
+                }
+                Text {
+                    text: "urpwallet • Open Source Personal Finance • Offline Local SQLite • Standalone Native Rust + Slint";
+                    color: Theme.text-muted;
+                    font-size: 10px;
+                    font-weight: 500;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

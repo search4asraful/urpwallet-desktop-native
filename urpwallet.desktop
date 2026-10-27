@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=urpwallet
+Comment=Local-first personal finance tracker
+Exec=urpwallet
+Icon=urpwallet
+Terminal=false
+Type=Application
+Categories=Office;Finance;

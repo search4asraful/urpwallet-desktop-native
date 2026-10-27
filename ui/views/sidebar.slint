@@ -1,0 +1,179 @@
+import { Theme } from "../theme.slint";
+
+export component Sidebar inherits Rectangle {
+    width: 190px;
+    background: Theme.surface;
+    border-color: Theme.border;
+    border-width: 1px;
+
+    in-out property <int> active-tab: 0;
+    in-out property <bool> privacy-mode: false;
+    in property <bool> gdrive-connected: false;
+    in property <bool> gdrive-loading: false;
+
+    callback switch-tab(int);
+    callback toggle-privacy();
+    callback set-theme(int);
+    callback gdrive-backup-now();
+
+    VerticalLayout {
+        padding: 12px;
+        spacing: 4px;
+
+        // Brand Header
+        HorizontalLayout {
+            spacing: 8px;
+            alignment: start;
+
+            VerticalLayout {
+                alignment: center;
+                Image {
+                    width: 28px;
+                    height: 28px;
+                    source: @image-url("../../assets/icon.svg");
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                spacing: 0px;
+                Text {
+                    text: "urpwallet";
+                    color: Theme.text-primary;
+                    font-size: 15px;
+                    font-weight: 800;
+                    letter-spacing: -0.3px;
+                    vertical-alignment: center;
+                }
+                Text {
+                    text: "Your Personal Wallet";
+                    color: Theme.text-muted;
+                    font-size: 9px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        Rectangle { height: 6px; }
+
+        // Navigation Items (32px compact)
+        for item[index] in [
+            { label: "Dashboard", tab: 0 },
+            { label: "Transactions", tab: 1 },
+            { label: "Accounts & Vaults", tab: 2 },
+            { label: "Budgets & Pacing", tab: 3 },
+            { label: "Recurring Bills", tab: 4 },
+            { label: "Debts & Loans", tab: 5 },
+            { label: "Reports", tab: 6 },
+            { label: "Settings", tab: 7 },
+        ]: Rectangle {
+            height: 32px;
+            border-radius: 5px;
+            background: root.active-tab == item.tab ? Theme.primary-subtle : (nav-touch.has-hover ? Theme.surface-hover : Colors.transparent);
+            nav-touch := TouchArea { clicked => { root.switch-tab(item.tab); } }
+            HorizontalLayout {
+                padding-left: 10px;
+                padding-right: 10px;
+                alignment: start;
+                Text {
+                    text: item.label;
+                    color: root.active-tab == item.tab ? Theme.primary : Theme.text-primary;
+                    font-weight: root.active-tab == item.tab ? 700 : 500;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        Rectangle { } // flex spacer
+
+        // 1-Click Cloud Backup Button (only shown when Google Cloud Services is connected)
+        if root.gdrive-connected: Rectangle {
+            height: 32px;
+            border-radius: 6px;
+            background: backup-touch.has-hover ? Theme.primary.darker(10%) : Theme.primary;
+            clip: true;
+
+            backup-touch := TouchArea {
+                clicked => {
+                    if (!root.gdrive-loading) {
+                        root.gdrive-backup-now();
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 8px;
+                alignment: center;
+
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: "☁";
+                        font-size: 13px;
+                        color: #FFFFFF;
+                        vertical-alignment: center;
+                    }
+                }
+                Text {
+                    text: root.gdrive-loading ? "Backing up..." : "1-Click Backup";
+                    color: #FFFFFF;
+                    font-size: 11px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // Privacy Quick Toggle
+        Rectangle {
+            height: 28px;
+            border-radius: 5px;
+            background: root.privacy-mode ? Theme.primary-subtle : Theme.surface-hover;
+            border-color: Theme.border;
+            border-width: 1px;
+            TouchArea { clicked => { root.toggle-privacy(); } }
+
+            HorizontalLayout {
+                alignment: center;
+                spacing: 6px;
+                Text {
+                    text: root.privacy-mode ? "Privacy Mask (ON)" : "Privacy Mask (OFF)";
+                    color: root.privacy-mode ? Theme.primary : Theme.text-secondary;
+                    font-size: 10px;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // Theme selector buttons (Light, Dark, OLED, Emerald)
+        HorizontalLayout {
+            spacing: 3px;
+            height: 22px;
+
+            for th[i] in [
+                { name: "Light", mode: 0 },
+                { name: "Dark", mode: 1 },
+                { name: "OLED", mode: 2 },
+                { name: "Emerald", mode: 3 },
+            ]: Rectangle {
+                border-radius: 4px;
+                background: Theme.mode == th.mode ? Theme.primary : Theme.surface-hover;
+                TouchArea { clicked => { Theme.mode = th.mode; root.set-theme(th.mode); } }
+                HorizontalLayout {
+                    alignment: center;
+                    Text {
+                        text: th.name;
+                        color: Theme.mode == th.mode ? #FFFFFF : Theme.text-muted;
+                        font-size: 9px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,383 @@
+import { Theme } from "../theme.slint";
+import { DebtItem } from "../models.slint";
+import { AppButton, Badge, AppInput } from "../components.slint";
+
+export component AddDebtModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(40%);
+
+    in property <bool> is-editing: false;
+    in property <string> debt-id: "";
+    in property <string> person: "";
+    in-out property <int> debt-type: 0;
+    in property <string> amount: "";
+    in property <string> notes: "";
+
+    callback close();
+    callback submit(bool, string, string, int, string, string, string);
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 380px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 10px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 8px;
+
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: root.is-editing ? "Edit Debt or Loan" : "Add Debt or Loan";
+                    color: Theme.text-primary;
+                    font-size: 14px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            Text { text: "Person Name:"; font-size: 10px; color: Theme.text-muted; }
+            input-debt-person := AppInput {
+                placeholder-text: "Friend, colleague, or lender...";
+                text: root.person;
+            }
+
+            Text { text: "Relationship Type:"; font-size: 10px; color: Theme.text-muted; }
+            HorizontalLayout {
+                spacing: 6px;
+                AppButton {
+                    text: "Loan (I Lent Money)";
+                    small: true;
+                    btn-color: Theme.primary;
+                    outline: root.debt-type != 0;
+                    clicked => { root.debt-type = 0; }
+                }
+                AppButton {
+                    text: "Debt (I Borrowed)";
+                    small: true;
+                    btn-color: Theme.danger;
+                    outline: root.debt-type != 1;
+                    clicked => { root.debt-type = 1; }
+                }
+            }
+
+            Text { text: "Total Principal Amount:"; font-size: 10px; color: Theme.text-muted; }
+            input-debt-amt := AppInput {
+                placeholder-text: "150.00";
+                text: root.amount;
+            }
+
+            Text { text: "Notes / Memo:"; font-size: 10px; color: Theme.text-muted; }
+            input-debt-notes := AppInput {
+                placeholder-text: "Reason or agreement...";
+                text: root.notes;
+            }
+
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: end;
+                AppButton {
+                    text: "Cancel";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+                AppButton {
+                    text: root.is-editing ? "Save Changes" : "Save Debt";
+                    small: true;
+                    btn-color: Theme.primary;
+                    clicked => {
+                        root.submit(
+                            root.is-editing,
+                            root.debt-id,
+                            input-debt-person.text,
+                            root.debt-type,
+                            input-debt-amt.text,
+                            "2026-11-30",
+                            input-debt-notes.text
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component RepayDebtModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(40%);
+
+    in property <string> debt-id: "";
+    in property <string> person: "";
+
+    callback close();
+    callback submit(string, string);
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 340px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 10px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 10px;
+
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: "Record Repayment: " + root.person;
+                    color: Theme.text-primary;
+                    font-size: 13px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            Text {
+                text: "Enter payment amount to record on ledger:";
+                color: Theme.text-muted;
+                font-size: 10px;
+                vertical-alignment: center;
+            }
+
+            input-repay-amt := AppInput {
+                placeholder-text: "50.00";
+            }
+
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: end;
+                AppButton {
+                    text: "Cancel";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+                AppButton {
+                    text: "Record Payment";
+                    small: true;
+                    btn-color: Theme.primary;
+                    clicked => {
+                        root.submit(root.debt-id, input-repay-amt.text);
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component DebtDetailModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(40%);
+
+    in property <DebtItem> detail-debt;
+
+    callback close();
+    callback delete-debt(string);
+    callback open-edit-debt(string);
+    callback open-repay-debt(string, string);
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 380px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 10px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 10px;
+
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: "Debt & Loan Details";
+                    color: Theme.text-primary;
+                    font-size: 14px;
+                    font-weight: 800;
+                    vertical-alignment: center;
+                }
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            // Debt Hero
+            Rectangle {
+                background: Theme.surface-subtle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+                height: 56px;
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 2px;
+                    Text {
+                        text: "Remaining: " + root.detail-debt.remaining;
+                        color: root.detail-debt.status == "settled" ? Theme.primary : (root.detail-debt.is_loan ? Theme.primary : Theme.danger);
+                        font-size: 20px;
+                        font-weight: 900;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: (root.detail-debt.is_loan ? "Lent to: " : "Borrowed from: ") + root.detail-debt.person;
+                        color: Theme.text-secondary;
+                        font-size: 11px;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Detail rows
+            VerticalLayout {
+                spacing: 8px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Direction:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Badge {
+                        text: root.detail-debt.is_loan ? "Loan (They owe me)" : "Debt (I owe them)";
+                        badge-color: root.detail-debt.is_loan ? Theme.primary : Theme.warning;
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Total Principal:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: root.detail-debt.amount; color: Theme.text-primary; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Settled So Far:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: root.detail-debt.settled; color: Theme.primary; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Status:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Badge {
+                        text: root.detail-debt.status;
+                        badge-color: root.detail-debt.status == "settled" ? Theme.primary : Theme.danger;
+                    }
+                }
+
+                if root.detail-debt.notes != "": HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Notes / Memo:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: root.detail-debt.notes; color: Theme.text-secondary; font-size: 10px; vertical-alignment: center; }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: end;
+
+                AppButton {
+                    text: "Delete";
+                    small: true;
+                    btn-color: Theme.danger;
+                    outline: true;
+                    clicked => {
+                        root.delete-debt(root.detail-debt.id);
+                        root.close();
+                    }
+                }
+
+                AppButton {
+                    text: "Edit";
+                    small: true;
+                    outline: true;
+                    btn-color: Theme.info;
+                    clicked => {
+                        root.close();
+                        root.open-edit-debt(root.detail-debt.id);
+                    }
+                }
+
+                if root.detail-debt.status != "settled": AppButton {
+                    text: "Record Repayment";
+                    small: true;
+                    btn-color: Theme.primary;
+                    clicked => {
+                        root.close();
+                        root.open-repay-debt(root.detail-debt.id, root.detail-debt.person);
+                    }
+                }
+            }
+        }
+    }
+}

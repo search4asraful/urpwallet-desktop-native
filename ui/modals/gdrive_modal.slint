@@ -1,0 +1,802 @@
+import { Theme } from "../theme.slint";
+import { GDriveBackupItem } from "../models.slint";
+import { AppButton, Badge, AppInput, TabButton } from "../components.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component GoogleDriveModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(40%);
+
+    in property <bool> is-connected: false;
+    in property <string> email: "";
+    in property <string> last-backup: "";
+    in property <string> status-msg: "";
+    in property <string> error-msg: "";
+    in property <bool> loading: false;
+    in property <[GDriveBackupItem]> backups: [];
+    in property <string> client-id: "";
+    in property <string> client-secret: "";
+    in property <bool> auto-backup: true;
+    in property <string> frequency: "daily";
+    in property <int> retention-count: 10;
+
+    in-out property <int> active-tab: 0; // 0: Backups & Sync, 1: Settings & OAuth
+    in-out property <bool> show-guide: false;
+    in-out property <string> edit-client-id: root.client-id;
+    in-out property <string> edit-client-secret: root.client-secret;
+    in-out property <bool> edit-auto-backup: root.auto-backup;
+    in-out property <string> edit-frequency: root.frequency;
+    in-out property <int> edit-retention-count: root.retention-count;
+    in-out property <string> manual-code: "";
+
+    callback close();
+    callback connect();
+    callback submit-code(string);
+    callback disconnect();
+    callback backup-now();
+    callback refresh-backups();
+    callback restore-backup(string);
+    callback delete-backup(string);
+    callback save-config(string, string, bool, string, int);
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 580px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 12px;
+        clip: true;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 18px;
+            spacing: 10px;
+
+            // 1. Modal Header
+            HorizontalLayout {
+                alignment: space-between;
+                VerticalLayout {
+                    spacing: 2px;
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: start;
+                        Text {
+                            text: "Google Drive Cloud Backup";
+                            color: Theme.text-primary;
+                            font-size: 15px;
+                            font-weight: 800;
+                            vertical-alignment: center;
+                        }
+                        Badge {
+                            text: root.is-connected ? "Connected" : "Disconnected";
+                            badge-color: root.is-connected ? Theme.primary : Theme.warning;
+                        }
+                    }
+                    Text {
+                        text: "Sync encrypted SQLite ledger snapshots directly to your personal Google Drive";
+                        color: Theme.text-muted;
+                        font-size: 10px;
+                    }
+                }
+
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            // 2. Tab Navigation
+            HorizontalLayout {
+                width: 250px;
+                spacing: 8px;
+                TabButton {
+                    text: "Backups & Synchronization";
+                    active: root.active-tab == 0;
+                    clicked => { root.active-tab = 0; }
+                }
+                TabButton {
+                    text: "Settings & OAuth Setup";
+                    active: root.active-tab == 1;
+                    clicked => { root.active-tab = 1; }
+                }
+            }
+
+            // 3. Status or Error Banners
+            if root.error-msg != "": Rectangle {
+                background: Theme.danger-subtle;
+                border-color: Theme.danger;
+                border-width: 1px;
+                border-radius: 6px;
+                HorizontalLayout {
+                    padding: 8px;
+                    Text {
+                        text: root.error-msg;
+                        color: Theme.danger;
+                        font-size: 10px;
+                        font-weight: 600;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            if root.status-msg != "": Rectangle {
+                background: Theme.primary-subtle;
+                border-color: Theme.primary;
+                border-width: 1px;
+                border-radius: 6px;
+                HorizontalLayout {
+                    padding: 8px;
+                    Text {
+                        text: root.status-msg;
+                        color: Theme.primary;
+                        font-size: 10px;
+                        font-weight: 600;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // TAB 0: BACKUPS & SYNC
+            if root.active-tab == 0: VerticalLayout {
+                spacing: 10px;
+
+                    if root.is-connected: VerticalLayout {
+                        spacing: 10px;
+
+                        // Account Info Card
+                        Rectangle {
+                            background: Theme.surface-subtle;
+                            border-color: Theme.border;
+                            border-width: 1px;
+                            border-radius: 8px;
+
+                            VerticalLayout {
+                                padding: 12px;
+                                spacing: 8px;
+
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        Text {
+                                            text: "Google Account: " + (root.email != "" ? root.email : "Connected");
+                                            color: Theme.text-primary;
+                                            font-size: 12px;
+                                            font-weight: 700;
+                                        }
+                                        HorizontalLayout {
+                                            spacing: 6px;
+                                            Text {
+                                                text: "Last backup: " + (root.last-backup != "" ? root.last-backup : "Never");
+                                                color: Theme.text-muted;
+                                                font-size: 10px;
+                                            }
+                                            Text {
+                                                text: "•";
+                                                color: Theme.text-muted;
+                                                font-size: 10px;
+                                            }
+                                        }
+                                        Text {
+                                            text: root.auto-backup ? ("Schedule: " + (root.frequency == "hourly" ? "Hourly" : (root.frequency == "every_6h" ? "Every 6h" : (root.frequency == "weekly" ? "Weekly" : "Daily"))) + " (auto-sync active)") : "Schedule: Manual";
+                                            color: Theme.primary;
+                                            font-size: 10px;
+                                            font-weight: 600;
+                                        }
+                                    }
+
+                                    HorizontalLayout {
+                                        spacing: 6px;
+                                        AppButton {
+                                            text: root.loading ? "Backing up..." : "Backup Now";
+                                            small: true;
+                                            btn-color: Theme.primary;
+                                            text-color: #FFFFFF;
+                                            enabled: !root.loading;
+                                            clicked => { root.backup-now(); }
+                                        }
+                                        AppButton {
+                                            text: "Refresh";
+                                            small: true;
+                                            outline: true;
+                                            btn-color: Theme.info;
+                                            text-color: Theme.info;
+                                            clicked => { root.refresh-backups(); }
+                                        }
+                                        AppButton {
+                                            text: "Disconnect";
+                                            small: true;
+                                            outline: true;
+                                            btn-color: Theme.danger;
+                                            text-color: Theme.danger;
+                                            clicked => { root.disconnect(); }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Backups List Header
+                        Text {
+                            text: "Backups in Google Drive (" + root.backups.length + "):";
+                            font-size: 11px;
+                            font-weight: 700;
+                            color: Theme.text-primary;
+                        }
+
+                        if root.backups.length == 0: Rectangle {
+                            height: 80px;
+                            background: Theme.surface-subtle;
+                            border-color: Theme.border;
+                            border-width: 1px;
+                            border-radius: 6px;
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 4px;
+                                Text {
+                                    text: "No backups found on Google Drive yet";
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: Theme.text-primary;
+                                    horizontal-alignment: center;
+                                }
+                                Text {
+                                    text: "Click 'Backup Now' above to upload your first snapshot.";
+                                    font-size: 10px;
+                                    color: Theme.text-muted;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+
+                        if root.backups.length > 0: ScrollView {
+                            height: min(200px, root.backups.length * 50px);
+                            VerticalLayout {
+                                spacing: 6px;
+                                for b in root.backups: Rectangle {
+                                    height: 44px;
+                                    background: Theme.surface-subtle;
+                                    border-color: Theme.border;
+                                    border-width: 1px;
+                                    border-radius: 6px;
+
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        alignment: space-between;
+
+                                        VerticalLayout {
+                                            alignment: center;
+                                            spacing: 2px;
+                                            Text {
+                                                text: b.name;
+                                                color: Theme.text-primary;
+                                                font-size: 11px;
+                                                font-weight: 600;
+                                                overflow: elide;
+                                            }
+                                            HorizontalLayout {
+                                                spacing: 6px;
+                                                Text {
+                                                    text: b.created_time;
+                                                    color: Theme.text-muted;
+                                                    font-size: 9px;
+                                                }
+                                            }
+                                        }
+
+                                        VerticalLayout {
+                                            alignment: center;
+                                            HorizontalLayout {
+                                                spacing: 6px;
+                                                VerticalLayout {
+                                                    alignment: center;
+                                                    if b.size != "": Text {
+                                                        text: b.size;
+                                                        color: Theme.info;
+                                                        font-size: 11px;
+                                                    }
+                                                }
+                                                AppButton {
+                                                    text: "Restore";
+                                                    small: true;
+                                                    btn-color: Theme.primary;
+                                                    text-color: #FFFFFF;
+                                                    clicked => { root.restore-backup(b.id); }
+                                                }
+                                                AppButton {
+                                                    text: "Delete";
+                                                    small: true;
+                                                    outline: true;
+                                                    btn-color: Theme.danger;
+                                                    text-color: Theme.danger;
+                                                    clicked => { root.delete-backup(b.id); }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if !root.is-connected: VerticalLayout {
+                        spacing: 10px;
+
+                        Rectangle {
+                            height: self.preferred-height;
+                            background: Theme.surface-subtle;
+                            border-color: Theme.border;
+                            border-width: 1px;
+                            border-radius: 8px;
+
+                            VerticalLayout {
+                                padding: 14px;
+                                spacing: 10px;
+
+                                Text {
+                                    text: "Connect Google Drive";
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    color: Theme.text-primary;
+                                }
+
+                                Text {
+                                    text: "Authorize urpwallet to save encrypted backups directly into your Google Drive folder ('urpwallet_backups'). No third parties or external servers have access to your data.";
+                                    font-size: 11px;
+                                    color: Theme.text-muted;
+                                    wrap: word-wrap;
+                                }
+
+                                if root.client-id != "": AppButton {
+                                    text: root.loading ? "Connecting..." : "Sign in with Google (Open Browser)";
+                                    btn-color: Theme.primary;
+                                    text-color: #FFFFFF;
+                                    enabled: !root.loading;
+                                    clicked => { root.connect(); }
+                                }
+
+                                if root.client-id == "": VerticalLayout {
+                                    spacing: 6px;
+                                    Text {
+                                        text: "⚠️ Google OAuth Client ID required before connecting.";
+                                        font-size: 10px;
+                                        font-weight: 600;
+                                        color: Theme.warning;
+                                    }
+                                    AppButton {
+                                        text: "Configure Client ID & Secret";
+                                        small: true;
+                                        btn-color: Theme.info;
+                                        text-color: #FFFFFF;
+                                        clicked => { root.active-tab = 1; }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Manual Code fallback option
+                        if root.client-id != "": Rectangle {
+                            background: Theme.surface-subtle;
+                            border-color: Theme.border;
+                            border-width: 1px;
+                            border-radius: 8px;
+
+                            VerticalLayout {
+                                padding: 12px;
+                                spacing: 8px;
+
+                                Text {
+                                    text: "Or Submit Authorization Code Manually:";
+                                    font-size: 10px;
+                                    font-weight: 600;
+                                    color: Theme.text-primary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    code-edit := AppInput {
+                                        placeholder-text: "Paste code parameter from browser URL...";
+                                        text <=> root.manual-code;
+                                    }
+                                    AppButton {
+                                        text: "Connect";
+                                        small: true;
+                                        btn-color: Theme.primary;
+                                        text-color: #FFFFFF;
+                                        clicked => {
+                                            root.submit-code(code-edit.text);
+                                            code-edit.text = "";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // TAB 1: SETTINGS & OAUTH SETUP
+                if root.active-tab == 1: VerticalLayout {
+                    padding-right: 6px;
+                    spacing: 10px;
+
+                    Rectangle {
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 8px;
+
+                        VerticalLayout {
+                            padding: 14px;
+                            spacing: 10px;
+
+                            Text {
+                                height: 20px;
+                                text: "Google OAuth 2.0 Credentials";
+                                font-size: 12px;
+                                font-weight: 700;
+                                color: Theme.text-primary;
+                            }
+
+                            // Collapsible Guide
+                            Rectangle {
+                                background: Theme.surface;
+                                border-color: root.show-guide ? Theme.info.transparentize(40%) : Theme.border;
+                                border-width: 1px;
+                                border-radius: 6px;
+                                clip: true;
+
+                                VerticalLayout {
+                                    padding: 0px;
+                                    spacing: 0px;
+
+                                    // Guide Header Bar (Clickable)
+                                    Rectangle {
+                                        height: 34px;
+                                        background: guide-touch.has-hover ? Theme.surface-hover : Colors.transparent;
+
+                                        guide-touch := TouchArea {
+                                            mouse-cursor: MouseCursor.pointer;
+                                            clicked => { root.show-guide = !root.show-guide; }
+                                        }
+
+                                        HorizontalLayout {
+                                            padding-left: 10px;
+                                            padding-right: 10px;
+                                            alignment: space-between;
+
+                                            HorizontalLayout {
+                                                spacing: 8px;
+                                                alignment: start;
+                                                Text {
+                                                    text: "💡";
+                                                    font-size: 10px;
+                                                    vertical-alignment: center;
+                                                }
+                                                Text {
+                                                    text: "Guide: Creating Google OAuth 2.0 Credentials";
+                                                    font-size: 10px;
+                                                    font-weight: 700;
+                                                    color: root.show-guide ? Theme.info : Theme.text-primary;
+                                                    vertical-alignment: center;
+                                                }
+                                            }
+
+                                            HorizontalLayout {
+                                                alignment: end;
+                                                VerticalLayout {
+                                                    alignment: center;
+                                                    padding-right: 5px;
+                                                    Badge {
+                                                        text: root.show-guide ? "Click to collapse" : "Click to expand";
+                                                        badge-color: root.show-guide ? Theme.info : Theme.text-muted;
+                                                    }
+                                                }
+                                                Text {
+                                                    text: root.show-guide ? "▲" : "▼";
+                                                    font-size: 10px;
+                                                    font-weight: 700;
+                                                    color: root.show-guide ? Theme.info : Theme.text-muted;
+                                                    vertical-alignment: center;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Guide Content
+                                    if root.show-guide: VerticalLayout {
+                                        padding-left: 8px;
+                                        padding-right: 8px;
+                                        padding-bottom: 8px;
+                                        spacing: 4px;
+
+                                        // Divider
+                                        Rectangle {
+                                            height: 1px;
+                                            background: Theme.border;
+                                        }
+
+                                        // the guide steps
+                                        Rectangle {
+                                            background: Theme.info-subtle.transparentize(50%);
+                                            border-radius: 4px;
+                                            VerticalLayout {
+                                                padding: 6px;
+                                                spacing: 4px;
+
+                                                // Step 1
+                                                HorizontalLayout {
+                                                    spacing: 4px;
+                                                    alignment: start;
+                                                    Text { text: "1."; font-size: 10px; font-weight: 700; color: Theme.info; }
+                                                    VerticalLayout {
+                                                        spacing: 0px;
+                                                        Text { text: "Create Project:"; font-size: 10px; font-weight: 700; color: Theme.text-primary; }
+                                                        HorizontalLayout {
+                                                            spacing: 2px;
+                                                            alignment: start;
+                                                            Text { text: "Go to"; font-size: 10px; color: Theme.text-muted; }
+                                                            Text { text: "console.cloud.google.com"; font-size: 10px; font-weight: 700; color: Theme.info; }
+                                                            Text { text: " and create/select a project."; font-size: 10px; color: Theme.text-muted; wrap: word-wrap; }
+                                                        }
+                                                    }
+                                                }
+
+                                                // Step 2
+                                                HorizontalLayout {
+                                                    spacing: 4px;
+                                                    alignment: start;
+                                                    Text { text: "2."; font-size: 10px; font-weight: 700; color: Theme.info; }
+                                                    VerticalLayout {
+                                                        spacing: 0px;
+                                                        Text { text: "Enable Drive API:"; font-size: 10px; font-weight: 700; color: Theme.text-primary; }
+                                                        Text { text: "Go to APIs & Services > Library, search for 'Google Drive API', and click Enable."; font-size: 10px; color: Theme.text-muted; wrap: word-wrap; }
+                                                    }
+                                                }
+
+                                                // Step 3
+                                                HorizontalLayout {
+                                                    spacing: 4px;
+                                                    alignment: start;
+                                                    Text { text: "3."; font-size: 10px; font-weight: 700; color: Theme.info; }
+                                                    VerticalLayout {
+                                                        spacing: 0px;
+                                                        Text { text: "Consent Screen & Users:"; font-size: 10px; font-weight: 700; color: Theme.text-primary; }
+                                                        Text { text: "Configure OAuth consent screen (External) and add your email under Test users."; font-size: 10px; color: Theme.text-muted; wrap: word-wrap; }
+                                                    }
+                                                }
+
+                                                // Step 4
+                                                HorizontalLayout {
+                                                    spacing: 4px;
+                                                    alignment: start;
+                                                    Text { text: "4."; font-size: 10px; font-weight: 700; color: Theme.info; }
+                                                    VerticalLayout {
+                                                        spacing: 0px;
+                                                        Text { text: "Credentials & Save:"; font-size: 10px; font-weight: 700; color: Theme.text-primary; }
+                                                        Text { text: "Create OAuth client ID ('Desktop app'), then copy & paste Client ID/Secret below."; font-size: 10px; color: Theme.text-muted; wrap: word-wrap; }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            VerticalLayout {
+                                height: 50px;
+                                spacing: 4px;
+                                Text {
+                                    text: "Client ID:";
+                                    font-size: 10px;
+                                    font-weight: 600;
+                                    color: Theme.text-secondary;
+                                }
+                                inp-client-id := AppInput {
+                                    placeholder-text: "e.g. 123456789-xxxx.apps.googleusercontent.com";
+                                    text <=> root.edit-client-id;
+                                }
+                            }
+
+                            VerticalLayout {
+                                height: 50px;
+                                spacing: 4px;
+                                Text {
+                                    text: "Client Secret:";
+                                    font-size: 10px;
+                                    font-weight: 600;
+                                    color: Theme.text-secondary;
+                                }
+                                inp-client-secret := AppInput {
+                                    placeholder-text: "e.g. GOCSPX-xxxxxx";
+                                    input-type: password;
+                                    text <=> root.edit-client-secret;
+                                }
+                            }
+
+                            // Scheduled Sync Toggle
+                            Rectangle {
+                                background: Theme.surface;
+                                border-color: Theme.border;
+                                border-width: 1px;
+                                border-radius: 6px;
+                                height: 42px;
+
+                                HorizontalLayout {
+                                    padding-left: 10px;
+                                    padding-right: 10px;
+                                    alignment: space-between;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        spacing: 1px;
+                                        Text {
+                                            text: "In-App Scheduled Sync";
+                                            font-size: 11px;
+                                            font-weight: 600;
+                                            color: Theme.text-primary;
+                                        }
+                                        Text {
+                                            text: "Auto-syncs ledger on schedule without cron jobs. Skips redundant uploads if unchanged.";
+                                            font-size: 9px;
+                                            color: Theme.text-muted;
+                                        }
+                                    }
+                                    VerticalLayout {
+                                        alignment: center;
+                                        AppButton {
+                                            text: root.edit-auto-backup ? "Enabled" : "Disabled";
+                                            small: true;
+                                            outline: !root.edit-auto-backup;
+                                            btn-color: root.edit-auto-backup ? Theme.primary : Theme.border;
+                                            text-color: root.edit-auto-backup ? #FFFFFF : Theme.text-primary;
+                                            clicked => { root.edit-auto-backup = !root.edit-auto-backup; }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Schedule frequency buttons
+                            if root.edit-auto-backup: VerticalLayout {
+                                spacing: 5px;
+                                Text {
+                                    height: 20px;
+                                    text: "Sync Schedule Frequency:";
+                                    font-size: 10px;
+                                    font-weight: 600;
+                                    color: Theme.text-secondary;
+                                }
+                                HorizontalLayout {
+                                    height: 30px;
+                                    spacing: 6px;
+                                    AppButton {
+                                        text: "Hourly";
+                                        small: true;
+                                        outline: root.edit-frequency != "hourly";
+                                        btn-color: root.edit-frequency == "hourly" ? Theme.primary : Theme.border;
+                                        text-color: root.edit-frequency == "hourly" ? #FFFFFF : Theme.text-primary;
+                                        clicked => { root.edit-frequency = "hourly"; }
+                                    }
+                                    AppButton {
+                                        text: "Every 6h";
+                                        small: true;
+                                        outline: root.edit-frequency != "every_6h";
+                                        btn-color: root.edit-frequency == "every_6h" ? Theme.primary : Theme.border;
+                                        text-color: root.edit-frequency == "every_6h" ? #FFFFFF : Theme.text-primary;
+                                        clicked => { root.edit-frequency = "every_6h"; }
+                                    }
+                                    AppButton {
+                                        text: "Daily";
+                                        small: true;
+                                        outline: root.edit-frequency != "daily";
+                                        btn-color: root.edit-frequency == "daily" ? Theme.primary : Theme.border;
+                                        text-color: root.edit-frequency == "daily" ? #FFFFFF : Theme.text-primary;
+                                        clicked => { root.edit-frequency = "daily"; }
+                                    }
+                                    AppButton {
+                                        text: "Weekly";
+                                        small: true;
+                                        outline: root.edit-frequency != "weekly";
+                                        btn-color: root.edit-frequency == "weekly" ? Theme.primary : Theme.border;
+                                        text-color: root.edit-frequency == "weekly" ? #FFFFFF : Theme.text-primary;
+                                        clicked => { root.edit-frequency = "weekly"; }
+                                    }
+                                    AppButton {
+                                        text: "Manual";
+                                        small: true;
+                                        outline: root.edit-frequency != "manual";
+                                        btn-color: root.edit-frequency == "manual" ? Theme.primary : Theme.border;
+                                        text-color: root.edit-frequency == "manual" ? #FFFFFF : Theme.text-primary;
+                                        clicked => { root.edit-frequency = "manual"; }
+                                    }
+                                }
+                            }
+
+                            // Retention limit buttons
+                            VerticalLayout {
+                                height: 50px;
+                                spacing: 5px;
+                                Text {
+                                    text: "Backup Retention Copies:";
+                                    font-size: 10px;
+                                    font-weight: 600;
+                                    color: Theme.text-secondary;
+                                }
+                                HorizontalLayout {
+                                    spacing: 6px;
+                                    AppButton {
+                                        text: "5 copies";
+                                        small: true;
+                                        outline: root.edit-retention-count != 5;
+                                        btn-color: root.edit-retention-count == 5 ? Theme.primary : Theme.border;
+                                        text-color: root.edit-retention-count == 5 ? #FFFFFF : Theme.text-primary;
+                                        clicked => { root.edit-retention-count = 5; }
+                                    }
+                                    AppButton {
+                                        text: "10 copies";
+                                        small: true;
+                                        outline: root.edit-retention-count != 10;
+                                        btn-color: root.edit-retention-count == 10 ? Theme.primary : Theme.border;
+                                        text-color: root.edit-retention-count == 10 ? #FFFFFF : Theme.text-primary;
+                                        clicked => { root.edit-retention-count = 10; }
+                                    }
+                                    AppButton {
+                                        text: "20 copies";
+                                        small: true;
+                                        outline: root.edit-retention-count != 20;
+                                        btn-color: root.edit-retention-count == 20 ? Theme.primary : Theme.border;
+                                        text-color: root.edit-retention-count == 20 ? #FFFFFF : Theme.text-primary;
+                                        clicked => { root.edit-retention-count = 20; }
+                                    }
+                                    AppButton {
+                                        text: "50 copies";
+                                        small: true;
+                                        outline: root.edit-retention-count != 50;
+                                        btn-color: root.edit-retention-count == 50 ? Theme.primary : Theme.border;
+                                        text-color: root.edit-retention-count == 50 ? #FFFFFF : Theme.text-primary;
+                                        clicked => { root.edit-retention-count = 50; }
+                                    }
+                                }
+                            }
+
+                            // Bottom Save Action
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: end;
+                                AppButton {
+                                    text: "Save Drive Settings";
+                                    btn-color: Theme.primary;
+                                    text-color: #FFFFFF;
+                                    clicked => {
+                                        root.save-config(
+                                            inp-client-id.text,
+                                            inp-client-secret.text,
+                                            root.edit-auto-backup,
+                                            root.edit-frequency,
+                                            root.edit-retention-count
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }

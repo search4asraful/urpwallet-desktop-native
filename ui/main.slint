@@ -1,0 +1,696 @@
+import { Theme } from "theme.slint";
+export { Theme } from "theme.slint";
+
+import {
+    AccountItem, TransactionItem, BudgetItem, BillItem, DebtItem, CategoryItem,
+    CategorySpendingItem, GDriveBackupItem
+} from "models.slint";
+export {
+    AccountItem, TransactionItem, BudgetItem, BillItem, DebtItem, CategoryItem,
+    CategorySpendingItem, GDriveBackupItem
+} from "models.slint";
+
+import { Sidebar } from "views/sidebar.slint";
+import { Header } from "views/header.slint";
+import { DashboardView } from "views/dashboard.slint";
+import { TransactionsView } from "views/transactions.slint";
+import { AccountsView } from "views/accounts.slint";
+import { BudgetsView } from "views/budgets.slint";
+import { BillsView } from "views/bills.slint";
+import { DebtsView } from "views/debts.slint";
+import { ReportsView } from "views/reports.slint";
+import { SettingsView } from "views/settings.slint";
+
+import { AddTransactionModal, TransactionDetailModal } from "modals/transaction_modals.slint";
+import { AddAccountModal, AccountDetailModal } from "modals/account_modals.slint";
+import { AddBudgetModal, BudgetDetailModal } from "modals/budget_modals.slint";
+import { AddBillModal, BillDetailModal } from "modals/bill_modals.slint";
+import { AddDebtModal, RepayDebtModal, DebtDetailModal } from "modals/debt_modals.slint";
+import { GoogleDriveModal } from "modals/gdrive_modal.slint";
+import { ChangeDbPathModal, ChangeExportPathModal } from "modals/path_modals.slint";
+import { PinLockOverlay } from "modals/lock_overlay.slint";
+
+export component MainWindow inherits Window {
+    title: "urpwallet — Financial Planner & Budget Tracker";
+    icon: @image-url("../assets/icon.svg");
+    min-width: 980px;
+    min-height: 660px;
+    preferred-width: 1140px;
+    preferred-height: 740px;
+    background: Theme.background;
+
+    // Navigation & State
+    in-out property <int> active-tab: 0; // 0:Dash, 1:Tx, 2:Accounts, 3:Budgets, 4:Bills, 5:Debts, 6:Reports, 7:Settings
+    in-out property <bool> privacy-mode: false;
+    in-out property <bool> pin-protected: false;
+    in-out property <bool> is-locked: false;
+    in-out property <string> pin-input: "";
+    in-out property <string> pin-error: "";
+
+    // Financial Metrics
+    in-out property <string> net-worth: "$0.00";
+    in-out property <string> total-assets: "$0.00";
+    in-out property <string> total-liabilities: "$0.00";
+    in-out property <string> monthly-income: "$0.00";
+    in-out property <string> monthly-expense: "$0.00";
+    in-out property <string> balance-change: "$0.00";
+    in-out property <string> savings-rate: "0%";
+    in-out property <string> safe-to-spend: "$0.00";
+    in-out property <int> safe-days-left: 1;
+    in-out property <string> base-currency: "BDT";
+
+    // Settings state
+    in-out property <string> db-storage-path: "";
+    in-out property <string> export-storage-path: "";
+    in-out property <bool> show-change-db-modal: false;
+    in-out property <bool> show-change-export-modal: false;
+    in-out property <string> date-format: "YYYY-MM-DD";
+    in-out property <string> settings-status-msg: "";
+    in-out property <bool> show-add-cat-form: false;
+    in-out property <string> new-cat-name: "";
+    in-out property <int> new-cat-type: 0; // 0: expense, 1: income
+    in-out property <string> new-cat-color: "#10B981";
+
+    callback select-db-file();
+    callback set-custom-db-path(string, bool);
+    callback reset-default-db();
+    callback select-export-folder();
+    callback set-custom-export-path(string);
+    callback open-export-folder();
+
+    // Google Drive state
+    in-out property <bool> show-gdrive-modal: false;
+    in-out property <bool> gdrive-connected: false;
+    in-out property <string> gdrive-email: "";
+    in-out property <string> gdrive-client-id: "";
+    in-out property <string> gdrive-client-secret: "";
+    in-out property <bool> gdrive-auto-backup: true;
+    in-out property <string> gdrive-frequency: "daily";
+    in-out property <int> gdrive-retention-count: 10;
+    in-out property <string> gdrive-last-backup: "";
+    in-out property <string> gdrive-status-msg: "";
+    in-out property <string> gdrive-error-msg: "";
+    in-out property <bool> gdrive-loading: false;
+    in-out property <[GDriveBackupItem]> gdrive-backups: [];
+
+    callback open-gdrive-modal();
+    callback gdrive-connect();
+    callback gdrive-submit-code(string);
+    callback gdrive-disconnect();
+    callback gdrive-backup-now();
+    callback gdrive-refresh-backups();
+    callback gdrive-restore-backup(string);
+    callback gdrive-delete-backup(string);
+    callback gdrive-save-config(string, string, bool, string, int);
+
+    // Models
+    in-out property <[AccountItem]> accounts: [];
+    in-out property <[AccountItem]> filtered-accounts: [];
+    in-out property <[TransactionItem]> recent-transactions: [];
+    in-out property <[TransactionItem]> all-transactions: [];
+    in-out property <[BudgetItem]> budgets: [];
+    in-out property <[BillItem]> bills: [];
+    in-out property <[DebtItem]> debts: [];
+    in-out property <[DebtItem]> filtered-debts: [];
+    in-out property <[CategoryItem]> categories: [];
+    in-out property <[CategoryItem]> filtered-categories: [];
+    in-out property <int> cat-expense-count: 0;
+    in-out property <int> cat-income-count: 0;
+    in-out property <[CategoryItem]> modal-categories: [];
+    in-out property <[CategorySpendingItem]> category-breakdown: [];
+
+    // Filter properties
+    in-out property <int> tx-filter-type: 0; // 0: All, 1: Expense, 2: Income, 3: Transfer
+    in-out property <string> tx-search-query: "";
+    in-out property <int> accounts-filter-tab: 0; // 0: All, 1: Assets, 2: Liabilities
+    in-out property <int> debts-filter-tab: 0; // 0: All, 1: Lent, 2: Borrowed
+    in-out property <int> cat-catalog-filter: 0; // 0: All, 1: Expense, 2: Income
+    in-out property <bool> modal-cat-show-all: false;
+
+    // MODAL STATE
+    property <bool> has-modal-open: root.show-add-tx-modal || root.show-tx-detail-modal ||
+        root.show-add-account-modal || root.show-acc-detail-modal ||
+        root.show-add-budget-modal || root.show-budget-detail-modal ||
+        root.show-add-bill-modal || root.show-bill-detail-modal ||
+        root.show-add-debt-modal || root.show-repay-debt-modal || root.show-debt-detail-modal ||
+        root.show-gdrive-modal ||
+        root.is-locked;
+
+    in-out property <bool> show-add-tx-modal: false;
+    in-out property <bool> modal-tx-is-editing: false;
+    in-out property <string> modal-tx-id: "";
+    in-out property <int> modal-tx-type: 0;
+    in-out property <string> modal-amount: "";
+    in-out property <string> modal-account-id: "";
+    in-out property <string> modal-account-name: "";
+    in-out property <string> modal-to-account-id: "";
+    in-out property <string> modal-to-account-name: "";
+    in-out property <string> modal-category-id: "";
+    in-out property <string> modal-category-name: "";
+    in-out property <string> modal-payee: "";
+    in-out property <string> modal-note: "";
+    in-out property <string> modal-date: "";
+    in-out property <string> modal-error: "";
+
+    in-out property <bool> show-tx-detail-modal: false;
+    in-out property <TransactionItem> detail-tx;
+
+    in-out property <bool> show-acc-detail-modal: false;
+    in-out property <AccountItem> detail-acc;
+
+    in-out property <bool> show-budget-detail-modal: false;
+    in-out property <BudgetItem> detail-budget;
+
+    in-out property <bool> show-bill-detail-modal: false;
+    in-out property <BillItem> detail-bill;
+
+    in-out property <bool> show-debt-detail-modal: false;
+    in-out property <DebtItem> detail-debt;
+
+    in-out property <bool> show-add-account-modal: false;
+    in-out property <bool> modal-acc-is-editing: false;
+    in-out property <string> modal-acc-id: "";
+    in-out property <string> modal-acc-name: "";
+    in-out property <int> modal-acc-type: 0;
+    in-out property <string> modal-acc-balance: "";
+    in-out property <string> modal-acc-currency: "BDT";
+    in-out property <string> modal-acc-color: "#3B82F6";
+
+    in-out property <bool> show-add-budget-modal: false;
+    in-out property <bool> modal-budget-is-editing: false;
+    in-out property <string> modal-budget-id: "";
+    in-out property <string> modal-budget-name: "";
+    in-out property <string> modal-budget-amount: "";
+    in-out property <string> modal-budget-category-id: "";
+
+    in-out property <bool> show-add-bill-modal: false;
+    in-out property <bool> modal-bill-is-editing: false;
+    in-out property <string> modal-bill-id: "";
+    in-out property <string> modal-bill-name: "";
+    in-out property <string> modal-bill-amount: "";
+    in-out property <string> modal-bill-account-id: "";
+    in-out property <string> modal-bill-category-id: "";
+    in-out property <string> modal-bill-payee: "";
+    in-out property <int> modal-bill-freq: 2;
+    in-out property <string> modal-bill-next-date: "";
+
+    in-out property <bool> show-add-debt-modal: false;
+    in-out property <bool> modal-debt-is-editing: false;
+    in-out property <string> modal-debt-id: "";
+    in-out property <string> modal-debt-person: "";
+    in-out property <int> modal-debt-type: 0;
+    in-out property <string> modal-debt-amount: "";
+    in-out property <string> modal-debt-notes: "";
+    in-out property <string> modal-debt-due-date: "";
+
+    in-out property <bool> show-repay-debt-modal: false;
+    in-out property <string> modal-repay-debt-id: "";
+    in-out property <string> modal-repay-person: "";
+    in-out property <string> modal-repay-amount: "";
+
+    // Callbacks to Rust
+    callback toggle-privacy();
+    callback set-theme(int);
+    callback switch-tab(int);
+    callback unlock-pin(string);
+    callback open-add-tx(int);
+    callback modal-tx-type-changed(int);
+    callback open-edit-tx(string);
+    callback open-tx-details(string);
+    callback open-edit-account(string);
+    callback open-edit-budget(string);
+    callback open-edit-bill(string);
+    callback open-edit-debt(string);
+    callback close-all-modals();
+    callback submit-save-tx(bool, string, int, string, string, string, string, string, string, string);
+    callback submit-save-account(bool, string, string, int, string, string, string);
+    callback submit-save-budget(bool, string, string, string, string);
+    callback submit-save-bill(bool, string, string, string, string, string, string, int, string);
+    callback submit-save-debt(bool, string, string, int, string, string, string);
+    callback submit-repay-debt(string, string);
+    callback execute-bill-payment(string);
+    callback delete-transaction(string);
+    callback delete-account(string);
+    callback delete-budget(string);
+    callback delete-bill(string);
+    callback delete-debt(string);
+    callback export-data(string);
+    callback import-backup();
+    callback set-master-pin(string);
+    callback disable-master-pin(string);
+    callback search-transactions(string, int);
+    callback update-base-currency(string);
+    callback update-date-format(string);
+    callback reset-and-seed-demo();
+    callback add-category(string, int, string);
+    callback delete-category(string);
+    callback filter-accounts(int);
+    callback filter-debts(int);
+    callback filter-categories(int);
+    callback toggle-modal-cat-filter();
+
+    // Root layout
+    Rectangle {
+        width: 100%;
+        height: 100%;
+
+        HorizontalLayout {
+            // SIDEBAR NAVIGATION
+            Sidebar {
+                active-tab <=> root.active-tab;
+                privacy-mode <=> root.privacy-mode;
+                gdrive-connected: root.gdrive-connected;
+                gdrive-loading: root.gdrive-loading;
+                switch-tab(tab) => { root.switch-tab(tab); }
+                toggle-privacy => { root.toggle-privacy(); }
+                set-theme(mode) => { root.set-theme(mode); }
+                gdrive-backup-now => { root.gdrive-backup-now(); }
+            }
+
+            // MAIN CONTENT VIEW
+            VerticalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-top: 10px;
+                padding-bottom: 12px;
+                spacing: 10px;
+
+                // Top Header Bar
+                Header {
+                    active-tab: root.active-tab;
+                    open-add-tx(type) => { root.open-add-tx(type); }
+                }
+
+                // TAB 0: DASHBOARD
+                if root.active-tab == 0: DashboardView {
+                    net-worth: root.net-worth;
+                    safe-to-spend: root.safe-to-spend;
+                    safe-days-left: root.safe-days-left;
+                    balance-change: root.balance-change;
+                    monthly-income: root.monthly-income;
+                    monthly-expense: root.monthly-expense;
+                    savings-rate: root.savings-rate;
+                    accounts: root.accounts;
+                    budgets: root.budgets;
+                    bills: root.bills;
+                    recent-transactions: root.recent-transactions;
+
+                    switch-tab(tab) => { root.switch-tab(tab); }
+                    select-account(acc) => {
+                        root.detail-acc = acc;
+                        root.show-acc-detail-modal = true;
+                    }
+                    execute-bill-payment(id) => { root.execute-bill-payment(id); }
+                    open-tx-details(id) => { root.open-tx-details(id); }
+                    open-new-account => {
+                        root.modal-acc-is-editing = false;
+                        root.modal-acc-id = "";
+                        root.modal-acc-name = "";
+                        root.modal-acc-balance = "0.00";
+                        root.modal-acc-currency = root.base-currency;
+                        root.show-add-account-modal = true;
+                    }
+                }
+
+                // TAB 1: TRANSACTIONS VIEW
+                if root.active-tab == 1: TransactionsView {
+                    tx-search-query <=> root.tx-search-query;
+                    tx-filter-type <=> root.tx-filter-type;
+                    all-transactions: root.all-transactions;
+
+                    search-transactions(q, t) => { root.search-transactions(q, t); }
+                    open-add-tx(t) => { root.open-add-tx(t); }
+                    open-tx-details(id) => { root.open-tx-details(id); }
+                    open-edit-tx(id) => { root.open-edit-tx(id); }
+                    delete-transaction(id) => { root.delete-transaction(id); }
+                }
+
+                // TAB 2: ACCOUNTS & VAULTS
+                if root.active-tab == 2: AccountsView {
+                    net-worth: root.net-worth;
+                    total-assets: root.total-assets;
+                    total-liabilities: root.total-liabilities;
+                    accounts-filter-tab <=> root.accounts-filter-tab;
+                    accounts: root.accounts;
+                    filtered-accounts: root.filtered-accounts;
+
+                    filter-accounts(tab) => { root.filter-accounts(tab); }
+                    open-new-account => {
+                        root.modal-acc-is-editing = false;
+                        root.modal-acc-id = "";
+                        root.modal-acc-name = "";
+                        root.modal-acc-balance = "0.00";
+                        root.modal-acc-currency = root.base-currency;
+                        root.show-add-account-modal = true;
+                    }
+                    select-account(acc) => {
+                        root.detail-acc = acc;
+                        root.show-acc-detail-modal = true;
+                    }
+                    open-edit-account(id) => { root.open-edit-account(id); }
+                    delete-account(id) => { root.delete-account(id); }
+                }
+
+                // TAB 3: BUDGETS & PACING
+                if root.active-tab == 3: BudgetsView {
+                    safe-to-spend: root.safe-to-spend;
+                    safe-days-left: root.safe-days-left;
+                    budgets: root.budgets;
+
+                    open-new-budget => {
+                        root.modal-budget-is-editing = false;
+                        root.modal-budget-id = "";
+                        root.modal-budget-name = "";
+                        root.modal-budget-amount = "";
+                        root.show-add-budget-modal = true;
+                    }
+                    select-budget(b) => {
+                        root.detail-budget = b;
+                        root.show-budget-detail-modal = true;
+                    }
+                    open-edit-budget(id) => { root.open-edit-budget(id); }
+                    delete-budget(id) => { root.delete-budget(id); }
+                }
+
+                // TAB 4: RECURRING BILLS & SUBSCRIPTIONS
+                if root.active-tab == 4: BillsView {
+                    bills: root.bills;
+
+                    open-new-bill => {
+                        root.modal-bill-is-editing = false;
+                        root.modal-bill-id = "";
+                        root.modal-bill-name = "";
+                        root.modal-bill-amount = "";
+                        root.modal-bill-payee = "";
+                        root.modal-bill-next-date = "";
+                        root.show-add-bill-modal = true;
+                    }
+                    select-bill(b) => {
+                        root.detail-bill = b;
+                        root.show-bill-detail-modal = true;
+                    }
+                    execute-bill-payment(id) => { root.execute-bill-payment(id); }
+                    open-edit-bill(id) => { root.open-edit-bill(id); }
+                    delete-bill(id) => { root.delete-bill(id); }
+                }
+
+                // TAB 5: DEBTS & LOANS
+                if root.active-tab == 5: DebtsView {
+                    debts-filter-tab <=> root.debts-filter-tab;
+                    debts: root.debts;
+                    filtered-debts: root.filtered-debts;
+
+                    filter-debts(tab) => { root.filter-debts(tab); }
+                    open-new-debt => {
+                        root.modal-debt-is-editing = false;
+                        root.modal-debt-id = "";
+                        root.modal-debt-person = "";
+                        root.modal-debt-amount = "";
+                        root.modal-debt-notes = "";
+                        root.show-add-debt-modal = true;
+                    }
+                    select-debt(d) => {
+                        root.detail-debt = d;
+                        root.show-debt-detail-modal = true;
+                    }
+                    open-repay-debt(id, person) => {
+                        root.modal-repay-debt-id = id;
+                        root.modal-repay-person = person;
+                        root.modal-repay-amount = "";
+                        root.show-repay-debt-modal = true;
+                    }
+                    open-edit-debt(id) => { root.open-edit-debt(id); }
+                    delete-debt(id) => { root.delete-debt(id); }
+                }
+
+                // TAB 6: REPORTS & ANALYTICS
+                if root.active-tab == 6: ReportsView {
+                    monthly-income: root.monthly-income;
+                    monthly-expense: root.monthly-expense;
+                    savings-rate: root.savings-rate;
+                    balance-change: root.balance-change;
+                    category-breakdown: root.category-breakdown;
+                }
+
+                // TAB 7: SETTINGS & PREFERENCES
+                if root.active-tab == 7: SettingsView {
+                    settings-status-msg: root.settings-status-msg;
+                    pin-protected: root.pin-protected;
+                    base-currency: root.base-currency;
+                    privacy-mode <=> root.privacy-mode;
+                    date-format: root.date-format;
+                    categories: root.categories;
+                    filtered-categories: root.filtered-categories;
+                    cat-catalog-filter <=> root.cat-catalog-filter;
+                    cat-expense-count: root.cat-expense-count;
+                    cat-income-count: root.cat-income-count;
+                    show-add-cat-form <=> root.show-add-cat-form;
+                    new-cat-name <=> root.new-cat-name;
+                    new-cat-type <=> root.new-cat-type;
+                    new-cat-color <=> root.new-cat-color;
+                    db-storage-path: root.db-storage-path;
+                    export-storage-path: root.export-storage-path;
+                    gdrive-connected: root.gdrive-connected;
+                    gdrive-email: root.gdrive-email;
+                    gdrive-frequency: root.gdrive-frequency;
+                    gdrive-last-backup: root.gdrive-last-backup;
+
+                    filter-categories(tab) => { root.filter-categories(tab); }
+
+                    select-db-file => { root.select-db-file(); }
+                    open-edit-db-path => { root.show-change-db-modal = true; }
+                    reset-default-db => { root.reset-default-db(); }
+                    select-export-folder => { root.select-export-folder(); }
+                    open-edit-export-path => { root.show-change-export-modal = true; }
+                    open-export-folder => { root.open-export-folder(); }
+
+                    set-master-pin(pin) => { root.set-master-pin(pin); }
+                    disable-master-pin(pin) => { root.disable-master-pin(pin); }
+                    set-theme(mode) => { root.set-theme(mode); }
+                    update-base-currency(curr) => { root.update-base-currency(curr); }
+                    toggle-privacy => { root.toggle-privacy(); }
+                    update-date-format(fmt) => { root.update-date-format(fmt); }
+                    add-category(name, type, color) => { root.add-category(name, type, color); }
+                    delete-category(id) => { root.delete-category(id); }
+                    export-data(fmt) => { root.export-data(fmt); }
+                    import-backup => { root.import-backup(); }
+                    reset-and-seed-demo => { root.reset-and-seed-demo(); }
+                    open-gdrive-modal => { root.open-gdrive-modal(); }
+                    gdrive-backup-now => { root.gdrive-backup-now(); }
+                }
+            }
+        }
+
+        // SHIELD BACKDROP: Blocks mouse hover and clicks on background when any modal is open
+        if root.has-modal-open: TouchArea {
+            width: 100%;
+            height: 100%;
+            clicked => {
+                if !root.is-locked {
+                    root.close-all-modals();
+                    root.show-acc-detail-modal = false;
+                    root.show-budget-detail-modal = false;
+                    root.show-bill-detail-modal = false;
+                    root.show-debt-detail-modal = false;
+                }
+            }
+        }
+
+        // MODAL 1: ADD / EDIT TRANSACTION
+        if root.show-add-tx-modal: AddTransactionModal {
+            is-editing: root.modal-tx-is-editing;
+            tx-id: root.modal-tx-id;
+            tx-type <=> root.modal-tx-type;
+            amount: root.modal-amount;
+            account-id <=> root.modal-account-id;
+            account-name <=> root.modal-account-name;
+            to-account-id <=> root.modal-to-account-id;
+            to-account-name <=> root.modal-to-account-name;
+            category-id <=> root.modal-category-id;
+            category-name <=> root.modal-category-name;
+            payee: root.modal-payee;
+            note: root.modal-note;
+            date: root.modal-date;
+            modal-error: root.modal-error;
+            cat-show-all <=> root.modal-cat-show-all;
+            accounts: root.accounts;
+            categories: root.categories;
+            modal-categories: root.modal-categories;
+
+            close => { root.close-all-modals(); }
+            tx-type-changed(t) => { root.modal-tx-type-changed(t); }
+            toggle-cat-filter => { root.toggle-modal-cat-filter(); }
+            submit(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date) => {
+                root.submit-save-tx(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date);
+            }
+        }
+
+        // MODAL 2: TRANSACTION DETAIL MODAL
+        if root.show-tx-detail-modal: TransactionDetailModal {
+            detail-tx: root.detail-tx;
+            close => { root.close-all-modals(); }
+            open-edit-tx(id) => { root.open-edit-tx(id); }
+            delete-transaction(id) => { root.delete-transaction(id); }
+        }
+
+        // MODAL 3: ADD / EDIT ACCOUNT
+        if root.show-add-account-modal: AddAccountModal {
+            is-editing: root.modal-acc-is-editing;
+            acc-id: root.modal-acc-id;
+            acc-name: root.modal-acc-name;
+            acc-type <=> root.modal-acc-type;
+            balance: root.modal-acc-balance;
+            currency <=> root.modal-acc-currency;
+
+            close => { root.close-all-modals(); }
+            submit(is_ed, id, name, type, bal, curr, col) => {
+                root.submit-save-account(is_ed, id, name, type, bal, curr, col);
+            }
+        }
+
+        // MODAL 8: VIEW ACCOUNT DETAILS
+        if root.show-acc-detail-modal: AccountDetailModal {
+            detail-acc: root.detail-acc;
+            close => { root.close-all-modals(); root.show-acc-detail-modal = false; }
+            open-edit-account(id) => { root.open-edit-account(id); }
+            delete-account(id) => { root.delete-account(id); }
+        }
+
+        // MODAL 4: ADD / EDIT BUDGET
+        if root.show-add-budget-modal: AddBudgetModal {
+            is-editing: root.modal-budget-is-editing;
+            budget-id: root.modal-budget-id;
+            budget-name: root.modal-budget-name;
+            budget-amount: root.modal-budget-amount;
+            budget-category-id: root.modal-budget-category-id;
+
+            close => { root.close-all-modals(); }
+            submit(is_ed, id, name, amt, cat) => {
+                root.submit-save-budget(is_ed, id, name, amt, cat);
+            }
+        }
+
+        // MODAL 9: VIEW BUDGET DETAILS
+        if root.show-budget-detail-modal: BudgetDetailModal {
+            detail-budget: root.detail-budget;
+            close => { root.close-all-modals(); root.show-budget-detail-modal = false; }
+            open-edit-budget(id) => { root.open-edit-budget(id); }
+            delete-budget(id) => { root.delete-budget(id); }
+        }
+
+        // MODAL 5: ADD / EDIT BILL
+        if root.show-add-bill-modal: AddBillModal {
+            is-editing: root.modal-bill-is-editing;
+            bill-id: root.modal-bill-id;
+            bill-name: root.modal-bill-name;
+            bill-amount: root.modal-bill-amount;
+            bill-account-id: root.modal-bill-account-id;
+            bill-category-id: root.modal-bill-category-id;
+            bill-payee: root.modal-bill-payee;
+            bill-next-date: root.modal-bill-next-date;
+
+            close => { root.close-all-modals(); }
+            submit(is_ed, id, name, amt, acc, cat, payee, freq, date) => {
+                root.submit-save-bill(is_ed, id, name, amt, acc, cat, payee, freq, date);
+            }
+        }
+
+        // MODAL 10: VIEW BILL DETAILS
+        if root.show-bill-detail-modal: BillDetailModal {
+            detail-bill: root.detail-bill;
+            close => { root.close-all-modals(); root.show-bill-detail-modal = false; }
+            delete-bill(id) => { root.delete-bill(id); }
+            open-edit-bill(id) => { root.open-edit-bill(id); }
+            execute-bill-payment(id) => { root.execute-bill-payment(id); }
+        }
+
+        // MODAL 6: ADD / EDIT DEBT
+        if root.show-add-debt-modal: AddDebtModal {
+            is-editing: root.modal-debt-is-editing;
+            debt-id: root.modal-debt-id;
+            person: root.modal-debt-person;
+            debt-type <=> root.modal-debt-type;
+            amount: root.modal-debt-amount;
+            notes: root.modal-debt-notes;
+
+            close => { root.close-all-modals(); }
+            submit(is_ed, id, person, type, amt, date, notes) => {
+                root.submit-save-debt(is_ed, id, person, type, amt, date, notes);
+            }
+        }
+
+        // MODAL 7: RECORD DEBT REPAYMENT
+        if root.show-repay-debt-modal: RepayDebtModal {
+            debt-id: root.modal-repay-debt-id;
+            person: root.modal-repay-person;
+
+            close => { root.close-all-modals(); }
+            submit(id, amt) => { root.submit-repay-debt(id, amt); }
+        }
+
+        // MODAL 11: VIEW DEBT DETAILS
+        if root.show-debt-detail-modal: DebtDetailModal {
+            detail-debt: root.detail-debt;
+            close => { root.close-all-modals(); root.show-debt-detail-modal = false; }
+            delete-debt(id) => { root.delete-debt(id); }
+            open-edit-debt(id) => { root.open-edit-debt(id); }
+            open-repay-debt(id, person) => {
+                root.modal-repay-debt-id = id;
+                root.modal-repay-person = person;
+                root.modal-repay-amount = "";
+                root.show-repay-debt-modal = true;
+            }
+        }
+
+        // MODAL 12: GOOGLE DRIVE BACKUP & SYNC
+        if root.show-gdrive-modal: GoogleDriveModal {
+            is-connected: root.gdrive-connected;
+            email: root.gdrive-email;
+            last-backup: root.gdrive-last-backup;
+            status-msg: root.gdrive-status-msg;
+            error-msg: root.gdrive-error-msg;
+            loading: root.gdrive-loading;
+            backups: root.gdrive-backups;
+            client-id: root.gdrive-client-id;
+            client-secret: root.gdrive-client-secret;
+            auto-backup: root.gdrive-auto-backup;
+            frequency: root.gdrive-frequency;
+            retention-count: root.gdrive-retention-count;
+
+            close => { root.close-all-modals(); root.show-gdrive-modal = false; }
+            connect => { root.gdrive-connect(); }
+            submit-code(c) => { root.gdrive-submit-code(c); }
+            disconnect => { root.gdrive-disconnect(); }
+            backup-now => { root.gdrive-backup-now(); }
+            refresh-backups => { root.gdrive-refresh-backups(); }
+            restore-backup(id) => { root.gdrive-restore-backup(id); }
+            delete-backup(id) => { root.gdrive-delete-backup(id); }
+            save-config(cid, csec, auto, freq, ret) => {
+                root.gdrive-save-config(cid, csec, auto, freq, ret);
+            }
+        }
+
+        // CHANGE DATABASE PATH MODAL
+        if root.show-change-db-modal: ChangeDbPathModal {
+            current-path: root.db-storage-path;
+            close => { root.show-change-db-modal = false; }
+            browse => { root.select-db-file(); }
+            apply(p, c) => { root.set-custom-db-path(p, c); }
+            reset-default => { root.reset-default-db(); }
+        }
+
+        // CHANGE EXPORT PATH MODAL
+        if root.show-change-export-modal: ChangeExportPathModal {
+            current-path: root.export-storage-path;
+            close => { root.show-change-export-modal = false; }
+            browse => { root.select-export-folder(); }
+            apply(p) => { root.set-custom-export-path(p); }
+        }
+
+        // MASTER PIN LOCK SCREEN OVERLAY
+        if root.is-locked: PinLockOverlay {
+            pin-error: root.pin-error;
+            unlock-pin(pin) => { root.unlock-pin(pin); }
+        }
+    }
+}

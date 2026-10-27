@@ -1,0 +1,253 @@
+import { Theme } from "../theme.slint";
+import { BudgetItem } from "../models.slint";
+import { AppButton, Badge, ProgressBar, AppInput } from "../components.slint";
+
+export component AddBudgetModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(40%);
+
+    in property <bool> is-editing: false;
+    in property <string> budget-id: "";
+    in property <string> budget-name: "";
+    in property <string> budget-amount: "";
+    in property <string> budget-category-id: "";
+
+    callback close();
+    callback submit(bool, string, string, string, string);
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 360px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 10px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 8px;
+
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: root.is-editing ? "Edit Budget Limit" : "Add Budget Limit";
+                    color: Theme.text-primary;
+                    font-size: 14px;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            Text { text: "Budget Name:"; font-size: 10px; color: Theme.text-muted; }
+            input-b-name := AppInput {
+                placeholder-text: "e.g. Dining Out, Groceries...";
+                text: root.budget-name;
+            }
+
+            Text { text: "Monthly Limit Amount:"; font-size: 10px; color: Theme.text-muted; }
+            input-b-amt := AppInput {
+                placeholder-text: "500.00";
+                text: root.budget-amount;
+            }
+
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: end;
+                AppButton {
+                    text: "Cancel";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+                AppButton {
+                    text: root.is-editing ? "Save Changes" : "Save Budget";
+                    small: true;
+                    btn-color: Theme.primary;
+                    clicked => {
+                        root.submit(
+                            root.is-editing,
+                            root.budget-id,
+                            input-b-name.text,
+                            input-b-amt.text,
+                            root.budget-category-id
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component BudgetDetailModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(40%);
+
+    in property <BudgetItem> detail-budget;
+
+    callback close();
+    callback open-edit-budget(string);
+    callback delete-budget(string);
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 380px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 10px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 10px;
+
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: "Budget Details & Pacing";
+                    color: Theme.text-primary;
+                    font-size: 14px;
+                    font-weight: 800;
+                    vertical-alignment: center;
+                }
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            // Progress Hero
+            Rectangle {
+                background: Theme.surface-subtle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+
+                VerticalLayout {
+                    padding: 10px;
+                    spacing: 6px;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text {
+                            text: root.detail-budget.name;
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Badge {
+                            text: root.detail-budget.is_over ? "OVER BUDGET" : "ON TRACK";
+                            badge-color: root.detail-budget.is_over ? Theme.danger : Theme.primary;
+                        }
+                    }
+                    Text {
+                        text: root.detail-budget.spent + " spent of " + root.detail-budget.total;
+                        color: root.detail-budget.is_over ? Theme.danger : Theme.text-primary;
+                        font-size: 16px;
+                        font-weight: 800;
+                        vertical-alignment: center;
+                    }
+                    ProgressBar {
+                        progress: root.detail-budget.percentage / 100.0;
+                    }
+                }
+            }
+
+            // Detail rows
+            VerticalLayout {
+                spacing: 8px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Monthly Limit:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: root.detail-budget.total; color: Theme.text-primary; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Current Month Spent:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: root.detail-budget.spent; color: root.detail-budget.is_over ? Theme.danger : Theme.text-primary; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Utilization Rate:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Badge {
+                        text: Math.round(root.detail-budget.percentage) + "%";
+                        badge-color: root.detail-budget.is_over ? Theme.danger : Theme.primary;
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Daily Safe Allowance:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: root.detail-budget.daily_safe + " / day"; color: Theme.info; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: end;
+
+                AppButton {
+                    text: "Delete Budget";
+                    small: true;
+                    btn-color: Theme.danger;
+                    outline: true;
+                    clicked => {
+                        root.delete-budget(root.detail-budget.id);
+                        root.close();
+                    }
+                }
+
+                AppButton {
+                    text: "Edit Budget";
+                    small: true;
+                    btn-color: Theme.primary;
+                    clicked => {
+                        root.close();
+                        root.open-edit-budget(root.detail-budget.id);
+                    }
+                }
+            }
+        }
+    }
+}

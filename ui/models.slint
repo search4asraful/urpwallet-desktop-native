@@ -1,0 +1,116 @@
+export struct CurrencyItem {
+    code: string,
+    label: string,
+}
+
+export global CurrencyModel {
+    out property <[CurrencyItem]> row-1: [
+        { code: "BDT", label: "BDT (৳)" },
+        { code: "USD", label: "USD ($)" },
+        { code: "EUR", label: "EUR (€)" },
+        { code: "GBP", label: "GBP (£)" },
+    ];
+    out property <[CurrencyItem]> row-2: [
+        { code: "INR", label: "INR (₹)" },
+        { code: "CAD", label: "CAD (CA$)" },
+        { code: "AUD", label: "AUD (AU$)" },
+        { code: "JPY", label: "JPY (¥)" },
+    ];
+}
+
+export struct AccountItem {
+    id: string,
+    name: string,
+    acc_type: string,
+    currency: string,
+    balance: string,
+    color: string,
+    is_liability: bool,
+}
+
+export struct TransactionItem {
+    id: string,
+    date: string,
+    time: string,
+    title: string,
+    subtitle: string,
+    amount: string,
+    raw_amount: string,
+    is_income: bool,
+    is_transfer: bool,
+    color: string,
+    account_id: string,
+    account_name: string,
+    to_account_id: string,
+    to_account_name: string,
+    category_id: string,
+    category_name: string,
+    payee: string,
+    note: string,
+    payment_type: string,
+    status: string,
+}
+
+export struct BudgetItem {
+    id: string,
+    name: string,
+    amount_raw: string,
+    spent: string,
+    total: string,
+    percentage: float,
+    daily_safe: string,
+    is_over: bool,
+    color: string,
+    category_id: string,
+    category_name: string,
+}
+
+export struct BillItem {
+    id: string,
+    name: string,
+    amount_raw: string,
+    due_date: string,
+    amount: string,
+    is_expense: bool,
+    frequency: string,
+    color: string,
+    account_id: string,
+    account_name: string,
+    category_id: string,
+    payee: string,
+}
+
+export struct DebtItem {
+    id: string,
+    person: string,
+    amount: string,
+    amount_raw: string,
+    settled: string,
+    remaining: string,
+    status: string,
+    is_loan: bool,
+    due_date: string,
+    notes: string,
+}
+
+export struct CategoryItem {
+    id: string,
+    name: string,
+    cat_type: string,
+    color: string,
+    tx_count: int,
+}
+
+export struct CategorySpendingItem {
+    name: string,
+    color: string,
+    total: string,
+    percentage: float,
+}
+
+export struct GDriveBackupItem {
+    id: string,
+    name: string,
+    size: string,
+    created_time: string,
+}

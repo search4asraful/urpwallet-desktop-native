@@ -1,0 +1,151 @@
+import { Theme } from "../theme.slint";
+import { AppButton, SixDigitPinInput, Badge } from "../components.slint";
+
+export component PinLockOverlay inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: Theme.background;
+
+    in property <string> pin-error: "";
+    in-out property <bool> is-masked: true;
+
+    callback unlock-pin(string);
+
+    forward-focus: pin-lock-edit;
+
+    // Consume all clicks and hovers across the full window, but do not dismiss PIN screen on click
+    TouchArea {
+        width: 100%;
+        height: 100%;
+    }
+
+    Rectangle {
+        width: 420px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border;
+        border-width: 1px;
+        border-radius: 12px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 24px;
+            spacing: 12px;
+            alignment: center;
+
+            HorizontalLayout {
+                alignment: center;
+                Image {
+                    width: 48px;
+                    height: 48px;
+                    source: @image-url("../../assets/icon.svg");
+                }
+            }
+
+            HorizontalLayout {
+                alignment: center;
+                Badge {
+                    text: "Argon2id Encrypted";
+                    badge-color: Theme.purple;
+                }
+            }
+
+            Text {
+                text: "urpwallet Locked";
+                color: Theme.text-primary;
+                font-size: 18px;
+                font-weight: 800;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+
+            Text {
+                text: "Enter your 6-digit master PIN to access your financial data.";
+                color: Theme.text-muted;
+                font-size: 11px;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+
+            HorizontalLayout {
+                alignment: center;
+
+                pin-lock-edit := SixDigitPinInput {
+                    is-masked <=> root.is-masked;
+                    complete(pin) => {
+                        root.unlock-pin(pin);
+                    }
+                    accepted(pin) => {
+                        if self.is-complete {
+                            root.unlock-pin(pin);
+                        }
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                alignment: center;
+                spacing: 8px;
+
+                AppButton {
+                    text: root.is-masked ? "Show PIN" : "Hide PIN";
+                    small: true;
+                    outline: true;
+                    btn-color: Theme.border-strong;
+                    clicked => {
+                        root.is-masked = !root.is-masked;
+                    }
+                }
+
+                AppButton {
+                    text: "Clear";
+                    small: true;
+                    outline: true;
+                    btn-color: Theme.border-strong;
+                    clicked => {
+                        pin-lock-edit.clear();
+                    }
+                }
+            }
+
+            if root.pin-error != "": Rectangle {
+                background: Theme.danger-subtle;
+                border-color: Theme.danger;
+                border-width: 1px;
+                border-radius: 6px;
+                height: 28px;
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    alignment: center;
+                    Text {
+                        text: root.pin-error;
+                        color: Theme.danger;
+                        font-size: 10px;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            AppButton {
+                text: "Unlock Wallet";
+                btn-color: Theme.primary;
+                enabled: pin-lock-edit.is-complete;
+                clicked => {
+                    if pin-lock-edit.is-complete {
+                        root.unlock-pin(pin-lock-edit.pin);
+                    }
+                }
+            }
+        }
+    }
+}

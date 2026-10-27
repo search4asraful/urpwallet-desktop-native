@@ -1,0 +1,55 @@
+import { Theme } from "../theme.slint";
+import { AppButton } from "../components.slint";
+
+export component Header inherits HorizontalLayout {
+    height: 32px;
+    alignment: space-between;
+
+    in property <int> active-tab: 0;
+    callback open-add-tx(int);
+
+    VerticalLayout {
+        alignment: center;
+        Text {
+            text: root.active-tab == 0 ? "Dashboard Overview" :
+                  (root.active-tab == 1 ? "Transaction Ledger" :
+                  (root.active-tab == 2 ? "Accounts & Assets Ledger" :
+                  (root.active-tab == 3 ? "Monthly Budgets & Pacing" :
+                  (root.active-tab == 4 ? "Recurring Bills & Subscriptions" :
+                  (root.active-tab == 5 ? "Debts & Loans Ledger" :
+                  (root.active-tab == 6 ? "Analytics & Spending Reports" : "Settings & Preferences"))))));
+            color: Theme.text-primary;
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            vertical-alignment: center;
+        }
+    }
+
+    // Quick Actions
+    VerticalLayout {
+        alignment: center;
+        HorizontalLayout {
+            spacing: 6px;
+
+            AppButton {
+                text: "+ Expense";
+                small: true;
+                btn-color: Theme.danger;
+                clicked => { root.open-add-tx(0); }
+            }
+            AppButton {
+                text: "+ Income";
+                small: true;
+                btn-color: Theme.primary;
+                clicked => { root.open-add-tx(1); }
+            }
+            AppButton {
+                text: "Transfer";
+                small: true;
+                btn-color: Theme.info;
+                clicked => { root.open-add-tx(2); }
+            }
+        }
+    }
+}

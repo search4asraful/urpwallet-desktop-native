@@ -1,0 +1,350 @@
+import { Theme } from "../theme.slint";
+import { AppButton, AppInput } from "../components.slint";
+
+export component ChangeDbPathModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(40%);
+
+    in property <string> current-path: "";
+    in-out property <string> new-path: root.current-path;
+    in-out property <bool> copy-existing: true;
+
+    callback close();
+    callback browse();
+    callback apply(string, bool);
+    callback reset-default();
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 500px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 12px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 20px;
+            spacing: 14px;
+
+            // Header
+            HorizontalLayout {
+                alignment: space-between;
+                VerticalLayout {
+                    spacing: 2px;
+                    Text {
+                        text: "Select / Change SQLite Database File";
+                        color: Theme.text-primary;
+                        font-size: 14px;
+                        font-weight: 800;
+                    }
+                    Text {
+                        text: "Specify where urpwallet stores your local financial ledger";
+                        color: Theme.text-muted;
+                        font-size: 10px;
+                    }
+                }
+
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            // Current Path Info Card
+            Rectangle {
+                background: Theme.surface-subtle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+
+                VerticalLayout {
+                    padding: 10px;
+                    spacing: 4px;
+
+                    Text {
+                        text: "Active Database File:";
+                        font-size: 10px;
+                        font-weight: 700;
+                        color: Theme.text-muted;
+                    }
+                    Text {
+                        text: root.current-path != "" ? root.current-path : "Standard System Default";
+                        font-size: 10px;
+                        color: Theme.primary;
+                        font-weight: 600;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // New Path Input
+            VerticalLayout {
+                spacing: 6px;
+
+                Text {
+                    text: "New File Path (.db or .sqlite):";
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: Theme.text-primary;
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    db-inp := AppInput {
+                        placeholder-text: "e.g. /home/user/wallets/finance.db";
+                        text <=> root.new-path;
+                    }
+
+                    AppButton {
+                        text: "Browse...";
+                        small: true;
+                        btn-color: Theme.info;
+                        clicked => { root.browse(); }
+                    }
+                }
+            }
+
+            // Copy Data Option Toggle
+            Rectangle {
+                background: Theme.surface-subtle;
+                border-radius: 6px;
+                height: 38px;
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    alignment: space-between;
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 1px;
+                        Text {
+                            text: "Copy current ledger to new location";
+                            font-size: 10px;
+                            font-weight: 600;
+                            color: Theme.text-primary;
+                        }
+                        Text {
+                            text: "Transfers your existing data if destination file does not exist yet";
+                            font-size: 9px;
+                            color: Theme.text-muted;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        AppButton {
+                            text: root.copy-existing ? "Yes" : "No";
+                            small: true;
+                            outline: !root.copy-existing;
+                            btn-color: root.copy-existing ? Theme.primary : Theme.border-strong;
+                            clicked => { root.copy-existing = !root.copy-existing; }
+                        }
+                    }
+                }
+            }
+
+            // Action Buttons
+            HorizontalLayout {
+                alignment: space-between;
+                spacing: 8px;
+
+                AppButton {
+                    text: "Reset to Default";
+                    small: true;
+                    outline: true;
+                    btn-color: Theme.warning;
+                    clicked => {
+                        root.reset-default();
+                        root.close();
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    AppButton {
+                        text: "Cancel";
+                        small: true;
+                        outline: true;
+                        btn-color: Theme.surface-hover;
+                        text-color: Theme.text-primary;
+                        clicked => { root.close(); }
+                    }
+                    AppButton {
+                        text: "Save & Switch DB";
+                        small: true;
+                        btn-color: Theme.primary;
+                        clicked => {
+                            if (root.new-path != "") {
+                                root.apply(root.new-path, root.copy-existing);
+                                root.close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component ChangeExportPathModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(40%);
+
+    in property <string> current-path: "";
+    in-out property <string> new-path: root.current-path;
+
+    callback close();
+    callback browse();
+    callback apply(string);
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 500px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 12px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 20px;
+            spacing: 14px;
+
+            // Header
+            HorizontalLayout {
+                alignment: space-between;
+                VerticalLayout {
+                    spacing: 2px;
+                    Text {
+                        text: "Select / Change Export Directory";
+                        color: Theme.text-primary;
+                        font-size: 14px;
+                        font-weight: 800;
+                    }
+                    Text {
+                        text: "Choose the destination folder where JSON backups and CSV files will be saved";
+                        color: Theme.text-muted;
+                        font-size: 10px;
+                    }
+                }
+
+                AppButton {
+                    text: "✕";
+                    small: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+            }
+
+            // Current Export Path
+            Rectangle {
+                background: Theme.surface-subtle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+
+                VerticalLayout {
+                    padding: 10px;
+                    spacing: 4px;
+
+                    Text {
+                        text: "Current Export Destination:";
+                        font-size: 10px;
+                        font-weight: 700;
+                        color: Theme.text-muted;
+                    }
+                    Text {
+                        text: root.current-path != "" ? root.current-path : "Standard System Exports";
+                        font-size: 10px;
+                        color: Theme.info;
+                        font-weight: 600;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // New Path Input
+            VerticalLayout {
+                spacing: 6px;
+
+                Text {
+                    text: "Destination Folder Path:";
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: Theme.text-primary;
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    exp-inp := AppInput {
+                        placeholder-text: "e.g. /home/user/Documents/urpwallet_backups";
+                        text <=> root.new-path;
+                    }
+
+                    AppButton {
+                        text: "Browse...";
+                        small: true;
+                        btn-color: Theme.info;
+                        clicked => { root.browse(); }
+                    }
+                }
+            }
+
+            // Actions
+            HorizontalLayout {
+                alignment: end;
+                spacing: 8px;
+
+                AppButton {
+                    text: "Cancel";
+                    small: true;
+                    outline: true;
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+                AppButton {
+                    text: "Save Destination";
+                    small: true;
+                    btn-color: Theme.primary;
+                    clicked => {
+                        if (root.new-path != "") {
+                            root.apply(root.new-path);
+                            root.close();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,208 @@
+import { Theme } from "../theme.slint";
+import { BillItem } from "../models.slint";
+import { AppButton, Badge } from "../components.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component BillsView inherits VerticalLayout {
+    spacing: 12px;
+
+    in property <[BillItem]> bills: [];
+
+    callback open-new-bill();
+    callback select-bill(BillItem);
+    callback execute-bill-payment(string);
+    callback open-edit-bill(string);
+    callback delete-bill(string);
+
+    // Dedicated Header & Action Bar
+    Rectangle {
+        background: Theme.surface;
+        border-color: Theme.border;
+        border-width: 1px;
+        border-radius: 10px;
+
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 14px;
+            padding-bottom: 14px;
+            alignment: space-between;
+
+            VerticalLayout {
+                alignment: center;
+                spacing: 3px;
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    Badge {
+                        text: root.bills.length + (root.bills.length == 1 ? " Scheduled Bill" : " Scheduled Bills");
+                        badge-color: Theme.primary;
+                    }
+                }
+                Text {
+                    text: "Track scheduled expenses, monthly memberships, utilities, and auto-payments";
+                    color: Theme.text-muted;
+                    font-size: 10px;
+                    vertical-alignment: center;
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                AppButton {
+                    text: "+ New Bill & Subscription";
+                    btn-color: Theme.primary;
+                    clicked => {
+                        root.open-new-bill();
+                    }
+                }
+            }
+        }
+    }
+
+    ScrollView {
+        VerticalLayout {
+            spacing: 8px;
+
+            if root.bills.length == 0: Rectangle {
+                height: 180px;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 10px;
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 12px;
+
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 4px;
+                        Text {
+                            text: "No Recurring Bills or Subscriptions Scheduled";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: Theme.text-primary;
+                            horizontal-alignment: center;
+                        }
+                        Text {
+                            text: "Stay on top of recurring cash outflows such as Netflix, Spotify, gym memberships, rent, and utility bills.";
+                            font-size: 11px;
+                            color: Theme.text-muted;
+                            horizontal-alignment: center;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        AppButton {
+                            text: "+ Create New Bill & Subscription";
+                            btn-color: Theme.primary;
+                            clicked => {
+                                root.open-new-bill();
+                            }
+                        }
+                    }
+                }
+            }
+
+            for bill in root.bills: Rectangle {
+                height: 56px;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 8px;
+
+                HorizontalLayout {
+                    padding-left: 14px;
+                    padding-right: 14px;
+                    alignment: space-between;
+
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 3px;
+                        Text {
+                            text: bill.name;
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        HorizontalLayout {
+                            spacing: 6px;
+                            Text {
+                                text: "Next Due: " + bill.due_date;
+                                color: Theme.text-muted;
+                                font-size: 10px;
+                                vertical-alignment: center;
+                            }
+                            Badge {
+                                text: bill.frequency;
+                                badge-color: Theme.info;
+                            }
+                            Badge {
+                                text: bill.account_name;
+                                badge-color: Theme.primary;
+                            }
+                        }
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+                        HorizontalLayout {
+                            spacing: 6px;
+                            Text {
+                                width: 90px;
+                                horizontal-alignment: right;
+                                vertical-alignment: center;
+                                text: bill.amount;
+                                color: bill.is_expense ? Theme.danger : Theme.primary;
+                                font-size: 14px;
+                                font-weight: 800;
+                            }
+                            AppButton {
+                                width: 56px;
+                                text: "Details";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.info;
+                                clicked => {
+                                    root.select-bill(bill);
+                                }
+                            }
+                            AppButton {
+                                width: 78px;
+                                text: "1-Click Pay";
+                                small: true;
+                                btn-color: Theme.primary;
+                                clicked => {
+                                    root.execute-bill-payment(bill.id);
+                                }
+                            }
+                            AppButton {
+                                width: 48px;
+                                text: "Edit";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.info;
+                                clicked => {
+                                    root.open-edit-bill(bill.id);
+                                }
+                            }
+                            AppButton {
+                                width: 56px;
+                                text: "Delete";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.danger;
+                                clicked => {
+                                    root.delete-bill(bill.id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

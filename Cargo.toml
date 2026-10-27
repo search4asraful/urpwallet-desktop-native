@@ -1,0 +1,61 @@
+[package]
+name = "urpwallet"
+version = "0.1.0"
+edition = "2024"
+authors = ["urpwallet team"]
+description = "Local-first native personal finance tracker and budget planner"
+repository = "https://github.com/search4asraful/urpwallet-desktop-native"
+
+[package.metadata.wix]
+upgrade-guid = "B42F70BC-7FBB-4B0E-A0A1-AEDCACD726F9"
+path-guid = "E4AA6A9E-9FF7-4593-92B3-4769C523A82F"
+license = false
+eula = false
+
+[dependencies]
+rusqlite = { version = "0.32", features = ["bundled"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10", features = ["v4"] }
+directories = "6.0"
+argon2 = "0.6"
+csv = "1.3"
+slint = "1.18"
+ureq = { version = "2.10", features = ["json"] }
+webbrowser = "1.2"
+sha2 = "0.11.1"
+rfd = "0.17.2"
+
+[build-dependencies]
+slint-build = "1.18"
+
+[dev-dependencies]
+tempfile = "3.17"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
+
+[package.metadata.deb]
+name = "urpwallet"
+maintainer = "Asraful <cpcasraful127@gmail.com>"
+copyright = "2026, Asraful"
+license-file = ["LICENSE", "4"]
+extended-description = "A local-first personal finance tracker."
+section = "utils"
+priority = "optional"
+depends = "$auto, libfontconfig1, libfreetype6, libxkbcommon0"
+assets = [
+    ["target/release/urpwallet", "usr/bin/urpwallet", "755"],
+    ["assets/icon.svg", "usr/share/icons/hicolor/scalable/apps/urpwallet.svg", "644"],
+    ["urpwallet.desktop", "usr/share/applications/urpwallet.desktop", "644"],
+]

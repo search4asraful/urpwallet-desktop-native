@@ -1,0 +1,199 @@
+import { Theme } from "../theme.slint";
+import { AccountItem } from "../models.slint";
+import { StatCard, TabButton, AppButton, Badge } from "../components.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component AccountsView inherits VerticalLayout {
+    spacing: 10px;
+
+    in property <string> net-worth: "$0.00";
+    in property <string> total-assets: "$0.00";
+    in property <string> total-liabilities: "$0.00";
+    in-out property <int> accounts-filter-tab: 0;
+    in property <[AccountItem]> accounts: [];
+    in property <[AccountItem]> filtered-accounts: [];
+
+    callback open-new-account();
+    callback select-account(AccountItem);
+    callback open-edit-account(string);
+    callback delete-account(string);
+    callback filter-accounts(int);
+
+    // Summary Strip
+    HorizontalLayout {
+        spacing: 10px;
+
+        StatCard {
+            title: "TOTAL CAPITAL";
+            value: root.net-worth;
+            subtitle: "Net worth balance";
+            accent-color: Theme.primary;
+        }
+        StatCard {
+            title: "TOTAL ASSETS";
+            value: root.total-assets;
+            subtitle: "Bank, Cash & Investments";
+            accent-color: Theme.primary;
+        }
+        StatCard {
+            title: "TOTAL LIABILITIES";
+            value: root.total-liabilities;
+            subtitle: "Credit Cards & Loans";
+            accent-color: Theme.danger;
+        }
+    }
+
+    // Action Bar
+    HorizontalLayout {
+        alignment: space-between;
+
+        VerticalLayout {
+            alignment: center;
+            HorizontalLayout {
+                spacing: 6px;
+                TabButton {
+                    text: "All Accounts";
+                    active: root.accounts-filter-tab == 0;
+                    clicked => {
+                        root.accounts-filter-tab = 0;
+                        root.filter-accounts(0);
+                    }
+                }
+                TabButton {
+                    text: "Assets Only";
+                    active: root.accounts-filter-tab == 1;
+                    clicked => {
+                        root.accounts-filter-tab = 1;
+                        root.filter-accounts(1);
+                    }
+                }
+                TabButton {
+                    text: "Liabilities Only";
+                    active: root.accounts-filter-tab == 2;
+                    clicked => {
+                        root.accounts-filter-tab = 2;
+                        root.filter-accounts(2);
+                    }
+                }
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            AppButton {
+                text: "+ New Account";
+                small: true;
+                btn-color: Theme.primary;
+                clicked => { root.open-new-account(); }
+            }
+        }
+    }
+
+    // Accounts List
+    ScrollView {
+        VerticalLayout {
+            spacing: 6px;
+
+            if root.filtered-accounts.length == 0: Rectangle {
+                height: 90px;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 4px;
+                    Text { text: "No Accounts Found"; font-size: 13px; font-weight: 700; color: Theme.text-primary; horizontal-alignment: center; }
+                    Text {
+                        text: root.accounts-filter-tab == 1 ? "No asset accounts found." :
+                              (root.accounts-filter-tab == 2 ? "No liability accounts found." :
+                              "Click '+ New Account' to create your first bank account or vault.");
+                        font-size: 11px;
+                        color: Theme.text-muted;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+
+            for acc in root.filtered-accounts: Rectangle {
+                height: 50px;
+                clip: true;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    alignment: space-between;
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 2px;
+                        HorizontalLayout {
+                            spacing: 8px;
+                            Text {
+                                text: acc.name;
+                                color: Theme.text-primary;
+                                font-size: 13px;
+                                font-weight: 700;
+                                vertical-alignment: center;
+                            }
+                            Badge {
+                                text: acc.acc_type;
+                                badge-color: acc.is_liability ? Theme.danger : Theme.primary;
+                            }
+                        }
+                        Text {
+                            text: "Currency: " + acc.currency;
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                            vertical-alignment: center;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        HorizontalLayout {
+                            spacing: 6px;
+                            Text {
+                                width: 100px;
+                                horizontal-alignment: right;
+                                vertical-alignment: center;
+                                text: acc.balance;
+                                color: acc.is_liability ? Theme.danger : Theme.text-primary;
+                                font-size: 15px;
+                                font-weight: 800;
+                            }
+                            AppButton {
+                                width: 54px;
+                                text: "Details";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.info;
+                                clicked => {
+                                    root.select-account(acc);
+                                }
+                            }
+                            AppButton {
+                                width: 46px;
+                                text: "Edit";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.primary;
+                                clicked => { root.open-edit-account(acc.id); }
+                            }
+                            AppButton {
+                                width: 54px;
+                                text: "Delete";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.danger;
+                                clicked => { root.delete-account(acc.id); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
