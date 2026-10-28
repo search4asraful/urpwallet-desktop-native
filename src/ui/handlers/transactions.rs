@@ -280,7 +280,7 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
                         refresh_ui(&ui, &db_clone);
                     }
                     Err(e) => {
-                        ui.set_modal_error(format!("Error: {e}").into());
+                        ui.set_modal_error(e.user_friendly_message().into());
                     }
                 }
             },

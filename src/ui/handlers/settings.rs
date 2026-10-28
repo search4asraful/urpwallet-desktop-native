@@ -101,7 +101,7 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
                     ui.set_settings_status_msg("Master PIN enabled/updated successfully".into());
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(format!("PIN error: {e}").into());
+                    ui.set_settings_status_msg(e.user_friendly_message().into());
                 }
             }
         });
@@ -118,7 +118,7 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
                     ui.set_settings_status_msg("Master PIN disabled".into());
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(format!("PIN error: {e}").into());
+                    ui.set_settings_status_msg(e.user_friendly_message().into());
                 }
             }
         });
@@ -182,7 +182,7 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
                     refresh_ui(&ui, &db_clone);
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(format!("Error creating category: {e}").into());
+                    ui.set_settings_status_msg(e.user_friendly_message().into());
                 }
             }
         });
@@ -199,7 +199,7 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
                     refresh_ui(&ui, &db_clone);
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(format!("Cannot delete category: {e}").into());
+                    ui.set_settings_status_msg(e.user_friendly_message().into());
                 }
             }
         });
@@ -216,8 +216,8 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
                     ui.set_settings_status_msg("Demo data successfully reset and seeded!".into());
                     refresh_ui(&ui, &db_clone);
                 }
-                Err(e) => {
-                    ui.set_settings_status_msg(format!("Error resetting demo data: {e}").into());
+                Err(_) => {
+                    ui.set_settings_status_msg("Unable to reset demo data. Please try again.".into());
                 }
             }
         });

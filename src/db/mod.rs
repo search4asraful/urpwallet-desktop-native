@@ -427,6 +427,10 @@ impl Database {
         self.with_conn(|conn| schema::seed_initial_data(conn))
     }
 
+    pub fn seed_demo(&self) -> DbResult<()> {
+        self.with_conn(|conn| schema::seed_demo_data(conn))
+    }
+
     pub fn reset_and_seed_demo(&self) -> DbResult<()> {
         self.with_conn(|conn| schema::reset_and_seed_demo_data(conn))
     }
@@ -952,6 +956,7 @@ mod tests {
     fn test_export_and_import() {
         let db = Database::open_in_memory().unwrap();
         db.seed().unwrap();
+        db.seed_demo().unwrap();
 
         // Test CSV export
         let csv = db.export_transactions_csv().unwrap();
@@ -980,7 +985,7 @@ mod tests {
         let db = Database::open_in_memory().unwrap();
         db.seed().unwrap();
         let accs_before = db.list_accounts(false).unwrap();
-        assert!(!accs_before.is_empty());
+        assert!(accs_before.is_empty());
 
         db.reset_and_seed_demo().unwrap();
         let accs_after = db.list_accounts(false).unwrap();

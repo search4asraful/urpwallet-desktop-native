@@ -37,23 +37,27 @@ pub fn register_io_handlers(ui: &MainWindow, db: &Database) {
             if fmt == "json" {
                 if let Ok(backup) = db_clone.export_full_backup() {
                     let path = export_dir.join(format!("urpwallet_backup_{}.json", timestamp));
-                    if let Ok(json_str) = serde_json::to_string_pretty(&backup)
-                        && std::fs::write(&path, json_str).is_ok()
-                    {
-                        println!("Full JSON backup successfully exported to: {:?}", path);
-                        if let Some(ui) = ui_weak.upgrade() {
-                            ui.set_settings_status_msg(format!("✓ Full JSON backup exported to: {}", path.display()).into());
+                    if let Ok(json_str) = serde_json::to_string_pretty(&backup) {
+                        if std::fs::write(&path, json_str).is_ok() {
+                            println!("Full JSON backup successfully exported to: {:?}", path);
+                            if let Some(ui) = ui_weak.upgrade() {
+                                ui.set_settings_status_msg(format!("✓ Full JSON backup exported to: {}", path.display()).into());
+                            }
+                        } else if let Some(ui) = ui_weak.upgrade() {
+                            ui.set_settings_status_msg("Failed to write export file. Please check folder permissions.".into());
                         }
                     }
                 }
-            } else if fmt == "csv"
-                && let Ok(csv_str) = db_clone.export_transactions_csv()
-            {
-                let path = export_dir.join(format!("urpwallet_transactions_{}.csv", timestamp));
-                if std::fs::write(&path, csv_str).is_ok() {
-                    println!("CSV transactions history exported to: {:?}", path);
-                    if let Some(ui) = ui_weak.upgrade() {
-                        ui.set_settings_status_msg(format!("✓ Transactions CSV exported to: {}", path.display()).into());
+            } else if fmt == "csv" {
+                if let Ok(csv_str) = db_clone.export_transactions_csv() {
+                    let path = export_dir.join(format!("urpwallet_transactions_{}.csv", timestamp));
+                    if std::fs::write(&path, csv_str).is_ok() {
+                        println!("CSV transactions history exported to: {:?}", path);
+                        if let Some(ui) = ui_weak.upgrade() {
+                            ui.set_settings_status_msg(format!("✓ Transactions CSV exported to: {}", path.display()).into());
+                        }
+                    } else if let Some(ui) = ui_weak.upgrade() {
+                        ui.set_settings_status_msg("Failed to write export file. Please check folder permissions.".into());
                     }
                 }
             }
@@ -100,17 +104,39 @@ pub fn register_io_handlers(ui: &MainWindow, db: &Database) {
                     }
                 };
 
-                if let Some(file_path) = file_to_import
-                    && let Ok(content) = std::fs::read_to_string(&file_path)
-                    && let Ok(data) = serde_json::from_str(&content)
-                    && db_bg.import_full_backup(&data).is_ok()
-                {
-                    println!("Imported backup from: {:?}", file_path);
-                    let _ = slint::invoke_from_event_loop(move || {
-                        let Some(ui) = ui_bg.upgrade() else { return; };
-                        refresh_ui(&ui, &db_bg);
-                        ui.set_settings_status_msg(format!("✓ Ledger restored from: {}", file_path.display()).into());
-                    });
+                if let Some(file_path) = file_to_import {
+                    match std::fs::read_to_string(&file_path) {
+                        Ok(content) => match serde_json::from_str::<urpwallet::db::models::FullBackupData>(&content) {
+                            Ok(data) => match db_bg.import_full_backup(&data) {
+                                Ok(_) => {
+                                    println!("Imported backup from: {:?}", file_path);
+                                    let _ = slint::invoke_from_event_loop(move || {
+                                        let Some(ui) = ui_bg.upgrade() else { return; };
+                                        refresh_ui(&ui, &db_bg);
+                                        ui.set_settings_status_msg(format!("✓ Ledger restored from: {}", file_path.display()).into());
+                                    });
+                                }
+                                Err(e) => {
+                                    let _ = slint::invoke_from_event_loop(move || {
+                                        let Some(ui) = ui_bg.upgrade() else { return; };
+                                        ui.set_settings_status_msg(format!("Could not restore ledger: {}", e.user_friendly_message()).into());
+                                    });
+                                }
+                            },
+                            Err(_) => {
+                                let _ = slint::invoke_from_event_loop(move || {
+                                    let Some(ui) = ui_bg.upgrade() else { return; };
+                                    ui.set_settings_status_msg("Invalid backup file. The JSON format is corrupted or unrecognized.".into());
+                                });
+                            }
+                        },
+                        Err(_) => {
+                            let _ = slint::invoke_from_event_loop(move || {
+                                let Some(ui) = ui_bg.upgrade() else { return; };
+                                ui.set_settings_status_msg("Unable to read the selected backup file. Please check file permissions.".into());
+                            });
+                        }
+                    }
                 }
             });
         });
@@ -140,7 +166,7 @@ pub fn register_io_handlers(ui: &MainWindow, db: &Database) {
                                 ui.set_settings_status_msg(format!("✓ Switched database to: {}", path.display()).into());
                             }
                             Err(e) => {
-                                ui.set_settings_status_msg(format!("Failed to switch database: {e}").into());
+                                ui.set_settings_status_msg(format!("Failed to switch database: {}", e.user_friendly_message()).into());
                             }
                         }
                     });
@@ -170,7 +196,7 @@ pub fn register_io_handlers(ui: &MainWindow, db: &Database) {
                             ui.set_settings_status_msg(format!("✓ Switched database to: {}", path.display()).into());
                         }
                         Err(e) => {
-                            ui.set_settings_status_msg(format!("Failed to switch database: {e}").into());
+                            ui.set_settings_status_msg(format!("Failed to switch database: {}", e.user_friendly_message()).into());
                         }
                     }
                 });
@@ -191,7 +217,7 @@ pub fn register_io_handlers(ui: &MainWindow, db: &Database) {
                     ui.set_settings_status_msg("✓ Database reset to standard system location".into());
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(format!("Failed to reset database: {e}").into());
+                    ui.set_settings_status_msg(format!("Failed to reset database: {}", e.user_friendly_message()).into());
                 }
             }
         });
@@ -217,7 +243,7 @@ pub fn register_io_handlers(ui: &MainWindow, db: &Database) {
                                 ui.set_settings_status_msg(format!("✓ Export destination set to: {}", path.display()).into());
                             }
                             Err(e) => {
-                                ui.set_settings_status_msg(format!("Failed to set export path: {e}").into());
+                                ui.set_settings_status_msg(format!("Failed to set export path: {}", urpwallet::db::DbError::Io(e).user_friendly_message()).into());
                             }
                         }
                     });
@@ -240,7 +266,7 @@ pub fn register_io_handlers(ui: &MainWindow, db: &Database) {
                     ui.set_settings_status_msg(format!("✓ Export destination set to: {}", path.display()).into());
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(format!("Failed to set export path: {e}").into());
+                    ui.set_settings_status_msg(format!("Failed to set export path: {}", urpwallet::db::DbError::Io(e).user_friendly_message()).into());
                 }
             }
         });

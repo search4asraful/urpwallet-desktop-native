@@ -171,15 +171,6 @@ pub fn run_migrations(conn: &mut Connection) -> DbResult<()> {
 
 pub fn seed_initial_data(conn: &Connection) -> DbResult<()> {
     let now = Utc::now().to_rfc3339();
-    let year_month = Utc::now().format("%Y-%m").to_string();
-
-    let base_curr: String = conn
-        .query_row(
-            "SELECT value FROM settings WHERE key = 'base_currency'",
-            [],
-            |r| r.get(0),
-        )
-        .unwrap_or_else(|_| "BDT".to_string());
 
     let tx = conn.unchecked_transaction()?;
 
@@ -225,7 +216,25 @@ pub fn seed_initial_data(conn: &Connection) -> DbResult<()> {
         )?;
     }
 
-    // 3. Default Accounts
+    tx.commit()?;
+    Ok(())
+}
+
+pub fn seed_demo_data(conn: &Connection) -> DbResult<()> {
+    let now = Utc::now().to_rfc3339();
+    let year_month = Utc::now().format("%Y-%m").to_string();
+
+    let base_curr: String = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'base_currency'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap_or_else(|_| "BDT".to_string());
+
+    let tx = conn.unchecked_transaction()?;
+
+    // 1. Default Accounts
     let accounts = [
         ("acc_checking", "Main Checking (Chase)", "bank", base_curr.as_str(), 5240.50, "#3B82F6", "CreditCard"),
         ("acc_cash", "Cash Wallet", "cash", base_curr.as_str(), 260.00, "#10B981", "Wallet"),
@@ -241,7 +250,7 @@ pub fn seed_initial_data(conn: &Connection) -> DbResult<()> {
         )?;
     }
 
-    // 4. Default Budgets
+    // 2. Default Budgets
     let start_of_month = format!("{}-01", year_month);
     let end_of_month = format!("{}-31", year_month);
 
@@ -260,7 +269,7 @@ pub fn seed_initial_data(conn: &Connection) -> DbResult<()> {
         )?;
     }
 
-    // 5. Default Recurring Bills & Subscriptions
+    // 3. Default Recurring Bills & Subscriptions
     let bills = [
         ("plan_rent", "Apartment Rent", 1250.0, "expense", "acc_checking", Some("cat_housing"), "Avalon Properties", "monthly", format!("{}-01", year_month)),
         ("plan_net_spo", "Streaming (Netflix & Spotify)", 27.98, "expense", "acc_credit", Some("cat_entertainment"), "Media Subscriptions", "monthly", format!("{}-15", year_month)),
@@ -276,7 +285,7 @@ pub fn seed_initial_data(conn: &Connection) -> DbResult<()> {
         )?;
     }
 
-    // 6. Default Debts & Loans
+    // 4. Default Debts & Loans
     let debts = [
         ("d_1", "loan_owed_to_me", "Sayem Ahamed", 160.0, 60.0, Some(format!("{}-30", year_month)), "Concert tickets upfront cost", "active"),
         ("d_2", "debt_i_owe", "Sarah Miller", 45.0, 0.0, Some(format!("{}-25", year_month)), "Group dinner bill split", "active"),
@@ -290,7 +299,7 @@ pub fn seed_initial_data(conn: &Connection) -> DbResult<()> {
         )?;
     }
 
-    // 7. Seed Transactions
+    // 5. Seed Transactions
     let curr_ref = base_curr.as_str();
     let txs = [
         ("tx_inc_1", "acc_checking", None, Some("cat_salary"), "income", 4800.0, curr_ref, format!("{}-01", year_month), Some("09:00"), Some("Tech Corp Inc"), Some("Monthly Salary direct deposit"), "cleared", "transfer"),
@@ -339,5 +348,6 @@ pub fn reset_and_seed_demo_data(conn: &Connection) -> DbResult<()> {
     conn.execute("DELETE FROM categories", [])?;
     conn.execute("PRAGMA foreign_keys = ON", [])?;
     seed_initial_data(conn)?;
+    seed_demo_data(conn)?;
     Ok(())
 }

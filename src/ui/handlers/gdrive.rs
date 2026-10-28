@@ -7,6 +7,36 @@ use urpwallet::gdrive;
 use crate::{GDriveBackupItem, MainWindow};
 use crate::ui::refresh::refresh_ui;
 
+/// Converts technical Google Drive errors into clean, human-readable explanations.
+fn humanize_gdrive_error(context: &str, raw_err: &str) -> String {
+    let err_lower = raw_err.to_lowercase();
+    if err_lower.contains("invalid_grant") || err_lower.contains("expired") || err_lower.contains("code has already been used") {
+        "Google authorization code expired or has already been used. Please click Connect to sign in again.".to_string()
+    } else if err_lower.contains("invalid_client") || err_lower.contains("unauthorized_client") {
+        "Google credentials rejected. Please verify your Client ID and Client Secret in Settings.".to_string()
+    } else if err_lower.contains("quota") || err_lower.contains("storage") {
+        "Google Drive storage quota exceeded. Please free up space in your Google Drive and try again.".to_string()
+    } else if err_lower.contains("addrinuse") || err_lower.contains("address already in use") || err_lower.contains("port") {
+        "Local authorization port 8080 is in use by another app. Please paste the authorization code manually below.".to_string()
+    } else if err_lower.contains("connection refused") || err_lower.contains("timeout") || err_lower.contains("timed out") || err_lower.contains("dns") || err_lower.contains("connect") {
+        "Unable to reach Google servers. Please check your internet connection and try again.".to_string()
+    } else if err_lower.contains("401") || err_lower.contains("token") {
+        "Google Drive session expired or access was revoked. Please disconnect and reconnect your account.".to_string()
+    } else if err_lower.contains("404") || err_lower.contains("not found") {
+        "The requested file was not found on Google Drive.".to_string()
+    } else {
+        match context {
+            "auth" => "Google authorization could not be completed. Please try signing in again.".to_string(),
+            "upload" => "Could not upload backup to Google Drive. Please check your internet connection and try again.".to_string(),
+            "list" => "Could not load backups from Google Drive. Please check your internet connection.".to_string(),
+            "restore" => "Could not restore backup from Google Drive. The file may be damaged or unreachable.".to_string(),
+            "delete" => "Could not delete backup from Google Drive. Please try again.".to_string(),
+            "config" => "Could not save Google Drive configuration. Please check your inputs.".to_string(),
+            _ => "An error occurred while communicating with Google Drive. Please try again.".to_string(),
+        }
+    }
+}
+
 /// Refreshes the Google Drive connection state and backups list on the UI
 pub fn refresh_gdrive_state(ui: &MainWindow, db: &Database) {
     let settings = gdrive::load_settings(db);
@@ -113,7 +143,7 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                                     Err(err) => {
                                         let _ = slint::invoke_from_event_loop(move || {
                                             if let Some(ui) = ui_bg.upgrade() {
-                                                ui.set_gdrive_error_msg(format!("Token exchange failed: {err}").into());
+                                                ui.set_gdrive_error_msg(humanize_gdrive_error("auth", &err.to_string()).into());
                                                 ui.set_gdrive_loading(false);
                                             }
                                         });
@@ -123,7 +153,7 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                             Ok(Err(err)) => {
                                 let _ = slint::invoke_from_event_loop(move || {
                                     if let Some(ui) = ui_bg.upgrade() {
-                                        ui.set_gdrive_error_msg(format!("Authorization error: {err}").into());
+                                        ui.set_gdrive_error_msg(humanize_gdrive_error("auth", &err.to_string()).into());
                                         ui.set_gdrive_loading(false);
                                     }
                                 });
@@ -141,7 +171,7 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                     Err(e) => {
                         let _ = slint::invoke_from_event_loop(move || {
                             if let Some(ui) = ui_bg.upgrade() {
-                                ui.set_gdrive_error_msg(format!("Could not start local authorization listener: {e}").into());
+                                ui.set_gdrive_error_msg(humanize_gdrive_error("auth", &e.to_string()).into());
                                 ui.set_gdrive_loading(false);
                             }
                         });
@@ -199,7 +229,7 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                             refresh_gdrive_state(&ui, &db_bg);
                         }
                         Err(e) => {
-                            ui.set_gdrive_error_msg(format!("Failed to connect with code: {e}").into());
+                            ui.set_gdrive_error_msg(humanize_gdrive_error("auth", &e.to_string()).into());
                         }
                     }
                     ui.set_gdrive_loading(false);
@@ -247,7 +277,7 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                             refresh_gdrive_state(&ui, &db_bg);
                         }
                         Err(e) => {
-                            ui.set_gdrive_error_msg(format!("Backup upload failed: {e}").into());
+                            ui.set_gdrive_error_msg(humanize_gdrive_error("upload", &e.to_string()).into());
                             ui.set_gdrive_status_msg("".into());
                         }
                     }
@@ -287,7 +317,7 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                             ui.set_gdrive_status_msg("Backups list refreshed".into());
                         }
                         Err(e) => {
-                            ui.set_gdrive_error_msg(format!("Could not fetch backups: {e}").into());
+                            ui.set_gdrive_error_msg(humanize_gdrive_error("list", &e.to_string()).into());
                         }
                     }
                     ui.set_gdrive_loading(false);
@@ -320,7 +350,7 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                             refresh_ui(&ui, &db_bg);
                         }
                         Err(e) => {
-                            ui.set_gdrive_error_msg(format!("Restore failed: {e}").into());
+                            ui.set_gdrive_error_msg(humanize_gdrive_error("restore", &e.to_string()).into());
                         }
                     }
                     ui.set_gdrive_loading(false);
@@ -351,7 +381,7 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                             refresh_gdrive_state(&ui, &db_bg);
                         }
                         Err(e) => {
-                            ui.set_gdrive_error_msg(format!("Delete failed: {e}").into());
+                            ui.set_gdrive_error_msg(humanize_gdrive_error("delete", &e.to_string()).into());
                         }
                     }
                     ui.set_gdrive_loading(false);
@@ -380,7 +410,7 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                     refresh_gdrive_state(&ui, &db_clone);
                 }
                 Err(e) => {
-                    ui.set_gdrive_error_msg(format!("Failed to save configuration: {e}").into());
+                    ui.set_gdrive_error_msg(humanize_gdrive_error("config", &e.to_string()).into());
                 }
             }
         });
