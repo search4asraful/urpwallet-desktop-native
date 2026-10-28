@@ -322,8 +322,8 @@ export component CloseButton inherits Rectangle {
     Path {
         width: 10px;
         height: 10px;
-        x: (parent.width - self.width) / 2;
-        y: (parent.height - self.height) / 2;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
         stroke: touch.has-hover ? Theme.text-primary : Theme.text-muted;
         stroke-width: 1.75px;
 

@@ -55,7 +55,6 @@ export component GoogleDriveModal inherits Rectangle {
         border-color: Theme.border-strong;
         border-width: 1px;
         border-radius: 12px;
-        clip: true;
 
         TouchArea {
             width: 100%;
@@ -293,7 +292,7 @@ export component GoogleDriveModal inherits Rectangle {
                                                 Text {
                                                     text: b.created_time;
                                                     color: Theme.text-muted;
-                                                    font-size: 9px;
+                                                    font-size: 10px;
                                                 }
                                             }
                                         }
@@ -457,7 +456,6 @@ export component GoogleDriveModal inherits Rectangle {
                                 border-color: root.show-guide ? Theme.info.transparentize(40%) : Theme.border;
                                 border-width: 1px;
                                 border-radius: 6px;
-                                clip: true;
 
                                 VerticalLayout {
                                     padding: 0px;
@@ -650,7 +648,7 @@ export component GoogleDriveModal inherits Rectangle {
                                         }
                                         Text {
                                             text: "Auto-syncs ledger on schedule without cron jobs. Skips redundant uploads if unchanged.";
-                                            font-size: 9px;
+                                            font-size: 10px;
                                             color: Theme.text-muted;
                                         }
                                     }

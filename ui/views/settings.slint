@@ -53,7 +53,7 @@ export component SettingsView inherits ScrollView {
         padding-left: 12px;
         padding-right: 12px;
         padding-top: 8px;
-        padding-bottom: 28px;
+        padding-bottom: 20px;
         spacing: 14px;
 
         // STATUS MESSAGE BANNER (if present)
@@ -813,7 +813,6 @@ export component SettingsView inherits ScrollView {
 
                     for cat in root.filtered-categories: Rectangle {
                         height: 38px;
-                        clip: true;
                         border-radius: 6px;
                         background: Theme.surface-subtle;
                         border-color: Theme.border;
@@ -1220,10 +1219,7 @@ export component SettingsView inherits ScrollView {
         // FOOTER BRANDING
         Rectangle {
             background: Theme.surface-subtle;
-            border-color: Theme.border;
-            border-width: 1px;
-            border-radius: 6px;
-            height: 32px;
+            height: 25px;
 
             HorizontalLayout {
                 alignment: center;
@@ -1238,7 +1234,7 @@ export component SettingsView inherits ScrollView {
                     }
                 }
                 Text {
-                    text: "urpwallet • Open Source Personal Finance • Offline Local SQLite • Standalone Native Rust + Slint";
+                    text: "urpwallet • Personal Finance • Offline Local SQLite • Standalone Native Rust + Slint";
                     color: Theme.text-muted;
                     font-size: 10px;
                     font-weight: 500;

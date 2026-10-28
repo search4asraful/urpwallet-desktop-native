@@ -48,7 +48,7 @@ export component Sidebar inherits Rectangle {
                 Text {
                     text: "Your Personal Wallet";
                     color: Theme.text-muted;
-                    font-size: 9px;
+                    font-size: 10px;
                     vertical-alignment: center;
                 }
             }
@@ -92,7 +92,6 @@ export component Sidebar inherits Rectangle {
             height: 32px;
             border-radius: 6px;
             background: backup-touch.has-hover ? Theme.primary.darker(10%) : Theme.primary;
-            clip: true;
 
             backup-touch := TouchArea {
                 clicked => {
@@ -168,7 +167,7 @@ export component Sidebar inherits Rectangle {
                     Text {
                         text: th.name;
                         color: Theme.mode == th.mode ? #FFFFFF : Theme.text-muted;
-                        font-size: 9px;
+                        font-size: 10px;
                         font-weight: 600;
                         vertical-alignment: center;
                     }

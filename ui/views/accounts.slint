@@ -116,8 +116,7 @@ export component AccountsView inherits VerticalLayout {
             }
 
             for acc in root.filtered-accounts: Rectangle {
-                height: 50px;
-                clip: true;
+                height: 52px;
                 background: Theme.surface;
                 border-color: Theme.border;
                 border-width: 1px;
@@ -147,7 +146,7 @@ export component AccountsView inherits VerticalLayout {
                         Text {
                             text: "Currency: " + acc.currency;
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 11px;
                             vertical-alignment: center;
                         }
                     }

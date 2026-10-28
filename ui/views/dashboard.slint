@@ -74,7 +74,7 @@ export component DashboardView inherits ScrollView {
                     Text {
                         text: "Manage All Accounts →";
                         color: Theme.primary;
-                        font-size: 10px;
+                        font-size: 11px;
                         font-weight: 600;
                         vertical-alignment: center;
                     }
@@ -323,7 +323,7 @@ export component DashboardView inherits ScrollView {
                     }
 
                     for bill in root.bills: Rectangle {
-                        height: 38px;
+                        height: 40px;
                         background: Theme.surface-subtle;
                         border-color: Theme.border;
                         border-width: 1px;
@@ -350,7 +350,7 @@ export component DashboardView inherits ScrollView {
                                     Text {
                                         text: "Due: " + bill.due_date;
                                         color: Theme.text-muted;
-                                        font-size: 9px;
+                                        font-size: 10px;
                                         vertical-alignment: center;
                                     }
                                 }
@@ -430,7 +430,7 @@ export component DashboardView inherits ScrollView {
                 }
 
                 for tx in root.recent-transactions: Rectangle {
-                    height: 44px;
+                    height: 46px;
                     background: tx-dash-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                     border-color: tx-dash-touch.has-hover ? Theme.primary : Theme.border;
                     border-width: 1px;
@@ -448,7 +448,7 @@ export component DashboardView inherits ScrollView {
                             Text {
                                 text: tx.date;
                                 color: Theme.text-muted;
-                                font-size: 10px;
+                                font-size: 11px;
                                 vertical-alignment: center;
                             }
                             VerticalLayout {

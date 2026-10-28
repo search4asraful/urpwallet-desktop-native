@@ -77,7 +77,7 @@ export component ReportsView inherits ScrollView {
                         VerticalLayout {
                             alignment: center;
                             padding-left: 10px;
-                            Text { text: "INCOME GENERATED"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: "INCOME GENERATED"; font-size: 10px; font-weight: 700; color: Theme.text-muted; }
                             Text { text: root.monthly-income; font-size: 14px; font-weight: 800; color: Theme.primary; }
                         }
                     }
@@ -90,7 +90,7 @@ export component ReportsView inherits ScrollView {
                         VerticalLayout {
                             alignment: center;
                             padding-left: 10px;
-                            Text { text: "TOTAL EXPENDITURES"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: "TOTAL EXPENDITURES"; font-size: 10px; font-weight: 700; color: Theme.text-muted; }
                             Text { text: root.monthly-expense; font-size: 14px; font-weight: 800; color: Theme.danger; }
                         }
                     }
@@ -103,7 +103,7 @@ export component ReportsView inherits ScrollView {
                         VerticalLayout {
                             alignment: center;
                             padding-left: 10px;
-                            Text { text: "NET SAVINGS DELTA"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: "NET SAVINGS DELTA"; font-size: 10px; font-weight: 700; color: Theme.text-muted; }
                             Text { text: root.balance-change; font-size: 14px; font-weight: 800; color: Theme.info; }
                         }
                     }
@@ -125,7 +125,6 @@ export component ReportsView inherits ScrollView {
                 padding-bottom: 12px;
                 spacing: 10px;
                 Text {
-                    height: 10px;
                     text: "Spending Breakdown by Category";
                     color: Theme.text-primary;
                     font-size: 13px;
