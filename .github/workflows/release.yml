@@ -25,13 +25,15 @@ jobs:
         run: cargo build --release
 
       - name: Install NSIS
-        run: choco install nsis -y --no-progress
+        run: |
+          choco install nsis -y --no-progress
+          echo "C:\Program Files\NSIS" >> $env:GITHUB_PATH
+          echo "C:\Program Files (x86)\NSIS" >> $env:GITHUB_PATH
 
       - name: Build NSIS Installer
-        shell: bash
         run: |
-          mkdir -p target/installer
-          "/c/Program Files (x86)/NSIS/makensis.exe" installer.nsi
+          New-Item -ItemType Directory -Force -Path target\installer
+          makensis installer.nsi
 
       - name: Upload Windows Setup to Release
         uses: softprops/action-gh-release@v2
