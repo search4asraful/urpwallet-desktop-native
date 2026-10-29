@@ -70,6 +70,8 @@ export component DashboardView inherits ScrollView {
                     vertical-alignment: center;
                 }
                 TouchArea {
+                    width: 140px;
+                    mouse-cursor: MouseCursor.pointer;
                     clicked => { root.switch-tab(2); }
                     Text {
                         text: "Manage All Accounts →";
@@ -81,10 +83,54 @@ export component DashboardView inherits ScrollView {
                 }
             }
 
-            // Two-Column Grid replacing the ScrollView
-            GridLayout {
+            // When there are no accounts, show Add new button at exactly 1 col width (1/3 of the row)
+            if root.accounts.length == 0: HorizontalLayout {
+                spacing: 6px;
+                dash-card-empty := Rectangle {
+                    horizontal-stretch: 1;
+                    height: 54px;
+                    border-radius: 6px;
+                    background: empty-touch.has-hover ? Theme.primary-subtle : Theme.surface-subtle;
+                    border-color: empty-touch.has-hover ? Theme.primary : Theme.border-strong;
+                    border-width: 1px;
+
+                    empty-touch := TouchArea {
+                        width: 100%;
+                        height: 100%;
+                        mouse-cursor: MouseCursor.pointer;
+                        clicked => {
+                            root.open-new-account();
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 6px;
+                        Text {
+                            text: "+";
+                            color: empty-touch.has-hover ? Theme.primary : Theme.text-muted;
+                            font-size: 14px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "Add new";
+                            color: empty-touch.has-hover ? Theme.primary : Theme.text-secondary;
+                            font-size: 11px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                Rectangle { horizontal-stretch: 1; }
+            }
+
+            // When there are accounts, render the 3-column grid
+            if root.accounts.length > 0: GridLayout {
                 spacing: 6px;
                 for acc[i] in root.accounts: Rectangle {
+                    horizontal-stretch: 1;
                     row: floor(i / 3);
                     col: mod(i, 3);
                     height: 54px;
@@ -94,6 +140,9 @@ export component DashboardView inherits ScrollView {
                     border-radius: 6px;
 
                     acc-card-touch := TouchArea {
+                        width: 100%;
+                        height: 100%;
+                        mouse-cursor: MouseCursor.pointer;
                         clicked => {
                             root.select-account(acc);
                         }
@@ -111,6 +160,7 @@ export component DashboardView inherits ScrollView {
                             color: Theme.text-primary;
                             font-size: 10px;
                             font-weight: 600;
+                            overflow: elide;
                             vertical-alignment: center;
                         }
                         
@@ -133,73 +183,18 @@ export component DashboardView inherits ScrollView {
 
                 // Add Account Card (Trigger Create Account Modal)
                 dash-card := Rectangle {
+                    horizontal-stretch: 1;
                     row: floor(root.accounts.length / 3);
                     col: mod(root.accounts.length, 3);
                     height: 54px;
                     border-radius: 6px;
-                    background: add-acc-touch.has-hover ?
-                        (Theme.mode == 0 ? Theme.primary.transparentize(88%) : Theme.primary.transparentize(82%)) :
-                        (Theme.mode == 0 ? Theme.surface.transparentize(50%) : Theme.surface.transparentize(65%));
-
-                    property <color> dash-color: add-acc-touch.has-hover ? Theme.primary : Theme.border-strong;
-
-                    // Dashed Top Border
-                    HorizontalLayout {
-                        y: 0;
-                        x: 4px;
-                        width: parent.width - 8px;
-                        height: 1px;
-                        alignment: space-between;
-                        for i in 24: Rectangle {
-                            width: 5px;
-                            height: 1px;
-                            background: dash-card.dash-color;
-                        }
-                    }
-
-                    // Dashed Bottom Border
-                    HorizontalLayout {
-                        y: parent.height - 1px;
-                        x: 4px;
-                        width: parent.width - 8px;
-                        height: 1px;
-                        alignment: space-between;
-                        for i in 24: Rectangle {
-                            width: 5px;
-                            height: 1px;
-                            background: dash-card.dash-color;
-                        }
-                    }
-
-                    // Dashed Left Border
-                    VerticalLayout {
-                        x: 0;
-                        y: 4px;
-                        height: parent.height - 8px;
-                        width: 1px;
-                        alignment: space-between;
-                        for i in 6: Rectangle {
-                            width: 1px;
-                            height: 4px;
-                            background: dash-card.dash-color;
-                        }
-                    }
-
-                    // Dashed Right Border
-                    VerticalLayout {
-                        x: parent.width - 1px;
-                        y: 4px;
-                        height: parent.height - 8px;
-                        width: 1px;
-                        alignment: space-between;
-                        for i in 6: Rectangle {
-                            width: 1px;
-                            height: 4px;
-                            background: dash-card.dash-color;
-                        }
-                    }
+                    background: add-acc-touch.has-hover ? Theme.primary-subtle : Theme.surface-subtle;
+                    border-color: add-acc-touch.has-hover ? Theme.primary : Theme.border-strong;
+                    border-width: 1px;
 
                     add-acc-touch := TouchArea {
+                        width: 100%;
+                        height: 100%;
                         mouse-cursor: MouseCursor.pointer;
                         clicked => {
                             root.open-new-account();
@@ -227,6 +222,13 @@ export component DashboardView inherits ScrollView {
                         }
                     }
                 }
+
+                // If only 1 account exists, ensure col 2 exists so columns remain 1/3 width
+                if root.accounts.length == 1: Rectangle {
+                    row: 0;
+                    col: 2;
+                    horizontal-stretch: 1;
+                }
             }
         }
 
@@ -236,6 +238,7 @@ export component DashboardView inherits ScrollView {
 
             // Left: Budgets Pacing
             Rectangle {
+                horizontal-stretch: 1;
                 background: Theme.surface;
                 border-color: Theme.border;
                 border-width: 1px;
@@ -254,6 +257,8 @@ export component DashboardView inherits ScrollView {
                             vertical-alignment: center;
                         }
                         TouchArea {
+                            width: 60px;
+                            mouse-cursor: MouseCursor.pointer;
                             clicked => { root.switch-tab(3); }
                             Text {
                                 text: "View All →";
@@ -262,6 +267,17 @@ export component DashboardView inherits ScrollView {
                                 font-weight: 600;
                                 vertical-alignment: center;
                             }
+                        }
+                    }
+
+                    if root.budgets.length == 0: Rectangle {
+                        height: 48px;
+                        Text {
+                            text: "No active budgets created yet.";
+                            font-size: 11px;
+                            color: Theme.text-muted;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
                         }
                     }
 
@@ -274,6 +290,7 @@ export component DashboardView inherits ScrollView {
                                 color: Theme.text-primary;
                                 font-size: 11px;
                                 font-weight: 600;
+                                overflow: elide;
                                 vertical-alignment: center;
                             }
                             Text {
@@ -292,6 +309,7 @@ export component DashboardView inherits ScrollView {
 
             // Right: Upcoming Bills
             Rectangle {
+                horizontal-stretch: 1;
                 background: Theme.surface;
                 border-color: Theme.border;
                 border-width: 1px;
@@ -311,6 +329,8 @@ export component DashboardView inherits ScrollView {
                             vertical-alignment: center;
                         }
                         TouchArea {
+                            width: 75px;
+                            mouse-cursor: MouseCursor.pointer;
                             clicked => { root.switch-tab(4); }
                             Text {
                                 text: "View Bills →";
@@ -319,6 +339,17 @@ export component DashboardView inherits ScrollView {
                                 font-weight: 600;
                                 vertical-alignment: center;
                             }
+                        }
+                    }
+
+                    if root.bills.length == 0: Rectangle {
+                        height: 48px;
+                        Text {
+                            text: "No upcoming scheduled bills.";
+                            font-size: 11px;
+                            color: Theme.text-muted;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
                         }
                     }
 
@@ -410,6 +441,8 @@ export component DashboardView inherits ScrollView {
                         vertical-alignment: center;
                     }
                     TouchArea {
+                        width: 75px;
+                        mouse-cursor: MouseCursor.pointer;
                         clicked => { root.switch-tab(1); }
                         Text {
                             text: "Full Ledger →";

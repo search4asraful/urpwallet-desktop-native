@@ -124,6 +124,177 @@ pub fn calculate_category_breakdown(
     list
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct WeeklyFlow {
+    pub week_number: usize,
+    pub label: String,
+    pub date_range: String,
+    pub income: f64,
+    pub expense: f64,
+    pub net: f64,
+    pub is_positive: bool,
+    pub income_ratio: f64,
+    pub expense_ratio: f64,
+}
+
+/// Calculates income, expenses, and net pacing broken down by week for a specific month.
+pub fn calculate_weekly_flow(
+    transactions: &[TransactionWithDetails],
+    year: i32,
+    month: u32,
+) -> Vec<WeeklyFlow> {
+    let days_in_month = match month {
+        2 => {
+            let is_leap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+            if is_leap { 29 } else { 28 }
+        }
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    };
+
+    let num_weeks = if days_in_month > 28 { 5 } else { 4 };
+    let mut weekly_income = vec![0.0; num_weeks];
+    let mut weekly_expense = vec![0.0; num_weeks];
+
+    let prefix = format!("{:04}-{:02}-", year, month);
+
+    for item in transactions {
+        let tx = &item.transaction;
+        if tx.date.starts_with(&prefix) {
+            if let Some(day_str) = tx.date.get(8..10) {
+                if let Ok(day) = day_str.parse::<u32>() {
+                    let week_idx = match day {
+                        1..=7 => 0,
+                        8..=14 => 1,
+                        15..=21 => 2,
+                        22..=28 => 3,
+                        _ => 4,
+                    };
+                    if week_idx < num_weeks {
+                        match tx.tx_type {
+                            TransactionType::Income => weekly_income[week_idx] += tx.amount,
+                            TransactionType::Expense => weekly_expense[week_idx] += tx.amount,
+                            TransactionType::Transfer => {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mut max_val = 0.0f64;
+    for i in 0..num_weeks {
+        if weekly_income[i] > max_val {
+            max_val = weekly_income[i];
+        }
+        if weekly_expense[i] > max_val {
+            max_val = weekly_expense[i];
+        }
+    }
+    if max_val <= 0.0 {
+        max_val = 1.0;
+    }
+
+    let mut result = Vec::with_capacity(num_weeks);
+    for i in 0..num_weeks {
+        let date_range = match i {
+            0 => "1st - 7th".to_string(),
+            1 => "8th - 14th".to_string(),
+            2 => "15th - 21st".to_string(),
+            3 => "22nd - 28th".to_string(),
+            _ => format!("29th - {}th", days_in_month),
+        };
+        let inc = (weekly_income[i] * 100.0).round() / 100.0;
+        let exp = (weekly_expense[i] * 100.0).round() / 100.0;
+        let net = (inc - exp) * 100.0 / 100.0;
+        result.push(WeeklyFlow {
+            week_number: i + 1,
+            label: format!("Week {}", i + 1),
+            date_range,
+            income: inc,
+            expense: exp,
+            net,
+            is_positive: net >= 0.0,
+            income_ratio: (inc / max_val).clamp(0.0, 1.0),
+            expense_ratio: (exp / max_val).clamp(0.0, 1.0),
+        });
+    }
+
+    result
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MonthlyTrend {
+    pub month_name: String,
+    pub month_prefix: String,
+    pub income: f64,
+    pub expense: f64,
+    pub net: f64,
+    pub is_positive: bool,
+    pub income_ratio: f64,
+    pub expense_ratio: f64,
+}
+
+/// Calculates monthly performance trajectory across the past N months.
+pub fn calculate_monthly_trends(
+    transactions: &[TransactionWithDetails],
+    current_year: i32,
+    current_month: u32,
+    months_count: usize,
+) -> Vec<MonthlyTrend> {
+    let mut months = Vec::new();
+    let mut y = current_year;
+    let mut m = current_month as i32;
+
+    for _ in 0..months_count {
+        months.push((y, m as u32));
+        m -= 1;
+        if m < 1 {
+            m = 12;
+            y -= 1;
+        }
+    }
+    months.reverse();
+
+    let month_names = [
+        "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+
+    let mut trends = Vec::with_capacity(months.len());
+    let mut max_val = 0.0f64;
+
+    for (year, month) in months {
+        let prefix = format!("{:04}-{:02}", year, month);
+        let cf = calculate_cash_flow(transactions, &prefix);
+        if cf.income > max_val {
+            max_val = cf.income;
+        }
+        if cf.expense > max_val {
+            max_val = cf.expense;
+        }
+        let m_name = month_names.get(month as usize).unwrap_or(&"");
+        trends.push((format!("{} '{:02}", m_name, year % 100), prefix, cf));
+    }
+
+    if max_val <= 0.0 {
+        max_val = 1.0;
+    }
+
+    trends
+        .into_iter()
+        .map(|(label, prefix, cf)| MonthlyTrend {
+            month_name: label,
+            month_prefix: prefix,
+            income: cf.income,
+            expense: cf.expense,
+            net: cf.net_delta,
+            is_positive: cf.net_delta >= 0.0,
+            income_ratio: (cf.income / max_val).clamp(0.0, 1.0),
+            expense_ratio: (cf.expense / max_val).clamp(0.0, 1.0),
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -239,5 +410,115 @@ mod tests {
         assert_eq!(summary.net_delta, 3000.0);
         // (3000 / 4000) * 100 = 75%
         assert_eq!(summary.savings_rate, 75.0);
+    }
+
+    #[test]
+    fn test_calculate_weekly_flow() {
+        let txs = vec![
+            TransactionWithDetails {
+                transaction: Transaction {
+                    id: "tx1".into(),
+                    account_id: "a1".into(),
+                    to_account_id: None,
+                    category_id: None,
+                    tx_type: TransactionType::Income,
+                    amount: 2000.0,
+                    currency: "USD".into(),
+                    date: "2026-10-02".into(), // Week 1
+                    time: None,
+                    payee: None,
+                    note: None,
+                    status: TransactionStatus::Cleared,
+                    payment_type: PaymentType::Transfer,
+                    created_at: "".into(),
+                },
+                category_name: None,
+                category_icon: None,
+                category_color: None,
+                account_name: None,
+                account_color: None,
+                account_icon: None,
+                account_currency: None,
+                to_account_name: None,
+                to_account_currency: None,
+            },
+            TransactionWithDetails {
+                transaction: Transaction {
+                    id: "tx2".into(),
+                    account_id: "a1".into(),
+                    to_account_id: None,
+                    category_id: None,
+                    tx_type: TransactionType::Expense,
+                    amount: 500.0,
+                    currency: "USD".into(),
+                    date: "2026-10-10".into(), // Week 2
+                    time: None,
+                    payee: None,
+                    note: None,
+                    status: TransactionStatus::Cleared,
+                    payment_type: PaymentType::Cash,
+                    created_at: "".into(),
+                },
+                category_name: None,
+                category_icon: None,
+                category_color: None,
+                account_name: None,
+                account_color: None,
+                account_icon: None,
+                account_currency: None,
+                to_account_name: None,
+                to_account_currency: None,
+            },
+        ];
+
+        let flow = calculate_weekly_flow(&txs, 2026, 10);
+        assert_eq!(flow.len(), 5);
+        assert_eq!(flow[0].income, 2000.0);
+        assert_eq!(flow[0].expense, 0.0);
+        assert_eq!(flow[0].net, 2000.0);
+        assert!(flow[0].is_positive);
+
+        assert_eq!(flow[1].income, 0.0);
+        assert_eq!(flow[1].expense, 500.0);
+        assert_eq!(flow[1].net, -500.0);
+        assert!(!flow[1].is_positive);
+    }
+
+    #[test]
+    fn test_calculate_monthly_trends() {
+        let txs = vec![
+            TransactionWithDetails {
+                transaction: Transaction {
+                    id: "tx1".into(),
+                    account_id: "a1".into(),
+                    to_account_id: None,
+                    category_id: None,
+                    tx_type: TransactionType::Income,
+                    amount: 3000.0,
+                    currency: "USD".into(),
+                    date: "2026-09-15".into(),
+                    time: None,
+                    payee: None,
+                    note: None,
+                    status: TransactionStatus::Cleared,
+                    payment_type: PaymentType::Transfer,
+                    created_at: "".into(),
+                },
+                category_name: None,
+                category_icon: None,
+                category_color: None,
+                account_name: None,
+                account_color: None,
+                account_icon: None,
+                account_currency: None,
+                to_account_name: None,
+                to_account_currency: None,
+            },
+        ];
+
+        let trends = calculate_monthly_trends(&txs, 2026, 10, 3);
+        assert_eq!(trends.len(), 3); // Aug, Sep, Oct
+        assert_eq!(trends[1].month_prefix, "2026-09");
+        assert_eq!(trends[1].income, 3000.0);
     }
 }

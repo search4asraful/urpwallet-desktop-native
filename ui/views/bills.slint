@@ -161,6 +161,15 @@ export component BillsView inherits VerticalLayout {
                                 font-weight: 800;
                             }
                             AppButton {
+                                width: 78px;
+                                text: "Pay Now";
+                                small: true;
+                                btn-color: Theme.primary;
+                                clicked => {
+                                    root.execute-bill-payment(bill.id);
+                                }
+                            }
+                            AppButton {
                                 width: 56px;
                                 text: "Details";
                                 small: true;
@@ -168,15 +177,6 @@ export component BillsView inherits VerticalLayout {
                                 btn-color: Theme.info;
                                 clicked => {
                                     root.select-bill(bill);
-                                }
-                            }
-                            AppButton {
-                                width: 78px;
-                                text: "1-Click Pay";
-                                small: true;
-                                btn-color: Theme.primary;
-                                clicked => {
-                                    root.execute-bill-payment(bill.id);
                                 }
                             }
                             AppButton {

@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
-import { CategorySpendingItem } from "../models.slint";
-import { StatCard, Badge, ProgressBar } from "../components.slint";
+import { CategorySpendingItem, WeeklyFlowItem, MonthlyTrendItem } from "../models.slint";
+import { StatCard, Badge, ProgressBar, AppButton } from "../components.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component ReportsView inherits ScrollView {
@@ -9,10 +9,20 @@ export component ReportsView inherits ScrollView {
     in property <string> savings-rate: "0%";
     in property <string> balance-change: "$0.00";
     in property <[CategorySpendingItem]> category-breakdown: [];
+    in property <[WeeklyFlowItem]> weekly-flow: [];
+    in property <[MonthlyTrendItem]> monthly-trends: [];
+    in property <string> daily-average: "$0.00";
+    in property <string> top-category-name: "None";
+    in property <string> top-category-amount: "$0.00";
+    in property <bool> has-data: false;
+
+    callback add-transaction();
 
     VerticalLayout {
-        spacing: 10px;
+        spacing: 12px;
+        padding-bottom: 20px;
 
+        // 1. Top 4 High-Level KPI Stat Cards
         HorizontalLayout {
             height: 80px;
             spacing: 10px;
@@ -26,39 +36,142 @@ export component ReportsView inherits ScrollView {
             StatCard {
                 title: "TOTAL EXPENSES";
                 value: root.monthly-expense;
-                subtitle: "Current month expenses";
+                subtitle: "Current month spending";
                 accent-color: Theme.danger;
+            }
+            StatCard {
+                title: "NET SAVINGS";
+                value: root.balance-change;
+                subtitle: "Retained capital delta";
+                accent-color: Theme.info;
             }
             StatCard {
                 title: "SAVINGS RATE";
                 value: root.savings-rate;
-                subtitle: "Retained Capital Ratio";
-                accent-color: Theme.info;
+                subtitle: "Income retained ratio";
+                accent-color: Theme.accent;
             }
         }
 
-        // Monthly Financial Performance Summary Card
-        Rectangle {
+        // 2. Empty State Message Card (When no transaction data exists)
+        if !root.has-data: Rectangle {
             background: Theme.surface;
             border-color: Theme.border;
             border-width: 1px;
-            border-radius: 8px;
+            border-radius: 10px;
 
             VerticalLayout {
-                padding-left: 14px;
-                padding-right: 14px;
-                padding-top: 12px;
-                padding-bottom: 12px;
-                spacing: 8px;
+                padding-top: 36px;
+                padding-bottom: 36px;
+                padding-left: 20px;
+                padding-right: 20px;
+                spacing: 12px;
+                alignment: center;
+
+                // Visual Chart Icon
+                HorizontalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 56px;
+                        height: 56px;
+                        border-radius: 28px;
+                        background: Theme.primary.transparentize(88%);
+                        border-width: 1px;
+                        border-color: Theme.primary.transparentize(50%);
+
+                        HorizontalLayout {
+                            alignment: center;
+                            spacing: 4px;
+                            padding-top: 14px;
+                            padding-bottom: 14px;
+
+                            VerticalLayout {
+                                alignment: end;
+                                Rectangle { width: 5px; height: 12px; border-radius: 2px; background: Theme.primary; }
+                            }
+                            VerticalLayout {
+                                alignment: end;
+                                Rectangle { width: 5px; height: 22px; border-radius: 2px; background: Theme.primary; }
+                            }
+                            VerticalLayout {
+                                alignment: end;
+                                Rectangle { width: 5px; height: 16px; border-radius: 2px; background: Theme.primary; }
+                            }
+                            VerticalLayout {
+                                alignment: end;
+                                Rectangle { width: 5px; height: 26px; border-radius: 2px; background: Theme.primary; }
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    text: "No Cash Flow or Transaction Data Yet";
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: Theme.text-primary;
+                    horizontal-alignment: center;
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    Text {
+                        text: "Record your income and expense transactions to unlock weekly cash flow pacing, growth trajectory graphs, and category spending allocations.";
+                        font-size: 11px;
+                        color: Theme.text-muted;
+                        horizontal-alignment: center;
+                        wrap: word-wrap;
+                        width: 480px;
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    padding-top: 6px;
+                    AppButton {
+                        text: "+ Log First Transaction";
+                        btn-color: Theme.primary;
+                        small: true;
+                        clicked => { root.add-transaction(); }
+                    }
+                }
+            }
+        }
+
+        // 3. Cash Flow Charts & Reports (Rendered when transaction data exists)
+        if root.has-data: VerticalLayout {
+            spacing: 12px;
+
+            // Monthly Financial Flow & Performance Overview
+            Rectangle {
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 8px;
+
+                VerticalLayout {
+                    padding-left: 14px;
+                    padding-right: 14px;
+                    padding-top: 12px;
+                    padding-bottom: 12px;
+                    spacing: 10px;
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text {
-                        text: "Monthly Flow & Performance Overview";
-                        color: Theme.text-primary;
-                        font-size: 13px;
-                        font-weight: 700;
-                        vertical-alignment: center;
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Monthly Flow & Performance Overview";
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "Aggregated monthly cash inflows, outflows, and daily pacing";
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                        }
                     }
                     Badge {
                         text: "Net Savings: " + root.balance-change;
@@ -69,49 +182,97 @@ export component ReportsView inherits ScrollView {
                 HorizontalLayout {
                     spacing: 8px;
                     Rectangle {
+                        horizontal-stretch: 1;
                         background: Theme.surface-subtle;
                         border-color: Theme.border;
                         border-width: 1px;
-                        border-radius: 5px;
-                        height: 48px;
+                        border-radius: 6px;
+                        height: 52px;
                         VerticalLayout {
                             alignment: center;
-                            padding-left: 10px;
-                            Text { text: "INCOME GENERATED"; font-size: 10px; font-weight: 700; color: Theme.text-muted; }
+                            padding-left: 12px;
+                            spacing: 2px;
+                            Text { text: "INCOME GENERATED"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
                             Text { text: root.monthly-income; font-size: 14px; font-weight: 800; color: Theme.primary; }
                         }
                     }
                     Rectangle {
+                        horizontal-stretch: 1;
                         background: Theme.surface-subtle;
                         border-color: Theme.border;
                         border-width: 1px;
-                        border-radius: 5px;
-                        height: 48px;
+                        border-radius: 6px;
+                        height: 52px;
                         VerticalLayout {
                             alignment: center;
-                            padding-left: 10px;
-                            Text { text: "TOTAL EXPENDITURES"; font-size: 10px; font-weight: 700; color: Theme.text-muted; }
+                            padding-left: 12px;
+                            spacing: 2px;
+                            Text { text: "TOTAL EXPENDITURES"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
                             Text { text: root.monthly-expense; font-size: 14px; font-weight: 800; color: Theme.danger; }
                         }
                     }
                     Rectangle {
+                        horizontal-stretch: 1;
                         background: Theme.surface-subtle;
                         border-color: Theme.border;
                         border-width: 1px;
-                        border-radius: 5px;
-                        height: 48px;
+                        border-radius: 6px;
+                        height: 52px;
                         VerticalLayout {
                             alignment: center;
-                            padding-left: 10px;
-                            Text { text: "NET SAVINGS DELTA"; font-size: 10px; font-weight: 700; color: Theme.text-muted; }
-                            Text { text: root.balance-change; font-size: 14px; font-weight: 800; color: Theme.info; }
+                            padding-left: 12px;
+                            spacing: 2px;
+                            Text { text: "DAILY AVERAGE SPEND"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: root.daily-average; font-size: 14px; font-weight: 800; color: Theme.info; }
+                        }
+                    }
+                }
+
+                // Quick Insights Footer
+                HorizontalLayout {
+                    alignment: space-between;
+                    padding-top: 2px;
+
+                    HorizontalLayout {
+                        spacing: 6px;
+                        Text {
+                            text: "Top Expense Category:";
+                            font-size: 10px;
+                            font-weight: 600;
+                            color: Theme.text-muted;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: root.top-category-name + " (" + root.top-category-amount + ")";
+                            font-size: 10px;
+                            font-weight: 700;
+                            color: Theme.text-primary;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 6px;
+                        Text {
+                            text: "Monthly Savings Rate:";
+                            font-size: 10px;
+                            font-weight: 600;
+                            color: Theme.text-muted;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: root.savings-rate;
+                            font-size: 10px;
+                            font-weight: 700;
+                            color: Theme.primary;
+                            vertical-alignment: center;
                         }
                     }
                 }
             }
         }
 
-        // Category Breakdown Card
+        // 4. Weekly Cash Flow Pacing (Income vs. Expense by Week)
         Rectangle {
             background: Theme.surface;
             border-color: Theme.border;
@@ -122,42 +283,479 @@ export component ReportsView inherits ScrollView {
                 padding-left: 14px;
                 padding-right: 14px;
                 padding-top: 12px;
-                padding-bottom: 12px;
-                spacing: 10px;
-                Text {
-                    text: "Spending Breakdown by Category";
-                    color: Theme.text-primary;
-                    height: 25px;
-                    font-size: 13px;
-                    font-weight: 700;
-                    vertical-alignment: center;
-                }
+                padding-bottom: 14px;
+                spacing: 12px;
 
-                for item in root.category-breakdown: VerticalLayout {
-                    height: 40px;
-                    spacing: 3px;
-                    HorizontalLayout {
-                        alignment: space-between;
+                HorizontalLayout {
+                    alignment: space-between;
+                    VerticalLayout {
+                        spacing: 2px;
                         Text {
-                            text: item.name;
+                            text: "Weekly Cash Flow Pacing";
                             color: Theme.text-primary;
-                            font-size: 11px;
-                            font-weight: 600;
-                            vertical-alignment: center;
+                            font-size: 13px;
+                            font-weight: 700;
                         }
                         Text {
-                            text: item.total + " (" + Math.round(item.percentage) + "%)";
-                            color: Theme.text-secondary;
-                            font-size: 11px;
-                            font-weight: 600;
-                            vertical-alignment: center;
+                            text: "Week-by-week cash inflow vs. outflow distribution for this month";
+                            color: Theme.text-muted;
+                            font-size: 10px;
                         }
                     }
-                    ProgressBar {
-                        progress: item.percentage / 100.0;
+
+                    // Legend
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: center;
+
+                        HorizontalLayout {
+                            spacing: 5px;
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle { width: 8px; height: 8px; border-radius: 2px; background: Theme.primary; }
+                                Text { text: "Income"; font-size: 10px; font-weight: 600; color: Theme.text-secondary; }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 5px;
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle { width: 8px; height: 8px; border-radius: 2px; background: Theme.danger; }
+                                Text { text: "Expense"; font-size: 10px; font-weight: 600; color: Theme.text-secondary; }
+                            }
+                        }
+                    }
+                }
+
+                // Empty state when no transactions in current month
+                if root.monthly-income == "$0.00" && root.monthly-expense == "$0.00": Rectangle {
+                    height: 72px;
+                    background: Theme.surface-subtle;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    border-radius: 6px;
+
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 4px;
+                        padding-left: 14px;
+                        padding-right: 14px;
+
+                        Text {
+                            text: "No weekly cash flow recorded for this month.";
+                            font-size: 11px;
+                            font-weight: 600;
+                            color: Theme.text-secondary;
+                            horizontal-alignment: center;
+                        }
+                        Text {
+                            text: "Weekly inflow and outflow bars will visualize here once transactions are recorded in this month.";
+                            font-size: 10px;
+                            color: Theme.text-muted;
+                            horizontal-alignment: center;
+                        }
+                    }
+                }
+
+                // Weekly Flow Chart Columns
+                if root.monthly-income != "$0.00" || root.monthly-expense != "$0.00": HorizontalLayout {
+                    spacing: 8px;
+
+                    for week in root.weekly-flow: Rectangle {
+                        horizontal-stretch: 1;
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 6px;
+
+                        VerticalLayout {
+                            padding: 8px;
+                            spacing: 6px;
+                            alignment: center;
+
+                            // Week Header
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text {
+                                    text: week.label;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    color: Theme.text-primary;
+                                }
+                                Text {
+                                    text: week.date_range;
+                                    font-size: 9px;
+                                    font-weight: 500;
+                                    color: Theme.text-muted;
+                                }
+                            }
+
+                            // Dual Bars Area
+                            Rectangle {
+                                height: 85px;
+
+                                // Subtle baseline
+                                Rectangle {
+                                    y: parent.height - 1px;
+                                    width: 100%;
+                                    height: 1px;
+                                    background: Theme.border;
+                                }
+
+                                HorizontalLayout {
+                                    alignment: center;
+                                    spacing: 8px;
+                                    height: 100%;
+
+                                    // Income Bar
+                                    VerticalLayout {
+                                        alignment: end;
+                                        Rectangle {
+                                            width: 14px;
+                                            height: max(4px, 72px * week.income_ratio);
+                                            border-radius: 3px;
+                                            background: Theme.primary;
+                                        }
+                                    }
+
+                                    // Expense Bar
+                                    VerticalLayout {
+                                        alignment: end;
+                                        Rectangle {
+                                            width: 14px;
+                                            height: max(4px, 72px * week.expense_ratio);
+                                            border-radius: 3px;
+                                            background: Theme.danger;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Delta Badge
+                            HorizontalLayout {
+                                alignment: center;
+                                Badge {
+                                    text: week.net;
+                                    badge-color: week.is_positive ? Theme.primary : Theme.danger;
+                                }
+                            }
+
+                            // Figures
+                            VerticalLayout {
+                                spacing: 2px;
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text {
+                                        text: "Income";
+                                        font-size: 9px;
+                                        color: Theme.text-muted;
+                                    }
+                                    Text {
+                                        text: week.income;
+                                        font-size: 9px;
+                                        font-weight: 600;
+                                        color: Theme.primary;
+                                    }
+                                }
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text {
+                                        text: "Expense";
+                                        font-size: 9px;
+                                        color: Theme.text-muted;
+                                    }
+                                    Text {
+                                        text: week.expense;
+                                        font-size: 9px;
+                                        font-weight: 600;
+                                        color: Theme.danger;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 5. Multi-Month Growth & Trend Graph
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 8px;
+
+            VerticalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-top: 12px;
+                padding-bottom: 14px;
+                spacing: 12px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Monthly Performance & Trajectory Trend";
+                            color: Theme.text-primary;
+                            font-size: 13px;
+                            font-weight: 700;
+                        }
+                        Text {
+                            text: "Comparative cash flow trajectory across the recent 4 months";
+                            color: Theme.text-muted;
+                            font-size: 10px;
+                        }
+                    }
+
+                    // Legend
+                    HorizontalLayout {
+                        spacing: 12px;
+                        alignment: center;
+
+                        HorizontalLayout {
+                            spacing: 5px;
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle { width: 8px; height: 8px; border-radius: 2px; background: Theme.primary; }
+                                Text { text: "Income"; font-size: 10px; font-weight: 600; color: Theme.text-secondary; }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 5px;
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle { width: 8px; height: 8px; border-radius: 2px; background: Theme.danger; }
+                                Text { text: "Expense"; font-size: 10px; font-weight: 600; color: Theme.text-secondary; }
+                            }
+                        }
+                    }
+                }
+
+                // Month Columns
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    for trend in root.monthly-trends: Rectangle {
+                        horizontal-stretch: 1;
+                        background: Theme.surface-subtle;
+                        border-color: Theme.border;
+                        border-width: 1px;
+                        border-radius: 6px;
+
+                        VerticalLayout {
+                            padding: 8px;
+                            spacing: 6px;
+                            alignment: center;
+
+                            Text {
+                                text: trend.month_name;
+                                font-size: 11px;
+                                font-weight: 700;
+                                color: Theme.text-primary;
+                                horizontal-alignment: center;
+                            }
+
+                            // Dual Bars Area
+                            Rectangle {
+                                height: 80px;
+
+                                // Baseline
+                                Rectangle {
+                                    y: parent.height - 1px;
+                                    width: 100%;
+                                    height: 1px;
+                                    background: Theme.border;
+                                }
+
+                                HorizontalLayout {
+                                    alignment: center;
+                                    spacing: 8px;
+                                    height: 100%;
+
+                                    // Income Bar
+                                    VerticalLayout {
+                                        alignment: end;
+                                        Rectangle {
+                                            width: 14px;
+                                            height: max(4px, 68px * trend.income_ratio);
+                                            border-radius: 3px;
+                                            background: Theme.primary;
+                                        }
+                                    }
+
+                                    // Expense Bar
+                                    VerticalLayout {
+                                        alignment: end;
+                                        Rectangle {
+                                            width: 14px;
+                                            height: max(4px, 68px * trend.expense_ratio);
+                                            border-radius: 3px;
+                                            background: Theme.danger;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Delta Badge
+                            HorizontalLayout {
+                                alignment: center;
+                                Badge {
+                                    text: trend.net;
+                                    badge-color: trend.is_positive ? Theme.primary : Theme.danger;
+                                }
+                            }
+
+                            // Figures
+                            VerticalLayout {
+                                spacing: 2px;
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text {
+                                        text: "Income";
+                                        font-size: 9px;
+                                        color: Theme.text-muted;
+                                    }
+                                    Text {
+                                        text: trend.income;
+                                        font-size: 9px;
+                                        font-weight: 600;
+                                        color: Theme.primary;
+                                    }
+                                }
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text {
+                                        text: "Expense";
+                                        font-size: 9px;
+                                        color: Theme.text-muted;
+                                    }
+                                    Text {
+                                        text: trend.expense;
+                                        font-size: 9px;
+                                        font-weight: 600;
+                                        color: Theme.danger;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 6. Spending Breakdown by Category Card
+        Rectangle {
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: 8px;
+
+            VerticalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-top: 12px;
+                padding-bottom: 14px;
+                spacing: 10px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: "Spending Breakdown by Category";
+                        color: Theme.text-primary;
+                        font-size: 13px;
+                        font-weight: 700;
+                        vertical-alignment: center;
+                    }
+                    if root.category-breakdown.length > 0: Text {
+                        text: "" + root.category-breakdown.length + " Categories";
+                        color: Theme.text-muted;
+                        font-size: 10px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // Empty notice when no categories have spending
+                if root.category-breakdown.length == 0: Rectangle {
+                    height: 80px;
+                    background: Theme.surface-subtle;
+                    border-radius: 6px;
+                    border-color: Theme.border;
+                    border-width: 1px;
+
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 4px;
+                        padding-left: 16px;
+                        padding-right: 16px;
+
+                        Text {
+                            text: "No category spending recorded for this month.";
+                            font-size: 11px;
+                            font-weight: 600;
+                            color: Theme.text-secondary;
+                            horizontal-alignment: center;
+                        }
+                        Text {
+                            text: "Categorized expense transactions will automatically generate allocation percentages and progress bars here.";
+                            font-size: 10px;
+                            color: Theme.text-muted;
+                            horizontal-alignment: center;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+
+                // Category List
+                if root.category-breakdown.length > 0: VerticalLayout {
+                    spacing: 8px;
+                    for item in root.category-breakdown: VerticalLayout {
+                        height: 40px;
+                        spacing: 3px;
+                        HorizontalLayout {
+                            alignment: space-between;
+                            HorizontalLayout {
+                                spacing: 6px;
+                                VerticalLayout {
+                                    alignment: center;
+                                    Rectangle {
+                                        width: 8px;
+                                        height: 8px;
+                                        border-radius: 4px;
+                                        background: item.color != "" ? @linear-gradient(90deg, Theme.primary, Theme.accent) : Theme.primary;
+                                    }
+                                }
+                                Text {
+                                    text: item.name;
+                                    color: Theme.text-primary;
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            Text {
+                                text: item.total + " (" + Math.round(item.percentage) + "%)";
+                                color: Theme.text-secondary;
+                                font-size: 11px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                            }
+                        }
+                        ProgressBar {
+                            progress: item.percentage / 100.0;
+                        }
                     }
                 }
             }
         }
     }
+}
 }

@@ -455,3 +455,66 @@ pub fn delete_transaction(conn: &mut Connection, id: &str) -> DbResult<()> {
     tx.commit()?;
     Ok(())
 }
+
+pub fn delete_transactions_bulk(conn: &mut Connection, ids: &[String]) -> DbResult<usize> {
+    if ids.is_empty() {
+        return Ok(0);
+    }
+
+    let now = Utc::now().to_rfc3339();
+    let tx = conn.transaction()?;
+    let mut deleted_count = 0;
+
+    for id in ids {
+        let old_tx_opt = tx.query_row(
+            "SELECT account_id, to_account_id, type, amount FROM transactions WHERE id = ?1",
+            params![id],
+            |row| {
+                let tx_type_str: String = row.get(2)?;
+                let tx_type = TransactionType::from_str_val(&tx_type_str).unwrap_or(TransactionType::Expense);
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, Option<String>>(1)?,
+                    tx_type,
+                    row.get::<_, f64>(3)?,
+                ))
+            },
+        ).optional()?;
+
+        let Some((account_id, to_account_id, tx_type, amount)) = old_tx_opt else { continue };
+
+        // Revert balances
+        match tx_type {
+            TransactionType::Expense => {
+                tx.execute(
+                    "UPDATE accounts SET balance = balance + ?1, updated_at = ?2 WHERE id = ?3",
+                    params![amount, now, account_id],
+                )?;
+            }
+            TransactionType::Income => {
+                tx.execute(
+                    "UPDATE accounts SET balance = balance - ?1, updated_at = ?2 WHERE id = ?3",
+                    params![amount, now, account_id],
+                )?;
+            }
+            TransactionType::Transfer => {
+                tx.execute(
+                    "UPDATE accounts SET balance = balance + ?1, updated_at = ?2 WHERE id = ?3",
+                    params![amount, now, account_id],
+                )?;
+                if let Some(ref to_id) = to_account_id {
+                    tx.execute(
+                        "UPDATE accounts SET balance = balance - ?1, updated_at = ?2 WHERE id = ?3",
+                        params![amount, now, to_id],
+                    )?;
+                }
+            }
+        }
+
+        tx.execute("DELETE FROM transactions WHERE id = ?1", params![id])?;
+        deleted_count += 1;
+    }
+
+    tx.commit()?;
+    Ok(deleted_count)
+}

@@ -1,18 +1,42 @@
-use chrono::Utc;
-use slint::ComponentHandle;
+use std::cell::RefCell;
+use std::collections::HashSet;
+use std::rc::Rc;
+use chrono::{Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use slint::{ComponentHandle, Model, ModelRc, VecModel};
 
 use urpwallet::db::models::{
     CategoryType, CreateTransactionInput, PaymentType, TransactionType,
     UpdateTransactionInput,
 };
 use urpwallet::db::Database;
-use urpwallet::logic::format_currency;
+use urpwallet::logic::{format_date, parse_date_input};
 
-use crate::{MainWindow, TransactionItem};
+use crate::MainWindow;
+use crate::ui::mappers::map_tx_item;
 use crate::ui::refresh::{refresh_categories, refresh_transactions, refresh_ui};
+
+fn sync_tx_selection_ui(ui: &MainWindow, selected_set: &HashSet<String>) {
+    let model = ui.get_all_transactions();
+    let count = model.row_count();
+    let mut updated = Vec::with_capacity(count);
+    let mut selected_count = 0;
+    for i in 0..count {
+        if let Some(mut tx) = model.row_data(i) {
+            let is_sel = selected_set.contains(tx.id.as_str());
+            if is_sel {
+                selected_count += 1;
+            }
+            tx.selected = is_sel;
+            updated.push(tx);
+        }
+    }
+    ui.set_all_transactions(ModelRc::from(Rc::new(VecModel::from(updated))));
+    ui.set_selected_tx_count(selected_count);
+}
 
 /// Registers all transaction-related event handlers on the main window.
 pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
+    let selected_ids = Rc::new(RefCell::new(HashSet::<String>::new()));
     // F. View Transaction Details Modal
     {
         let ui_weak = ui.as_weak();
@@ -22,45 +46,13 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
             let privacy = ui.get_privacy_mode();
 
             if let Ok(item) = db_clone.get_transaction(tx_id.as_str()) {
-                let tx = item.transaction;
-                let is_income = tx.tx_type == TransactionType::Income;
-                let is_transfer = tx.tx_type == TransactionType::Transfer;
-                let prefix = if is_income { "+" } else if is_transfer { "⇄ " } else { "-" };
-                let acc_name = item.account_name.unwrap_or_default();
-                let to_acc_name = item.to_account_name.unwrap_or_default();
-                let cat_name = item.category_name.unwrap_or_else(|| "Expense".into());
+                let date_fmt = db_clone
+                    .get_setting("date_format")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| "YYYY-MM-DD".to_string());
 
-                let title = tx.payee.clone().unwrap_or_else(|| {
-                    if is_transfer {
-                        format!("{acc_name} → {to_acc_name}")
-                    } else {
-                        cat_name.clone()
-                    }
-                });
-
-                ui.set_detail_tx(TransactionItem {
-                    id: tx.id.clone().into(),
-                    date: tx.date.clone().into(),
-                    time: tx.time.clone().unwrap_or_default().into(),
-                    title: title.into(),
-                    subtitle: acc_name.clone().into(),
-                    amount: format!("{}{}", prefix, format_currency(tx.amount, &tx.currency, privacy)).into(),
-                    raw_amount: tx.amount.to_string().into(),
-                    is_income,
-                    is_transfer,
-                    color: item.category_color.clone().unwrap_or_else(|| "#64748B".into()).into(),
-                    account_id: tx.account_id.clone().into(),
-                    account_name: acc_name.into(),
-                    to_account_id: tx.to_account_id.unwrap_or_default().into(),
-                    to_account_name: to_acc_name.into(),
-                    category_id: tx.category_id.unwrap_or_default().into(),
-                    category_name: cat_name.into(),
-                    payee: tx.payee.unwrap_or_default().into(),
-                    note: tx.note.unwrap_or_default().into(),
-                    payment_type: tx.payment_type.as_str().into(),
-                    status: tx.status.as_str().into(),
-                });
-
+                ui.set_detail_tx(map_tx_item(&item, privacy, &date_fmt));
                 ui.set_show_tx_detail_modal(true);
             }
         });
@@ -72,14 +64,33 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
         let db_clone = db.clone();
         ui.on_open_add_tx(move |tx_type| {
             let Some(ui) = ui_weak.upgrade() else { return; };
-            let today = Utc::now().format("%Y-%m-%d").to_string();
+            let date_fmt = db_clone
+                .get_setting("date_format")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "YYYY-MM-DD".to_string());
+            let now = Local::now();
+            let today_iso = now.format("%Y-%m-%d").to_string();
+            let formatted_date = format_date(&today_iso, &date_fmt);
+            let current_time = now.format("%H:%M").to_string();
             ui.set_modal_tx_is_editing(false);
             ui.set_modal_tx_id("".into());
             ui.set_modal_tx_type(tx_type);
             ui.set_modal_amount("".into());
             ui.set_modal_payee("".into());
             ui.set_modal_note("".into());
-            ui.set_modal_date(today.into());
+            ui.set_modal_date(formatted_date.into());
+            ui.set_modal_time(current_time.into());
+            ui.set_modal_date_year(now.year());
+            ui.set_modal_date_month(now.month() as i32);
+            ui.set_modal_date_day(now.day() as i32);
+            ui.set_modal_time_hour(now.hour() as i32);
+            ui.set_modal_time_minute(now.minute() as i32);
+            ui.set_today_year(now.year());
+            ui.set_today_month(now.month() as i32);
+            ui.set_today_day(now.day() as i32);
+            ui.set_today_hour(now.hour() as i32);
+            ui.set_today_minute(now.minute() as i32);
             ui.set_modal_error("".into());
 
             if let Ok(accs) = db_clone.list_accounts(false) {
@@ -168,9 +179,41 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
                 ui.set_modal_to_account_name(item.to_account_name.unwrap_or_default().into());
                 ui.set_modal_category_id(tx.category_id.clone().unwrap_or_default().into());
                 ui.set_modal_category_name(item.category_name.unwrap_or_default().into());
+                let now = Local::now();
+                ui.set_today_year(now.year());
+                ui.set_today_month(now.month() as i32);
+                ui.set_today_day(now.day() as i32);
+                ui.set_today_hour(now.hour() as i32);
+                ui.set_today_minute(now.minute() as i32);
+
+                let date_fmt = db_clone
+                    .get_setting("date_format")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| "YYYY-MM-DD".to_string());
+                let (date_year, date_month, date_day) = match NaiveDate::parse_from_str(&tx.date, "%Y-%m-%d") {
+                    Ok(d) => (d.year(), d.month() as i32, d.day() as i32),
+                    Err(_) => (now.year(), now.month() as i32, now.day() as i32),
+                };
+
+                let time_str = tx.time.clone().unwrap_or_else(|| now.format("%H:%M").to_string());
+                let (time_hour, time_minute) = match NaiveTime::parse_from_str(&time_str, "%H:%M")
+                    .or_else(|_| NaiveTime::parse_from_str(&time_str, "%H:%M:%S"))
+                {
+                    Ok(t) => (t.hour() as i32, t.minute() as i32),
+                    Err(_) => (now.hour() as i32, now.minute() as i32),
+                };
+
+                let formatted_date = format_date(&tx.date, &date_fmt);
                 ui.set_modal_payee(tx.payee.unwrap_or_default().into());
                 ui.set_modal_note(tx.note.unwrap_or_default().into());
-                ui.set_modal_date(tx.date.into());
+                ui.set_modal_date(formatted_date.into());
+                ui.set_modal_time(time_str.into());
+                ui.set_modal_date_year(date_year);
+                ui.set_modal_date_month(date_month);
+                ui.set_modal_date_day(date_day);
+                ui.set_modal_time_hour(time_hour);
+                ui.set_modal_time_minute(time_minute);
                 ui.set_modal_error("".into());
                 ui.set_modal_cat_show_all(false);
 
@@ -186,7 +229,7 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
         let ui_weak = ui.as_weak();
         let db_clone = db.clone();
         ui.on_submit_save_tx(
-            move |is_editing, tx_id, tx_type_int, amount_str, account_id, to_account_id, category_id, payee, note, date| {
+            move |is_editing, tx_id, tx_type_int, amount_str, account_id, to_account_id, category_id, payee, note, date, time| {
                 let Some(ui) = ui_weak.upgrade() else { return; };
 
                 let amount: f64 = match amount_str.trim().parse() {
@@ -232,11 +275,48 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
                 let cat = if category_id.is_empty() { None } else { Some(category_id.to_string()) };
                 let payee_opt = if payee.trim().is_empty() { None } else { Some(payee.trim().to_string()) };
                 let note_opt = if note.trim().is_empty() { None } else { Some(note.trim().to_string()) };
+
+                let date_fmt = db_clone
+                    .get_setting("date_format")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| "YYYY-MM-DD".to_string());
+
+                let now = Local::now();
                 let date_str = if date.trim().is_empty() {
-                    Utc::now().format("%Y-%m-%d").to_string()
+                    now.format("%Y-%m-%d").to_string()
                 } else {
                     date.trim().to_string()
                 };
+
+                let parsed_date = match parse_date_input(&date_str, &date_fmt) {
+                    Ok(d) => d,
+                    Err(_) => {
+                        let example = format_date("2026-10-29", &date_fmt);
+                        ui.set_modal_error(format!("Please enter a valid date in {date_fmt} format (e.g. {example})").into());
+                        return;
+                    }
+                };
+
+                let time_str = if time.trim().is_empty() {
+                    now.format("%H:%M").to_string()
+                } else {
+                    time.trim().to_string()
+                };
+
+                let parsed_time = match NaiveTime::parse_from_str(&time_str, "%H:%M")
+                    .or_else(|_| NaiveTime::parse_from_str(&time_str, "%H:%M:%S"))
+                {
+                    Ok(t) => t,
+                    Err(_) => {
+                        ui.set_modal_error("Please enter a valid time in HH:MM format (e.g. 14:30)".into());
+                        return;
+                    }
+                };
+
+                let _unified_dt: NaiveDateTime = NaiveDateTime::new(parsed_date, parsed_time);
+                let formatted_date = parsed_date.format("%Y-%m-%d").to_string();
+                let formatted_time = parsed_time.format("%H:%M").to_string();
 
                 let result = if is_editing {
                     db_clone.update_transaction(
@@ -248,8 +328,8 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
                             tx_type: Some(tx_type),
                             amount: Some(amount),
                             currency: None,
-                            date: Some(date_str),
-                            time: None,
+                            date: Some(formatted_date),
+                            time: Some(Some(formatted_time)),
                             payee: Some(payee_opt),
                             note: Some(note_opt),
                             status: None,
@@ -265,8 +345,8 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
                         tx_type,
                         amount,
                         currency: None,
-                        date: Some(date_str),
-                        time: Some(Utc::now().format("%H:%M").to_string()),
+                        date: Some(formatted_date),
+                        time: Some(formatted_time),
                         payee: payee_opt,
                         note: note_opt,
                         status: None,
@@ -291,21 +371,99 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
     {
         let ui_weak = ui.as_weak();
         let db_clone = db.clone();
+        let selected_ids_clone = selected_ids.clone();
         ui.on_search_transactions(move |query, filter_type| {
             let Some(ui) = ui_weak.upgrade() else { return; };
             ui.set_tx_search_query(query.clone());
             ui.set_tx_filter_type(filter_type);
+            selected_ids_clone.borrow_mut().clear();
+            ui.set_selected_tx_count(0);
             refresh_transactions(&ui, &db_clone);
         });
     }
 
-    // P. Delete Transaction
+    // P. Delete Single Transaction
     {
         let ui_weak = ui.as_weak();
         let db_clone = db.clone();
+        let selected_ids_clone = selected_ids.clone();
         ui.on_delete_transaction(move |id| {
             let Some(ui) = ui_weak.upgrade() else { return; };
-            if db_clone.delete_transaction(id.as_str()).is_ok() {
+            let id_str = id.to_string();
+            if db_clone.delete_transaction(id_str.as_str()).is_ok() {
+                selected_ids_clone.borrow_mut().remove(&id_str);
+                ui.set_selected_tx_count(selected_ids_clone.borrow().len() as i32);
+                refresh_ui(&ui, &db_clone);
+            }
+        });
+    }
+
+    // R. Toggle Transaction Selection
+    {
+        let ui_weak = ui.as_weak();
+        let selected_ids_clone = selected_ids.clone();
+        ui.on_toggle_tx_selection(move |id| {
+            let Some(ui) = ui_weak.upgrade() else { return; };
+            let id_str = id.to_string();
+            {
+                let mut set = selected_ids_clone.borrow_mut();
+                if set.contains(&id_str) {
+                    set.remove(&id_str);
+                } else {
+                    set.insert(id_str);
+                }
+            }
+            sync_tx_selection_ui(&ui, &selected_ids_clone.borrow());
+        });
+    }
+
+    // S. Select All Visible Transactions
+    {
+        let ui_weak = ui.as_weak();
+        let selected_ids_clone = selected_ids.clone();
+        ui.on_select_all_txs(move |select_all| {
+            let Some(ui) = ui_weak.upgrade() else { return; };
+            {
+                let mut set = selected_ids_clone.borrow_mut();
+                set.clear();
+                if select_all {
+                    let model = ui.get_all_transactions();
+                    for i in 0..model.row_count() {
+                        if let Some(tx) = model.row_data(i) {
+                            set.insert(tx.id.to_string());
+                        }
+                    }
+                }
+            }
+            sync_tx_selection_ui(&ui, &selected_ids_clone.borrow());
+        });
+    }
+
+    // T. Clear Selection
+    {
+        let ui_weak = ui.as_weak();
+        let selected_ids_clone = selected_ids.clone();
+        ui.on_clear_tx_selection(move || {
+            let Some(ui) = ui_weak.upgrade() else { return; };
+            selected_ids_clone.borrow_mut().clear();
+            sync_tx_selection_ui(&ui, &selected_ids_clone.borrow());
+        });
+    }
+
+    // U. Bulk Delete Selected Transactions
+    {
+        let ui_weak = ui.as_weak();
+        let selected_ids_clone = selected_ids.clone();
+        let db_clone = db.clone();
+        ui.on_bulk_delete_selected(move || {
+            let Some(ui) = ui_weak.upgrade() else { return; };
+            let ids: Vec<String> = selected_ids_clone.borrow().iter().cloned().collect();
+            if ids.is_empty() { return; }
+
+            if let Ok(count) = db_clone.delete_transactions_bulk(&ids) {
+                selected_ids_clone.borrow_mut().clear();
+                ui.set_selected_tx_count(0);
+                ui.set_settings_status_msg(format!("Successfully deleted {count} transactions").into());
                 refresh_ui(&ui, &db_clone);
             }
         });

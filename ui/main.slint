@@ -3,11 +3,11 @@ export { Theme } from "theme.slint";
 
 import {
     AccountItem, TransactionItem, BudgetItem, BillItem, DebtItem, CategoryItem,
-    CategorySpendingItem, GDriveBackupItem
+    CategorySpendingItem, WeeklyFlowItem, MonthlyTrendItem, GDriveBackupItem
 } from "models.slint";
 export {
     AccountItem, TransactionItem, BudgetItem, BillItem, DebtItem, CategoryItem,
-    CategorySpendingItem, GDriveBackupItem
+    CategorySpendingItem, WeeklyFlowItem, MonthlyTrendItem, GDriveBackupItem
 } from "models.slint";
 
 import { Sidebar } from "views/sidebar.slint";
@@ -118,13 +118,21 @@ export component MainWindow inherits Window {
     in-out property <int> cat-income-count: 0;
     in-out property <[CategoryItem]> modal-categories: [];
     in-out property <[CategorySpendingItem]> category-breakdown: [];
+    in-out property <[WeeklyFlowItem]> weekly-flow: [];
+    in-out property <[MonthlyTrendItem]> monthly-trends: [];
+    in-out property <string> daily-average-expense: "$0.00";
+    in-out property <string> top-category-name: "None";
+    in-out property <string> top-category-amount: "$0.00";
+    in-out property <bool> reports-has-data: false;
 
     // Filter properties
     in-out property <int> tx-filter-type: 0; // 0: All, 1: Expense, 2: Income, 3: Transfer
     in-out property <string> tx-search-query: "";
+    in-out property <int> selected-tx-count: 0;
     in-out property <int> accounts-filter-tab: 0; // 0: All, 1: Assets, 2: Liabilities
     in-out property <int> debts-filter-tab: 0; // 0: All, 1: Lent, 2: Borrowed
     in-out property <int> cat-catalog-filter: 0; // 0: All, 1: Expense, 2: Income
+    in-out property <string> cat-search-query: "";
     in-out property <bool> modal-cat-show-all: false;
 
     // MODAL STATE
@@ -150,6 +158,17 @@ export component MainWindow inherits Window {
     in-out property <string> modal-payee: "";
     in-out property <string> modal-note: "";
     in-out property <string> modal-date: "";
+    in-out property <string> modal-time: "";
+    in-out property <int> modal-date-year: 2026;
+    in-out property <int> modal-date-month: 10;
+    in-out property <int> modal-date-day: 1;
+    in-out property <int> modal-time-hour: 12;
+    in-out property <int> modal-time-minute: 0;
+    in-out property <int> today-year: 2026;
+    in-out property <int> today-month: 10;
+    in-out property <int> today-day: 1;
+    in-out property <int> today-hour: 12;
+    in-out property <int> today-minute: 0;
     in-out property <string> modal-error: "";
 
     in-out property <bool> show-tx-detail-modal: false;
@@ -222,7 +241,7 @@ export component MainWindow inherits Window {
     callback open-edit-bill(string);
     callback open-edit-debt(string);
     callback close-all-modals();
-    callback submit-save-tx(bool, string, int, string, string, string, string, string, string, string);
+    callback submit-save-tx(bool, string, int, string, string, string, string, string, string, string, string);
     callback submit-save-account(bool, string, string, int, string, string, string);
     callback submit-save-budget(bool, string, string, string, string);
     callback submit-save-bill(bool, string, string, string, string, string, string, int, string);
@@ -243,11 +262,17 @@ export component MainWindow inherits Window {
     callback update-date-format(string);
     callback reset-and-seed-demo();
     callback add-category(string, int, string);
+    callback edit-category(string, string, int, string);
     callback delete-category(string);
     callback filter-accounts(int);
     callback filter-debts(int);
     callback filter-categories(int);
+    callback search-categories(string);
     callback toggle-modal-cat-filter();
+    callback toggle-tx-selection(string);
+    callback select-all-txs(bool);
+    callback clear-tx-selection();
+    callback bulk-delete-selected();
 
     // Root layout
     Rectangle {
@@ -317,12 +342,17 @@ export component MainWindow inherits Window {
                     tx-search-query <=> root.tx-search-query;
                     tx-filter-type <=> root.tx-filter-type;
                     all-transactions: root.all-transactions;
+                    selected-tx-count: root.selected-tx-count;
 
                     search-transactions(q, t) => { root.search-transactions(q, t); }
                     open-add-tx(t) => { root.open-add-tx(t); }
                     open-tx-details(id) => { root.open-tx-details(id); }
                     open-edit-tx(id) => { root.open-edit-tx(id); }
                     delete-transaction(id) => { root.delete-transaction(id); }
+                    toggle-tx-selection(id) => { root.toggle-tx-selection(id); }
+                    select-all-txs(all) => { root.select-all-txs(all); }
+                    clear-tx-selection => { root.clear-tx-selection(); }
+                    bulk-delete-selected => { root.bulk-delete-selected(); }
                 }
 
                 // TAB 2: ACCOUNTS & VAULTS
@@ -430,6 +460,13 @@ export component MainWindow inherits Window {
                     savings-rate: root.savings-rate;
                     balance-change: root.balance-change;
                     category-breakdown: root.category-breakdown;
+                    weekly-flow: root.weekly-flow;
+                    monthly-trends: root.monthly-trends;
+                    daily-average: root.daily-average-expense;
+                    top-category-name: root.top-category-name;
+                    top-category-amount: root.top-category-amount;
+                    has-data: root.reports-has-data;
+                    add-transaction => { root.open-add-tx(0); }
                 }
 
                 // TAB 7: SETTINGS & PREFERENCES
@@ -442,6 +479,7 @@ export component MainWindow inherits Window {
                     categories: root.categories;
                     filtered-categories: root.filtered-categories;
                     cat-catalog-filter <=> root.cat-catalog-filter;
+                    cat-search-query <=> root.cat-search-query;
                     cat-expense-count: root.cat-expense-count;
                     cat-income-count: root.cat-income-count;
                     show-add-cat-form <=> root.show-add-cat-form;
@@ -456,12 +494,11 @@ export component MainWindow inherits Window {
                     gdrive-last-backup: root.gdrive-last-backup;
 
                     filter-categories(tab) => { root.filter-categories(tab); }
+                    search-categories(query) => { root.search-categories(query); }
 
                     select-db-file => { root.select-db-file(); }
-                    open-edit-db-path => { root.show-change-db-modal = true; }
                     reset-default-db => { root.reset-default-db(); }
                     select-export-folder => { root.select-export-folder(); }
-                    open-edit-export-path => { root.show-change-export-modal = true; }
                     open-export-folder => { root.open-export-folder(); }
 
                     set-master-pin(pin) => { root.set-master-pin(pin); }
@@ -471,12 +508,14 @@ export component MainWindow inherits Window {
                     toggle-privacy => { root.toggle-privacy(); }
                     update-date-format(fmt) => { root.update-date-format(fmt); }
                     add-category(name, type, color) => { root.add-category(name, type, color); }
+                    edit-category(id, name, type, color) => { root.edit-category(id, name, type, color); }
                     delete-category(id) => { root.delete-category(id); }
                     export-data(fmt) => { root.export-data(fmt); }
                     import-backup => { root.import-backup(); }
                     reset-and-seed-demo => { root.reset-and-seed-demo(); }
                     open-gdrive-modal => { root.open-gdrive-modal(); }
                     gdrive-backup-now => { root.gdrive-backup-now(); }
+                    gdrive-disconnect => { root.gdrive-disconnect(); }
                 }
             }
         }
@@ -511,6 +550,18 @@ export component MainWindow inherits Window {
             payee: root.modal-payee;
             note: root.modal-note;
             date: root.modal-date;
+            time: root.modal-time;
+            date-format: root.date-format;
+            date-year <=> root.modal-date-year;
+            date-month <=> root.modal-date-month;
+            date-day <=> root.modal-date-day;
+            time-hour <=> root.modal-time-hour;
+            time-minute <=> root.modal-time-minute;
+            today-year: root.today-year;
+            today-month: root.today-month;
+            today-day: root.today-day;
+            today-hour: root.today-hour;
+            today-minute: root.today-minute;
             modal-error: root.modal-error;
             cat-show-all <=> root.modal-cat-show-all;
             accounts: root.accounts;
@@ -518,10 +569,14 @@ export component MainWindow inherits Window {
             modal-categories: root.modal-categories;
 
             close => { root.close-all-modals(); }
+            cancel-clicked => { root.close-all-modals(); }
             tx-type-changed(t) => { root.modal-tx-type-changed(t); }
             toggle-cat-filter => { root.toggle-modal-cat-filter(); }
-            submit(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date) => {
-                root.submit-save-tx(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date);
+            submit(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date, time) => {
+                root.submit-save-tx(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date, time);
+            }
+            save-clicked(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date, time) => {
+                root.submit-save-tx(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date, time);
             }
         }
 

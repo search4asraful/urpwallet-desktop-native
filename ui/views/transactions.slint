@@ -9,12 +9,19 @@ export component TransactionsView inherits VerticalLayout {
     in property <string> tx-search-query: "";
     in property <int> tx-filter-type: 0;
     in property <[TransactionItem]> all-transactions: [];
+    in property <int> selected-tx-count: 0;
+
+    property <bool> confirm-bulk-delete: false;
 
     callback search-transactions(string, int);
     callback open-add-tx(int);
     callback open-tx-details(string);
     callback open-edit-tx(string);
     callback delete-transaction(string);
+    callback toggle-tx-selection(string);
+    callback select-all-txs(bool);
+    callback clear-tx-selection();
+    callback bulk-delete-selected();
 
     // Search & Filters Bar
     HorizontalLayout {
@@ -54,14 +61,160 @@ export component TransactionsView inherits VerticalLayout {
                 }
             }
         }
+    }
 
-        VerticalLayout {
-            alignment: center;
-            AppButton {
-                text: "+ New Entry";
-                small: true;
-                btn-color: Theme.primary;
-                clicked => { root.open-add-tx(0); }
+    // Actions & Selection Toolbar Row
+    if root.all-transactions.length > 0: Rectangle {
+        height: 38px;
+        background: root.selected-tx-count > 0 ? Theme.primary.transparentize(90%) : Theme.surface;
+        border-color: root.selected-tx-count > 0 ? Theme.primary.transparentize(50%) : Theme.border;
+        border-width: 1px;
+        border-radius: 6px;
+
+        HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            alignment: space-between;
+
+            HorizontalLayout {
+                alignment: center;
+                spacing: 10px;
+
+                // Master Checkbox (Vertically Centered)
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 18px;
+                        height: 18px;
+                        border-radius: 4px;
+                        background: root.selected-tx-count > 0 ? Theme.primary : Theme.surface-subtle;
+                        border-color: root.selected-tx-count > 0 ? Theme.primary : (master-chk-touch.has-hover ? Theme.primary : Theme.border-strong);
+                        border-width: 1.5px;
+
+                        master-chk-touch := TouchArea {
+                            width: 100%;
+                            height: 100%;
+                            mouse-cursor: MouseCursor.pointer;
+                            clicked => {
+                                root.confirm-bulk-delete = false;
+                                if root.selected-tx-count > 0 {
+                                    root.clear-tx-selection();
+                                } else {
+                                    root.select-all-txs(true);
+                                }
+                            }
+                        }
+
+                        if root.selected-tx-count > 0: Path {
+                            width: 10px;
+                            height: 10px;
+                            x: 4px;
+                            y: 4px;
+                            stroke: #FFFFFF;
+                            stroke-width: 2px;
+                            MoveTo { x: 1; y: 5; }
+                            LineTo { x: 4; y: 8; }
+                            LineTo { x: 9; y: 2; }
+                        }
+                    }
+                }
+
+                if root.selected-tx-count == 0: Text {
+                    text: "" + root.all-transactions.length + (root.all-transactions.length == 1 ? " transaction" : " transactions");
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: Theme.text-muted;
+                    vertical-alignment: center;
+                }
+
+                if root.selected-tx-count > 0: Text {
+                    text: "" + root.selected-tx-count + (root.selected-tx-count == 1 ? " transaction selected" : " transactions selected");
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: Theme.primary;
+                    vertical-alignment: center;
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    if root.selected-tx-count == 0: AppButton {
+                        text: "Select All";
+                        small: true;
+                        outline: true;
+                        btn-color: Theme.border;
+                        text-color: Theme.text-secondary;
+                        clicked => { root.select-all-txs(true); }
+                    }
+                    
+                    if root.selected-tx-count > 0: TouchArea {
+                        width: 90px;
+                        mouse-cursor: MouseCursor.pointer;
+                        clicked => {
+                            root.confirm-bulk-delete = false;
+                            root.clear-tx-selection();
+                        }
+                        Text {
+                            text: "Clear Selection";
+                            font-size: 10px;
+                            font-weight: 600;
+                            color: Theme.text-muted;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    if root.selected-tx-count > 0 && !root.confirm-bulk-delete && root.selected-tx-count < root.all-transactions.length: AppButton {
+                        text: "Select All (" + root.all-transactions.length + ")";
+                        small: true;
+                        outline: true;
+                        btn-color: Theme.primary;
+                        clicked => { root.select-all-txs(true); }
+                    }
+
+                    if root.selected-tx-count > 0 && !root.confirm-bulk-delete: AppButton {
+                        text: "Delete Selected (" + root.selected-tx-count + ")";
+                        small: true;
+                        btn-color: Theme.danger;
+                        clicked => { root.confirm-bulk-delete = true; }
+                    }
+
+                    if root.selected-tx-count > 0 && root.confirm-bulk-delete: HorizontalLayout {
+                        spacing: 8px;
+                        alignment: center;
+
+                        Text {
+                            text: "Permanently delete " + root.selected-tx-count + " transactions?";
+                            font-size: 11px;
+                            font-weight: 700;
+                            color: Theme.danger;
+                            vertical-alignment: center;
+                        }
+
+                        AppButton {
+                            text: "Confirm Delete";
+                            small: true;
+                            btn-color: Theme.danger;
+                            clicked => {
+                                root.confirm-bulk-delete = false;
+                                root.bulk-delete-selected();
+                            }
+                        }
+
+                        AppButton {
+                            text: "Cancel";
+                            small: true;
+                            outline: true;
+                            btn-color: Theme.border;
+                            text-color: Theme.text-primary;
+                            clicked => {
+                                root.confirm-bulk-delete = false;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -87,8 +240,8 @@ export component TransactionsView inherits VerticalLayout {
 
             for tx in root.all-transactions: Rectangle {
                 height: 50px;
-                background: Theme.surface;
-                border-color: Theme.border;
+                background: tx.selected ? Theme.primary-subtle : Theme.surface;
+                border-color: tx.selected ? Theme.primary : Theme.border;
                 border-width: 1px;
                 border-radius: 5px;
 
@@ -99,6 +252,42 @@ export component TransactionsView inherits VerticalLayout {
                     HorizontalLayout {
                         alignment: center;
                         spacing: 10px;
+
+                        // Checkbox (Vertically Centered)
+                        VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 18px;
+                                height: 18px;
+                                border-radius: 4px;
+                                background: tx.selected ? Theme.primary : Theme.surface-subtle;
+                                border-color: tx.selected ? Theme.primary : (chk-touch.has-hover ? Theme.primary : Theme.border-strong);
+                                border-width: 1.5px;
+
+                                chk-touch := TouchArea {
+                                    width: 100%;
+                                    height: 100%;
+                                    mouse-cursor: MouseCursor.pointer;
+                                    clicked => {
+                                        root.confirm-bulk-delete = false;
+                                        root.toggle-tx-selection(tx.id);
+                                    }
+                                }
+
+                                if tx.selected: Path {
+                                    width: 10px;
+                                    height: 10px;
+                                    x: 4px;
+                                    y: 4px;
+                                    stroke: #FFFFFF;
+                                    stroke-width: 2px;
+                                    MoveTo { x: 1; y: 5; }
+                                    LineTo { x: 4; y: 8; }
+                                    LineTo { x: 9; y: 2; }
+                                }
+                            }
+                        }
+
                         Text {
                             text: tx.date;
                             color: Theme.text-muted;

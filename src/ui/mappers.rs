@@ -1,9 +1,9 @@
 use crate::TransactionItem;
 use urpwallet::db::models::{TransactionType, TransactionWithDetails};
-use urpwallet::logic::format_currency;
+use urpwallet::logic::{format_currency, format_date};
 
 /// Maps a `TransactionWithDetails` row into the Slint `TransactionItem` struct.
-pub fn map_tx_item(item: &TransactionWithDetails, privacy: bool) -> TransactionItem {
+pub fn map_tx_item(item: &TransactionWithDetails, privacy: bool, date_format: &str) -> TransactionItem {
     let tx = &item.transaction;
     let is_income = tx.tx_type == TransactionType::Income;
     let is_transfer = tx.tx_type == TransactionType::Transfer;
@@ -21,7 +21,7 @@ pub fn map_tx_item(item: &TransactionWithDetails, privacy: bool) -> TransactionI
 
     TransactionItem {
         id: tx.id.as_str().into(),
-        date: tx.date.as_str().into(),
+        date: format_date(tx.date.as_str(), date_format).into(),
         time: tx.time.as_deref().unwrap_or("").into(),
         title,
         subtitle: acc_name.into(),
@@ -40,5 +40,6 @@ pub fn map_tx_item(item: &TransactionWithDetails, privacy: bool) -> TransactionI
         note: tx.note.as_deref().unwrap_or("").into(),
         payment_type: tx.payment_type.as_str().into(),
         status: tx.status.as_str().into(),
+        selected: false,
     }
 }

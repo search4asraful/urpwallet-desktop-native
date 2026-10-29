@@ -291,6 +291,10 @@ impl Database {
         self.with_conn(|conn| repository::transactions::delete_transaction(conn, id))
     }
 
+    pub fn delete_transactions_bulk(&self, ids: &[String]) -> DbResult<usize> {
+        self.with_conn(|conn| repository::transactions::delete_transactions_bulk(conn, ids))
+    }
+
     // ------------------------------------------------------------------------
     // Budgets
     // ------------------------------------------------------------------------
@@ -636,6 +640,66 @@ mod tests {
         // 4. Delete expense transaction (balance should restore)
         db.delete_transaction(&tx_exp.transaction.id).unwrap();
         assert_eq!(db.get_account(&acc1.id).unwrap().balance, 950.0);
+    }
+
+    #[test]
+    fn test_delete_transactions_bulk() {
+        let db = Database::open_in_memory().unwrap();
+
+        let acc = db.create_account(CreateAccountInput {
+            id: Some("acc_bulk_test".into()),
+            name: "Bulk Test Account".into(),
+            account_type: AccountType::Bank,
+            currency: Some("USD".into()),
+            balance: Some(1000.0),
+            color: None,
+            icon: None,
+        }).unwrap();
+
+        let tx1 = db.create_transaction(CreateTransactionInput {
+            id: None,
+            account_id: acc.id.clone(),
+            to_account_id: None,
+            category_id: None,
+            tx_type: TransactionType::Expense,
+            amount: 100.0,
+            currency: None,
+            date: Some("2026-10-20".into()),
+            time: None,
+            payee: None,
+            note: None,
+            status: None,
+            payment_type: None,
+        }).unwrap();
+
+        let tx2 = db.create_transaction(CreateTransactionInput {
+            id: None,
+            account_id: acc.id.clone(),
+            to_account_id: None,
+            category_id: None,
+            tx_type: TransactionType::Income,
+            amount: 250.0,
+            currency: None,
+            date: Some("2026-10-21".into()),
+            time: None,
+            payee: None,
+            note: None,
+            status: None,
+            payment_type: None,
+        }).unwrap();
+
+        // After tx1 (-100) and tx2 (+250), balance = 1150
+        assert_eq!(db.get_account(&acc.id).unwrap().balance, 1150.0);
+
+        // Bulk delete both transactions
+        let ids = vec![tx1.transaction.id, tx2.transaction.id];
+        let deleted = db.delete_transactions_bulk(&ids).unwrap();
+        assert_eq!(deleted, 2);
+
+        // Balance should be reverted back to initial 1000.0
+        assert_eq!(db.get_account(&acc.id).unwrap().balance, 1000.0);
+        assert!(db.get_transaction(&ids[0]).is_err());
+        assert!(db.get_transaction(&ids[1]).is_err());
     }
 
     #[test]
