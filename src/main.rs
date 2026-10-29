@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use urpwallet::db::Database;
 
 use crate::ui::handlers::{

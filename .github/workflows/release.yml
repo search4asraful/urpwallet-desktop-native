@@ -10,9 +10,9 @@ permissions:
   contents: write
 
 jobs:
-  # WINDOWS: Build Native .msi Installer
+  # WINDOWS: Build Native NSIS (.exe) Installer
   build-windows:
-    name: Windows Installer (.msi)
+    name: Windows Installer (.exe)
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -21,18 +21,22 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-wix
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-wix
+      - name: Build release binary
+        run: cargo build --release
 
-      - name: Build MSI Installer
-        run: cargo wix --nocapture
+      - name: Install NSIS
+        run: choco install nsis -y --no-progress
 
-      - name: Upload Windows MSI to Release
+      - name: Build NSIS Installer
+        shell: bash
+        run: |
+          mkdir -p target/installer
+          makensis installer.nsi
+
+      - name: Upload Windows Setup to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: target/wix/*.msi
+          files: target/installer/*.exe
 
   # LINUX: Build Native .deb and .AppImage
   build-linux:
@@ -70,7 +74,7 @@ jobs:
           cp target/release/urpwallet target/AppDir/usr/bin/urpwallet
           cp urpwallet.desktop target/AppDir/urpwallet.desktop
           cp urpwallet.desktop target/AppDir/usr/share/applications/urpwallet.desktop
-          cp assets/icon.svg target/AppDir/usr/share/icons/hicolor/scalable/apps/urpwallet.svg
+          cp assets/icon.png target/AppDir/usr/share/icons/hicolor/scalable/apps/urpwallet.png
           cp assets/icon-256.png target/AppDir/usr/share/icons/hicolor/256x256/apps/urpwallet.png
           cp assets/icon-256.png target/AppDir/urpwallet.png
           ln -sf urpwallet.png target/AppDir/.DirIcon

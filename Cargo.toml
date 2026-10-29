@@ -1,16 +1,10 @@
 [package]
 name = "urpwallet"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 authors = ["urpwallet team"]
 description = "Local-first native personal finance tracker and budget planner"
 repository = "https://github.com/search4asraful/urpwallet-desktop-native"
-
-[package.metadata.wix]
-upgrade-guid = "B42F70BC-7FBB-4B0E-A0A1-AEDCACD726F9"
-path-guid = "E4AA6A9E-9FF7-4593-92B3-4769C523A82F"
-license = false
-eula = false
 
 [dependencies]
 rusqlite = { version = "0.32", features = ["bundled"] }
@@ -59,7 +53,7 @@ priority = "optional"
 depends = "$auto, libfontconfig1, libfreetype6, libxkbcommon0"
 assets = [
     ["target/release/urpwallet", "usr/bin/urpwallet", "755"],
-    ["assets/icon.svg", "usr/share/icons/hicolor/scalable/apps/urpwallet.svg", "644"],
+    ["assets/icon.png", "usr/share/icons/hicolor/scalable/apps/urpwallet.png", "644"],
     ["assets/icon-256.png", "usr/share/icons/hicolor/256x256/apps/urpwallet.png", "644"],
     ["assets/icon.png", "usr/share/pixmaps/urpwallet.png", "644"],
     ["urpwallet.desktop", "usr/share/applications/urpwallet.desktop", "644"],
