@@ -52,7 +52,7 @@ export component BudgetsView inherits ScrollView {
                         Text {
                             text: "Formula: (Total Remaining Discretionary Budget) ÷ (" + root.safe-days-left + " Days Left in Month)";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                             vertical-alignment: center;
                         }
                     }
@@ -70,44 +70,44 @@ export component BudgetsView inherits ScrollView {
         }
 
         if root.budgets.length == 0: Rectangle {
-            height: 90px;
+            height: 100px;
             background: Theme.surface;
             border-color: Theme.border;
             border-width: 1px;
             border-radius: 6px;
             VerticalLayout {
                 alignment: center;
-                spacing: 4px;
-                Text { text: "No Budgets Configured"; font-size: 13px; font-weight: 700; color: Theme.text-primary; horizontal-alignment: center; }
-                Text { text: "Click '+ New Budget Limit' to establish category spending ceilings."; font-size: 11px; color: Theme.text-muted; horizontal-alignment: center; }
+                spacing: 5px;
+                Text { text: "No Budgets Configured"; font-size: 15px; font-weight: 700; color: Theme.text-primary; horizontal-alignment: center; }
+                Text { text: "Click '+ New Budget Limit' to establish category spending ceilings."; font-size: 12px; color: Theme.text-muted; horizontal-alignment: center; }
             }
         }
 
         // Budget Items Grid
         for b in root.budgets: Rectangle {
-            height: 70px;
+            height: 76px;
             background: Theme.surface;
             border-color: Theme.border;
             border-width: 1px;
             border-radius: 6px;
 
             VerticalLayout {
-                padding-left: 12px;
-                padding-right: 12px;
-                padding-top: 10px;
-                padding-bottom: 10px;
-                spacing: 6px;
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-top: 12px;
+                padding-bottom: 12px;
+                spacing: 8px;
 
                 HorizontalLayout {
                     alignment: space-between;
                     VerticalLayout {
                         spacing: 2px;
                         HorizontalLayout {
-                            spacing: 6px;
+                            spacing: 8px;
                             Text {
                                 text: b.name;
                                 color: Theme.text-primary;
-                                font-size: 13px;
+                                font-size: 14px;
                                 font-weight: 700;
                                 vertical-alignment: center;
                             }
@@ -119,25 +119,25 @@ export component BudgetsView inherits ScrollView {
                         Text {
                             text: "Spent: " + b.spent + " of " + b.total + " • Safe pacing: " + b.daily_safe + "/day";
                             color: Theme.text-secondary;
-                            font-size: 11px;
+                            font-size: 12px;
                             vertical-alignment: center;
                         }
                     }
                     VerticalLayout {
                         alignment: center;
                         HorizontalLayout {
-                            spacing: 6px;
+                            spacing: 8px;
                             Text {
-                                width: 50px;
+                                width: 55px;
                                 horizontal-alignment: right;
                                 vertical-alignment: center;
                                 text: Math.round(b.percentage) + "%";
                                 color: b.is_over ? Theme.danger : Theme.text-primary;
-                                font-size: 13px;
+                                font-size: 14px;
                                 font-weight: 800;
                             }
                             AppButton {
-                                width: 54px;
+                                width: 58px;
                                 text: "Details";
                                 small: true;
                                 outline: true;
@@ -147,7 +147,7 @@ export component BudgetsView inherits ScrollView {
                                 }
                             }
                             AppButton {
-                                width: 46px;
+                                width: 50px;
                                 text: "Edit";
                                 small: true;
                                 outline: true;
@@ -155,7 +155,7 @@ export component BudgetsView inherits ScrollView {
                                 clicked => { root.open-edit-budget(b.id); }
                             }
                             AppButton {
-                                width: 54px;
+                                width: 58px;
                                 text: "Delete";
                                 small: true;
                                 outline: true;

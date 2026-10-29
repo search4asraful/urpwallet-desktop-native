@@ -2,7 +2,7 @@ import { Theme } from "../theme.slint";
 import { AppButton } from "../components.slint";
 
 export component Header inherits HorizontalLayout {
-    height: 32px;
+    height: 36px;
     alignment: space-between;
 
     in property <int> active-tab: 0;
@@ -19,7 +19,7 @@ export component Header inherits HorizontalLayout {
                   (root.active-tab == 5 ? "Debts & Loans Ledger" :
                   (root.active-tab == 6 ? "Analytics & Spending Reports" : "Settings & Preferences"))))));
             color: Theme.text-primary;
-            font-size: 17px;
+            font-size: 18px;
             font-weight: 800;
             letter-spacing: -0.3px;
             vertical-alignment: center;
@@ -30,7 +30,7 @@ export component Header inherits HorizontalLayout {
     VerticalLayout {
         alignment: center;
         HorizontalLayout {
-            spacing: 6px;
+            spacing: 8px;
 
             AppButton {
                 text: "+ Expense";

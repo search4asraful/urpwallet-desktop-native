@@ -56,13 +56,13 @@ export component AddAccountModal inherits Rectangle {
                 }
             }
 
-            Text { text: "Account Name:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Account Name:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-acc-name := AppInput {
                 placeholder-text: "e.g. Chase Checking, Vault...";
                 text: root.acc-name;
             }
 
-            Text { text: "Account Type:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Account Type:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             HorizontalLayout {
                 spacing: 4px;
                 AppButton {
@@ -97,7 +97,7 @@ export component AddAccountModal inherits Rectangle {
                 }
             }
 
-            Text { text: "Balance:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Balance:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-acc-bal := AppInput {
                 placeholder-text: "0.00";
                 text: root.balance;
@@ -107,7 +107,8 @@ export component AddAccountModal inherits Rectangle {
                 alignment: space-between;
                 Text {
                     text: "Currency:";
-                    font-size: 10px;
+                    font-size: 12px;
+                    font-weight: 600;
                     color: Theme.text-muted;
                     vertical-alignment: center;
                 }
@@ -223,7 +224,7 @@ export component AccountDetailModal inherits Rectangle {
                     Text {
                         text: root.detail-acc.name;
                         color: Theme.text-secondary;
-                        font-size: 11px;
+                        font-size: 12px;
                         font-weight: 600;
                         horizontal-alignment: center;
                         vertical-alignment: center;
@@ -237,7 +238,7 @@ export component AccountDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Classification:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: "Classification:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
                     Badge {
                         text: root.detail-acc.is_liability ? "Liability / Debt" : "Asset / Capital";
                         badge-color: root.detail-acc.is_liability ? Theme.danger : Theme.primary;
@@ -246,7 +247,7 @@ export component AccountDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Account Type:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: "Account Type:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
                     Badge {
                         text: root.detail-acc.acc_type;
                         badge-color: Theme.info;
@@ -255,14 +256,14 @@ export component AccountDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Currency:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-acc.currency; color: Theme.text-primary; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                    Text { text: "Currency:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-acc.currency; color: Theme.text-primary; font-size: 12px; font-weight: 700; vertical-alignment: center; }
                 }
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Account ID:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-acc.id; color: Theme.text-secondary; font-size: 10px; vertical-alignment: center; }
+                    Text { text: "Account ID:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-acc.id; color: Theme.text-secondary; font-size: 11px; font-family: "monospace"; vertical-alignment: center; }
                 }
             }
 

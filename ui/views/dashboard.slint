@@ -27,7 +27,7 @@ export component DashboardView inherits ScrollView {
 
         // 4 Key Stat Cards
         HorizontalLayout {
-            height: 80px;
+            height: 86px;
             spacing: 10px;
 
             StatCard {
@@ -60,23 +60,24 @@ export component DashboardView inherits ScrollView {
         VerticalLayout {
             spacing: 6px;
             HorizontalLayout {
-                height: 20px;
+                height: 24px;
                 alignment: space-between;
                 Text {
                     text: "ACCOUNTS & VAULTS";
                     color: Theme.text-muted;
-                    font-size: 10px;
+                    font-size: 11px;
                     font-weight: 700;
+                    letter-spacing: 0.5px;
                     vertical-alignment: center;
                 }
                 TouchArea {
-                    width: 140px;
+                    width: 150px;
                     mouse-cursor: MouseCursor.pointer;
                     clicked => { root.switch-tab(2); }
                     Text {
                         text: "Manage All Accounts →";
                         color: Theme.primary;
-                        font-size: 11px;
+                        font-size: 12px;
                         font-weight: 600;
                         vertical-alignment: center;
                     }
@@ -88,7 +89,7 @@ export component DashboardView inherits ScrollView {
                 spacing: 6px;
                 dash-card-empty := Rectangle {
                     horizontal-stretch: 1;
-                    height: 54px;
+                    height: 60px;
                     border-radius: 6px;
                     background: empty-touch.has-hover ? Theme.primary-subtle : Theme.surface-subtle;
                     border-color: empty-touch.has-hover ? Theme.primary : Theme.border-strong;
@@ -109,14 +110,14 @@ export component DashboardView inherits ScrollView {
                         Text {
                             text: "+";
                             color: empty-touch.has-hover ? Theme.primary : Theme.text-muted;
-                            font-size: 14px;
+                            font-size: 15px;
                             font-weight: 700;
                             vertical-alignment: center;
                         }
                         Text {
                             text: "Add new";
                             color: empty-touch.has-hover ? Theme.primary : Theme.text-secondary;
-                            font-size: 11px;
+                            font-size: 12px;
                             font-weight: 600;
                             vertical-alignment: center;
                         }
@@ -133,7 +134,7 @@ export component DashboardView inherits ScrollView {
                     horizontal-stretch: 1;
                     row: floor(i / 3);
                     col: mod(i, 3);
-                    height: 54px;
+                    height: 60px;
                     background: acc-card-touch.has-hover ? Theme.surface-hover : Theme.surface;
                     border-color: acc-card-touch.has-hover ? Theme.primary : Theme.border;
                     border-width: 1px;
@@ -149,16 +150,16 @@ export component DashboardView inherits ScrollView {
                     }
 
                     VerticalLayout {
-                        padding-left: 10px;
-                        padding-right: 10px;
-                        padding-top: 6px;
-                        padding-bottom: 6px;
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        padding-top: 8px;
+                        padding-bottom: 8px;
                         spacing: 2px;
                         
                         Text {
                             text: acc.name;
                             color: Theme.text-primary;
-                            font-size: 10px;
+                            font-size: 12px;
                             font-weight: 600;
                             overflow: elide;
                             vertical-alignment: center;
@@ -169,7 +170,7 @@ export component DashboardView inherits ScrollView {
                             Text {
                                 text: acc.balance;
                                 color: acc.is_liability ? Theme.danger : Theme.text-primary;
-                                font-size: 12px;
+                                font-size: 13px;
                                 font-weight: 700;
                                 vertical-alignment: center;
                             }
@@ -186,7 +187,7 @@ export component DashboardView inherits ScrollView {
                     horizontal-stretch: 1;
                     row: floor(root.accounts.length / 3);
                     col: mod(root.accounts.length, 3);
-                    height: 54px;
+                    height: 60px;
                     border-radius: 6px;
                     background: add-acc-touch.has-hover ? Theme.primary-subtle : Theme.surface-subtle;
                     border-color: add-acc-touch.has-hover ? Theme.primary : Theme.border-strong;
@@ -208,7 +209,7 @@ export component DashboardView inherits ScrollView {
                         Text {
                             text: "+";
                             color: add-acc-touch.has-hover ? Theme.primary : Theme.text-muted;
-                            font-size: 14px;
+                            font-size: 15px;
                             font-weight: 700;
                             vertical-alignment: center;
                         }
@@ -216,7 +217,7 @@ export component DashboardView inherits ScrollView {
                         Text {
                             text: "Add new";
                             color: add-acc-touch.has-hover ? Theme.primary : Theme.text-secondary;
-                            font-size: 11px;
+                            font-size: 12px;
                             font-weight: 600;
                             vertical-alignment: center;
                         }
@@ -245,25 +246,25 @@ export component DashboardView inherits ScrollView {
                 border-radius: 8px;
 
                 VerticalLayout {
-                    padding: 12px;
-                    spacing: 8px;
+                    padding: 14px;
+                    spacing: 10px;
                     HorizontalLayout {
                         alignment: space-between;
                         Text {
                             text: "Budget Pacing";
                             color: Theme.text-primary;
-                            font-size: 13px;
+                            font-size: 14px;
                             font-weight: 700;
                             vertical-alignment: center;
                         }
                         TouchArea {
-                            width: 60px;
+                            width: 70px;
                             mouse-cursor: MouseCursor.pointer;
                             clicked => { root.switch-tab(3); }
                             Text {
                                 text: "View All →";
                                 color: Theme.primary;
-                                font-size: 10px;
+                                font-size: 12px;
                                 font-weight: 600;
                                 vertical-alignment: center;
                             }
@@ -274,7 +275,7 @@ export component DashboardView inherits ScrollView {
                         height: 48px;
                         Text {
                             text: "No active budgets created yet.";
-                            font-size: 11px;
+                            font-size: 12px;
                             color: Theme.text-muted;
                             horizontal-alignment: center;
                             vertical-alignment: center;
@@ -282,13 +283,13 @@ export component DashboardView inherits ScrollView {
                     }
 
                     for b in root.budgets: VerticalLayout {
-                        spacing: 3px;
+                        spacing: 4px;
                         HorizontalLayout {
                             alignment: space-between;
                             Text {
                                 text: b.name;
                                 color: Theme.text-primary;
-                                font-size: 11px;
+                                font-size: 12px;
                                 font-weight: 600;
                                 overflow: elide;
                                 vertical-alignment: center;
@@ -296,7 +297,7 @@ export component DashboardView inherits ScrollView {
                             Text {
                                 text: b.spent + " / " + b.total;
                                 color: Theme.text-secondary;
-                                font-size: 10px;
+                                font-size: 11px;
                                 vertical-alignment: center;
                             }
                         }
@@ -316,26 +317,26 @@ export component DashboardView inherits ScrollView {
                 border-radius: 8px;
 
                 VerticalLayout {
-                    padding: 12px;
-                    spacing: 8px;
+                    padding: 14px;
+                    spacing: 10px;
                     HorizontalLayout {
-                        height: 20px;
+                        height: 22px;
                         alignment: space-between;
                         Text {
                             text: "Upcoming Scheduled Bills";
                             color: Theme.text-primary;
-                            font-size: 13px;
+                            font-size: 14px;
                             font-weight: 700;
                             vertical-alignment: center;
                         }
                         TouchArea {
-                            width: 75px;
+                            width: 85px;
                             mouse-cursor: MouseCursor.pointer;
                             clicked => { root.switch-tab(4); }
                             Text {
                                 text: "View Bills →";
                                 color: Theme.primary;
-                                font-size: 10px;
+                                font-size: 12px;
                                 font-weight: 600;
                                 vertical-alignment: center;
                             }
@@ -346,7 +347,7 @@ export component DashboardView inherits ScrollView {
                         height: 48px;
                         Text {
                             text: "No upcoming scheduled bills.";
-                            font-size: 11px;
+                            font-size: 12px;
                             color: Theme.text-muted;
                             horizontal-alignment: center;
                             vertical-alignment: center;
@@ -354,15 +355,15 @@ export component DashboardView inherits ScrollView {
                     }
 
                     for bill in root.bills: Rectangle {
-                        height: 40px;
+                        height: 48px;
                         background: Theme.surface-subtle;
                         border-color: Theme.border;
                         border-width: 1px;
-                        border-radius: 5px;
+                        border-radius: 6px;
 
                         HorizontalLayout {
-                            padding-left: 10px;
-                            padding-right: 10px;
+                            padding-left: 12px;
+                            padding-right: 12px;
                             alignment: space-between;
 
                             HorizontalLayout {
@@ -374,14 +375,14 @@ export component DashboardView inherits ScrollView {
                                     Text {
                                         text: bill.name;
                                         color: Theme.text-primary;
-                                        font-size: 11px;
+                                        font-size: 12px;
                                         font-weight: 600;
                                         vertical-alignment: center;
                                     }
                                     Text {
                                         text: "Due: " + bill.due_date;
                                         color: Theme.text-muted;
-                                        font-size: 10px;
+                                        font-size: 11px;
                                         vertical-alignment: center;
                                     }
                                 }
@@ -400,7 +401,7 @@ export component DashboardView inherits ScrollView {
                                 Text {
                                     text: bill.amount;
                                     color: bill.is_expense ? Theme.danger : Theme.primary;
-                                    font-size: 12px;
+                                    font-size: 13px;
                                     font-weight: 700;
                                     vertical-alignment: center;
                                 }
@@ -428,26 +429,26 @@ export component DashboardView inherits ScrollView {
             border-radius: 8px;
 
             VerticalLayout {
-                padding: 12px;
-                spacing: 6px;
+                padding: 14px;
+                spacing: 8px;
                 HorizontalLayout {
-                    height: 20px;
+                    height: 22px;
                     alignment: space-between;
                     Text {
                         text: "Recent Ledger Activity";
                         color: Theme.text-primary;
-                        font-size: 13px;
+                        font-size: 14px;
                         font-weight: 700;
                         vertical-alignment: center;
                     }
                     TouchArea {
-                        width: 75px;
+                        width: 90px;
                         mouse-cursor: MouseCursor.pointer;
                         clicked => { root.switch-tab(1); }
                         Text {
                             text: "Full Ledger →";
                             color: Theme.primary;
-                            font-size: 10px;
+                            font-size: 12px;
                             font-weight: 600;
                             vertical-alignment: center;
                         }
@@ -455,49 +456,49 @@ export component DashboardView inherits ScrollView {
                 }
 
                 if root.recent-transactions.length == 0: Rectangle {
-                    height: 42px;
+                    height: 48px;
                     HorizontalLayout {
                         alignment: center;
-                        Text { text: "No recent transactions found."; font-size: 11px; color: Theme.text-muted; vertical-alignment: center; }
+                        Text { text: "No recent transactions found."; font-size: 12px; color: Theme.text-muted; vertical-alignment: center; }
                     }
                 }
 
                 for tx in root.recent-transactions: Rectangle {
-                    height: 46px;
+                    height: 52px;
                     background: tx-dash-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                     border-color: tx-dash-touch.has-hover ? Theme.primary : Theme.border;
                     border-width: 1px;
-                    border-radius: 5px;
+                    border-radius: 6px;
 
                     tx-dash-touch := TouchArea { clicked => { root.open-tx-details(tx.id); } }
 
                     HorizontalLayout {
-                        padding-left: 10px;
-                        padding-right: 10px;
+                        padding-left: 12px;
+                        padding-right: 12px;
                         alignment: space-between;
                         HorizontalLayout {
                             alignment: center;
-                            spacing: 10px;
+                            spacing: 12px;
                             Text {
                                 text: tx.date;
                                 color: Theme.text-muted;
-                                font-size: 11px;
+                                font-size: 12px;
                                 vertical-alignment: center;
                             }
                             VerticalLayout {
                                 alignment: center;  
-                                spacing: 1px;
+                                spacing: 2px;
                                 Text {
                                     text: tx.title;
                                     color: Theme.text-primary;
-                                    font-size: 12px;
+                                    font-size: 13px;
                                     font-weight: 600;
                                     vertical-alignment: center;
                                 }
                                 HorizontalLayout {
                                     spacing: 4px;
                                     Badge {
-                                        text: tx.is_transfer ? (tx.account_name + " ➔ " + tx.to_account_name) : tx.account_name;
+                                        text: tx.is_transfer ? (tx.account_name + " → " + tx.to_account_name) : tx.account_name;
                                         badge-color: Theme.info;
                                     }
                                     if tx.category_name != "": Badge {
@@ -512,16 +513,16 @@ export component DashboardView inherits ScrollView {
                             HorizontalLayout {
                                 spacing: 8px;
                                 Text {
-                                    width: 90px;
+                                    width: 100px;
                                     horizontal-alignment: right;
                                     vertical-alignment: center;
                                     text: tx.amount;
                                     color: tx.is_transfer ? Theme.info : (tx.is_income ? Theme.primary : Theme.danger);
-                                    font-size: 12px;
+                                    font-size: 13px;
                                     font-weight: 700;
                                 }
                                 AppButton {
-                                    width: 52px;
+                                    width: 58px;
                                     text: "View";
                                     small: true;
                                     outline: true;

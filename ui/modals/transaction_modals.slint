@@ -158,7 +158,7 @@ export component AddTransactionModal inherits Rectangle {
                         spacing: 3px;
                         Text {
                             text: "Amount";
-                            font-size: 10px;
+                            font-size: 12px;
                             color: Theme.text-muted;
                             font-weight: 600;
                         }
@@ -182,7 +182,7 @@ export component AddTransactionModal inherits Rectangle {
                             spacing: 3px;
                             Text {
                                 text: "Date";
-                                font-size: 10px;
+                                font-size: 12px;
                                 color: Theme.text-muted;
                                 font-weight: 600;
                             }
@@ -267,7 +267,7 @@ export component AddTransactionModal inherits Rectangle {
                             spacing: 3px;
                             Text {
                                 text: "Time";
-                                font-size: 10px;
+                                font-size: 12px;
                                 color: Theme.text-muted;
                                 font-weight: 600;
                             }
@@ -353,7 +353,7 @@ export component AddTransactionModal inherits Rectangle {
                         spacing: 3px;
                         Text {
                             text: "Payee / Merchant";
-                            font-size: 10px;
+                            font-size: 12px;
                             color: Theme.text-muted;
                             font-weight: 600;
                         }
@@ -369,7 +369,7 @@ export component AddTransactionModal inherits Rectangle {
                         spacing: 3px;
                         Text {
                             text: "Note / Description";
-                            font-size: 10px;
+                            font-size: 12px;
                             color: Theme.text-muted;
                             font-weight: 600;
                         }
@@ -384,7 +384,7 @@ export component AddTransactionModal inherits Rectangle {
                     if root.modal-error != "": Text {
                         text: root.modal-error;
                         color: Theme.danger;
-                        font-size: 10px;
+                        font-size: 12px;
                         font-weight: 600;
                     }
                 }
@@ -401,10 +401,10 @@ export component AddTransactionModal inherits Rectangle {
                         alignment: start;
                         HorizontalLayout {
                             alignment: space-between;
-                            Text { text: "Source Account"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                            Text { text: "Source Account"; font-size: 12px; color: Theme.text-muted; font-weight: 600; }
                             if root.account-name != "": Text {
                                 text: root.account-name;
-                                font-size: 10px;
+                                font-size: 12px;
                                 color: root.active-type-color;
                                 font-weight: 700;
                             }
@@ -415,7 +415,7 @@ export component AddTransactionModal inherits Rectangle {
                                 horizontal-stretch: 1;
                                 row: floor(i / 2);
                                 col: mod(i, 2);
-                                height: 26px;
+                                height: 30px;
                                 border-radius: 4px;
                                 background: acc.id == root.account-id ? root.active-type-color : Theme.surface-subtle;
                                 border-color: acc.id == root.account-id ? root.active-type-color : Theme.border;
@@ -436,7 +436,7 @@ export component AddTransactionModal inherits Rectangle {
                                     alignment: center;
                                     Text {
                                         text: acc.name;
-                                        font-size: 10px;
+                                        font-size: 11px;
                                         color: acc.id == root.account-id ? #ffffff : Theme.text-primary;
                                         font-weight: 600;
                                         overflow: elide;
@@ -459,10 +459,10 @@ export component AddTransactionModal inherits Rectangle {
                         alignment: start;
                         HorizontalLayout {
                             alignment: space-between;
-                            Text { text: "Destination Account"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                            Text { text: "Destination Account"; font-size: 12px; color: Theme.text-muted; font-weight: 600; }
                             if root.to-account-name != "": Text {
                                 text: root.to-account-name;
-                                font-size: 10px;
+                                font-size: 12px;
                                 color: Theme.info;
                                 font-weight: 700;
                             }
@@ -473,7 +473,7 @@ export component AddTransactionModal inherits Rectangle {
                                 horizontal-stretch: 1;
                                 row: floor(i / 2);
                                 col: mod(i, 2);
-                                height: 26px;
+                                height: 30px;
                                 border-radius: 4px;
                                 background: acc.id == root.to-account-id ? Theme.info : Theme.surface-subtle;
                                 border-color: acc.id == root.to-account-id ? Theme.info : Theme.border;
@@ -494,7 +494,7 @@ export component AddTransactionModal inherits Rectangle {
                                     alignment: center;
                                     Text {
                                         text: acc.name;
-                                        font-size: 10px;
+                                        font-size: 11px;
                                         color: acc.id == root.to-account-id ? #ffffff : Theme.text-primary;
                                         font-weight: 600;
                                         overflow: elide;
@@ -517,9 +517,9 @@ export component AddTransactionModal inherits Rectangle {
                         alignment: start;
                         HorizontalLayout {
                             alignment: space-between;
-                            Text { text: "Category"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                            Text { text: "Category"; font-size: 12px; color: Theme.text-muted; font-weight: 600; }
                             Rectangle {
-                                height: 18px;
+                                height: 22px;
                                 border-radius: 4px;
                                 background: Theme.surface-subtle;
                                 border-color: Theme.border;
@@ -531,12 +531,12 @@ export component AddTransactionModal inherits Rectangle {
                                     clicked => { root.toggle-cat-filter(); }
                                 }
                                 VerticalLayout {
-                                    padding-left: 6px;
-                                    padding-right: 6px;
+                                    padding-left: 8px;
+                                    padding-right: 8px;
                                     alignment: center;
                                     Text {
-                                        text: root.cat-show-all ? "All Types ▾" : (root.tx-type == 0 ? "Expense ▾" : "Income ▾");
-                                        font-size: 10px;
+                                        text: root.cat-show-all ? "All Types ▼" : (root.tx-type == 0 ? "Expense ▼" : "Income ▼");
+                                        font-size: 11px;
                                         color: Theme.text-secondary;
                                         font-weight: 600;
                                         horizontal-alignment: center;
@@ -552,7 +552,7 @@ export component AddTransactionModal inherits Rectangle {
                                 horizontal-stretch: 1;
                                 row: floor(i / 2);
                                 col: mod(i, 2);
-                                height: 26px;
+                                height: 30px;
                                 border-radius: 4px;
                                 background: cat.id == root.category-id ? root.active-type-subtle : Theme.surface-subtle;
                                 border-color: cat.id == root.category-id ? root.active-type-color : Theme.border;
@@ -583,7 +583,7 @@ export component AddTransactionModal inherits Rectangle {
                                     }
                                     Text {
                                         text: cat.name;
-                                        font-size: 10px;
+                                        font-size: 11px;
                                         color: cat.id == root.category-id ? root.active-type-color : Theme.text-primary;
                                         font-weight: cat.id == root.category-id ? 700 : 500;
                                         overflow: elide;
@@ -711,7 +711,7 @@ export component TransactionDetailModal inherits Rectangle {
                 border-color: Theme.border;
                 border-width: 1px;
                 border-radius: 6px;
-                height: 52px;
+                height: 58px;
 
                 VerticalLayout {
                     alignment: center;
@@ -719,14 +719,14 @@ export component TransactionDetailModal inherits Rectangle {
                     Text {
                         text: root.detail-tx.amount;
                         color: root.detail-tx.is_transfer ? Theme.info : (root.detail-tx.is_income ? Theme.primary : Theme.danger);
-                        font-size: 20px;
-                        font-weight: 900;
+                        font-size: 22px;
+                        font-weight: 800;
                         horizontal-alignment: center;
                     }
                     Text {
                         text: root.detail-tx.title;
                         color: Theme.text-secondary;
-                        font-size: 11px;
+                        font-size: 12px;
                         font-weight: 600;
                         horizontal-alignment: center;
                     }
@@ -739,18 +739,18 @@ export component TransactionDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Account:"; color: Theme.text-muted; font-size: 11px; }
+                    Text { text: "Account:"; color: Theme.text-muted; font-size: 12px; }
                     Text {
-                        text: root.detail-tx.is_transfer ? (root.detail-tx.account_name + " ➔ " + root.detail-tx.to_account_name) : root.detail-tx.account_name;
+                        text: root.detail-tx.is_transfer ? (root.detail-tx.account_name + " → " + root.detail-tx.to_account_name) : root.detail-tx.account_name;
                         color: Theme.text-primary;
-                        font-size: 11px;
+                        font-size: 12px;
                         font-weight: 700;
                     }
                 }
 
                 if root.detail-tx.category_name != "": HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Category:"; color: Theme.text-muted; font-size: 11px; }
+                    Text { text: "Category:"; color: Theme.text-muted; font-size: 12px; }
                     Badge {
                         text: root.detail-tx.category_name;
                         badge-color: Theme.accent;
@@ -759,19 +759,19 @@ export component TransactionDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Date & Time:"; color: Theme.text-muted; font-size: 11px; }
-                    Text { text: root.detail-tx.date + " " + root.detail-tx.time; color: Theme.text-primary; font-size: 11px; font-weight: 600; }
+                    Text { text: "Date & Time:"; color: Theme.text-muted; font-size: 12px; }
+                    Text { text: root.detail-tx.date + " " + root.detail-tx.time; color: Theme.text-primary; font-size: 12px; font-weight: 600; }
                 }
 
                 if root.detail-tx.note != "": HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Note:"; color: Theme.text-muted; font-size: 11px; }
-                    Text { text: root.detail-tx.note; color: Theme.text-secondary; font-size: 11px; }
+                    Text { text: "Note:"; color: Theme.text-muted; font-size: 12px; }
+                    Text { text: root.detail-tx.note; color: Theme.text-secondary; font-size: 12px; }
                 }
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Status:"; color: Theme.text-muted; font-size: 11px; }
+                    Text { text: "Status:"; color: Theme.text-muted; font-size: 12px; }
                     Badge { text: root.detail-tx.status; badge-color: Theme.primary; }
                 }
             }

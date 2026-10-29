@@ -250,11 +250,11 @@ export component Badge inherits Rectangle {
 
     background: badge-bg;
     border-radius: 4px;
-    height: 20px;
+    height: 22px;
 
     HorizontalLayout {
-        padding-left: 6px;
-        padding-right: 6px;
+        padding-left: 7px;
+        padding-right: 7px;
         alignment: center;
         Text {
             text: root.text;
@@ -280,8 +280,8 @@ export component AppButton inherits Rectangle {
     background: !enabled ? (outline ? Colors.transparent : btn-color.transparentize(50%)) : (touch.pressed ? btn-color.darker(15%) : (touch.has-hover ? (outline ? btn-color.transparentize(85%) : btn-color.darker(6%)) : (outline ? Colors.transparent : btn-color)));
     border-color: outline ? (enabled ? btn-color : btn-color.transparentize(50%)) : Colors.transparent;
     border-width: outline ? 1px : 0px;
-    border-radius: 5px;
-    height: small ? 26px : 30px;
+    border-radius: 6px;
+    height: small ? 28px : 34px;
 
     touch := TouchArea {
         width: 100%;
@@ -292,15 +292,15 @@ export component AppButton inherits Rectangle {
     }
 
     HorizontalLayout {
-        padding-left: small ? 8px : 12px;
-        padding-right: small ? 8px : 12px;
+        padding-left: small ? 10px : 14px;
+        padding-right: small ? 10px : 14px;
         alignment: center;
         spacing: 4px;
 
         Text {
             text: root.text;
             color: root.text-color != Colors.transparent ? root.text-color : (root.outline ? ((root.btn-color == Theme.surface-hover || root.btn-color == Theme.surface-subtle || root.btn-color == Theme.border || root.btn-color == Theme.border-strong) ? Theme.text-primary : root.btn-color) : ((root.btn-color == Theme.surface-hover || root.btn-color == Theme.surface-subtle) ? Theme.text-primary : #FFFFFF));
-            font-size: small ? 10px : 11px;
+            font-size: small ? 12px : 13px;
             font-weight: 600;
             horizontal-alignment: center;
             vertical-alignment: center;
@@ -312,9 +312,9 @@ export component CloseButton inherits Rectangle {
     in property <bool> small: true;
     callback clicked();
 
-    width: small ? 26px : 30px;
-    height: small ? 26px : 30px;
-    border-radius: 5px;
+    width: small ? 28px : 32px;
+    height: small ? 28px : 32px;
+    border-radius: 6px;
     background: touch.pressed ? Theme.surface-hover.darker(15%) : (touch.has-hover ? Theme.surface-hover : Colors.transparent);
 
     touch := TouchArea {
@@ -341,8 +341,8 @@ export component ProgressBar inherits Rectangle {
     in property <float> progress: 0.0; // 0.0 to 1.0 or greater
     in property <color> bar-color: progress > 1.0 ? Theme.danger : (progress > 0.85 ? Theme.warning : Theme.primary);
 
-    height: 5px;
-    border-radius: 2.5px;
+    height: 6px;
+    border-radius: 3px;
     background: Theme.border;
 
     fill := Rectangle {
@@ -350,7 +350,7 @@ export component ProgressBar inherits Rectangle {
         y: 0;
         height: parent.height;
         width: Math.min(parent.width, parent.width * Math.max(0.0, root.progress));
-        border-radius: 2.5px;
+        border-radius: 3px;
         background: root.bar-color;
     }
 }
@@ -368,14 +368,14 @@ export component StatCard inherits Rectangle {
     border-radius: 8px;
 
     VerticalLayout {
-        padding: 12px;
+        padding: 13px;
         spacing: 3px;
 
         HorizontalLayout {
             Text {
                 text: root.title;
                 color: Theme.text-secondary;
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: 700;
                 letter-spacing: 0.5px;
                 vertical-alignment: center;
@@ -385,7 +385,7 @@ export component StatCard inherits Rectangle {
         Text {
             text: root.value;
             color: Theme.text-primary;
-            font-size: 19px;
+            font-size: 22px;
             font-weight: 800;
             vertical-alignment: center;
         }
@@ -393,7 +393,7 @@ export component StatCard inherits Rectangle {
         if root.subtitle != "": Text {
             text: root.subtitle;
             color: root.accent-color;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 600;
             vertical-alignment: center;
         }
@@ -408,8 +408,8 @@ export component TabButton inherits Rectangle {
     background: active ? Theme.primary-subtle : (touch.has-hover ? Theme.surface-hover : Colors.transparent);
     border-color: active ? Theme.primary : Theme.border;
     border-width: 1px;
-    border-radius: 5px;
-    height: 26px;
+    border-radius: 6px;
+    height: 30px;
 
     touch := TouchArea {
         width: 100%;
@@ -419,13 +419,13 @@ export component TabButton inherits Rectangle {
     }
 
     HorizontalLayout {
-        padding-left: 10px;
-        padding-right: 10px;
+        padding-left: 12px;
+        padding-right: 12px;
         alignment: center;
         Text {
             text: root.text;
             color: root.active ? Theme.primary : Theme.text-secondary;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: root.active ? 700 : 500;
             horizontal-alignment: center;
             vertical-alignment: center;
@@ -440,7 +440,7 @@ export component AppInput inherits Rectangle {
     in property <bool> read-only <=> input.read-only;
     in property <bool> enabled: true;
     out property <bool> has-focus: input.has-focus;
-    in property <length> font-size: 11px;
+    in property <length> font-size: 13px;
     in property <TextHorizontalAlignment> horizontal-alignment: left;
     in property <string> prefix-text: "";
     in property <color> focus-border-color: Theme.primary;
@@ -450,7 +450,7 @@ export component AppInput inherits Rectangle {
 
     forward-focus: input;
 
-    height: 32px;
+    height: 36px;
     min-width: 40px;
     border-radius: 6px;
     background: Theme.input-background;
@@ -465,9 +465,9 @@ export component AppInput inherits Rectangle {
     }
 
     HorizontalLayout {
-        padding-left: 10px;
-        padding-right: 10px;
-        spacing: 4px;
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 6px;
 
         if root.prefix-text != "": VerticalLayout {
             alignment: center;
@@ -536,14 +536,14 @@ export component AppTextEdit inherits Rectangle {
     in property <bool> read-only <=> input.read-only;
     in property <bool> enabled: true;
     out property <bool> has-focus: input.has-focus;
-    in property <length> font-size: 11px;
+    in property <length> font-size: 13px;
     in property <color> focus-border-color: Theme.primary;
 
     callback edited(string);
 
     forward-focus: input;
 
-    min-height: 60px;
+    min-height: 70px;
     border-radius: 6px;
     background: Theme.input-background;
     border-width: 1px;
@@ -557,10 +557,10 @@ export component AppTextEdit inherits Rectangle {
     }
 
     VerticalLayout {
-        padding-left: 10px;
-        padding-right: 10px;
-        padding-top: 8px;
-        padding-bottom: 8px;
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 10px;
+        padding-bottom: 10px;
 
         Rectangle {
             clip: true;
@@ -605,7 +605,7 @@ export component CurrencySelector inherits VerticalLayout {
         spacing: 6px;
         for curr in CurrencyModel.row-1: Rectangle {
             horizontal-stretch: 1;
-            height: 30px;
+            height: 34px;
             border-radius: 6px;
             background: root.selected-currency == curr.code ? Theme.primary : (touch1.has-hover ? Theme.surface-hover : Theme.input-background);
             border-color: root.selected-currency == curr.code ? Theme.primary : (touch1.has-hover ? Theme.border-strong : Theme.border);
@@ -621,13 +621,13 @@ export component CurrencySelector inherits VerticalLayout {
 
             HorizontalLayout {
                 alignment: center;
-                spacing: 4px;
-                padding-left: 4px;
-                padding-right: 4px;
+                spacing: 5px;
+                padding-left: 6px;
+                padding-right: 6px;
 
                 Text {
                     text: curr.code;
-                    font-size: 11px;
+                    font-size: 12px;
                     font-weight: root.selected-currency == curr.code ? 800 : 600;
                     color: root.selected-currency == curr.code ? #FFFFFF : Theme.text-primary;
                     vertical-alignment: center;
@@ -637,15 +637,15 @@ export component CurrencySelector inherits VerticalLayout {
                     alignment: center;
                     Rectangle {
                         border-radius: 3px;
-                        height: 16px;
+                        height: 18px;
                         background: root.selected-currency == curr.code ? #FFFFFF.transparentize(80%) : (Theme.mode == 0 ? #000000.transparentize(92%) : #FFFFFF.transparentize(90%));
                         VerticalLayout {
-                            padding-left: 4px;
-                            padding-right: 4px;
+                            padding-left: 5px;
+                            padding-right: 5px;
                             alignment: center;
                             Text {
                                 text: curr.symbol;
-                                font-size: 10px;
+                                font-size: 11px;
                                 font-weight: 700;
                                 color: root.selected-currency == curr.code ? #FFFFFF : Theme.text-secondary;
                                 horizontal-alignment: center;
@@ -662,7 +662,7 @@ export component CurrencySelector inherits VerticalLayout {
         spacing: 6px;
         for curr in CurrencyModel.row-2: Rectangle {
             horizontal-stretch: 1;
-            height: 30px;
+            height: 34px;
             border-radius: 6px;
             background: root.selected-currency == curr.code ? Theme.primary : (touch2.has-hover ? Theme.surface-hover : Theme.input-background);
             border-color: root.selected-currency == curr.code ? Theme.primary : (touch2.has-hover ? Theme.border-strong : Theme.border);
@@ -678,13 +678,13 @@ export component CurrencySelector inherits VerticalLayout {
 
             HorizontalLayout {
                 alignment: center;
-                spacing: 4px;
-                padding-left: 4px;
-                padding-right: 4px;
+                spacing: 5px;
+                padding-left: 6px;
+                padding-right: 6px;
 
                 Text {
                     text: curr.code;
-                    font-size: 11px;
+                    font-size: 12px;
                     font-weight: root.selected-currency == curr.code ? 800 : 600;
                     color: root.selected-currency == curr.code ? #FFFFFF : Theme.text-primary;
                     vertical-alignment: center;
@@ -694,15 +694,15 @@ export component CurrencySelector inherits VerticalLayout {
                     alignment: center;
                     Rectangle {
                         border-radius: 3px;
-                        height: 16px;
+                        height: 18px;
                         background: root.selected-currency == curr.code ? #FFFFFF.transparentize(80%) : (Theme.mode == 0 ? #000000.transparentize(92%) : #FFFFFF.transparentize(90%));
                         VerticalLayout {
-                            padding-left: 4px;
-                            padding-right: 4px;
+                            padding-left: 5px;
+                            padding-right: 5px;
                             alignment: center;
                             Text {
                                 text: curr.symbol;
-                                font-size: 10px;
+                                font-size: 11px;
                                 font-weight: 700;
                                 color: root.selected-currency == curr.code ? #FFFFFF : Theme.text-secondary;
                                 horizontal-alignment: center;
@@ -733,7 +733,7 @@ export component ModernDatePickerPopup inherits PopupWindow {
     callback accepted(int, int, int);
 
     close-policy: close-on-click-outside;
-    width: 270px;
+    width: 280px;
 
     pure function is-leap(y: int) -> bool {
         (mod(y, 4) == 0 && mod(y, 100) != 0) || mod(y, 400) == 0
@@ -829,7 +829,7 @@ export component ModernDatePickerPopup inherits PopupWindow {
                     alignment: center;
                     Text {
                         text: root.get-month-name(root.view-month) + " " + root.view-year;
-                        font-size: 13px;
+                        font-size: 14px;
                         font-weight: 700;
                         color: Theme.text-primary;
                     }
@@ -840,7 +840,7 @@ export component ModernDatePickerPopup inherits PopupWindow {
 
                     // Today quick jump pill
                     Rectangle {
-                        height: 24px;
+                        height: 26px;
                         border-radius: 4px;
                         background: today-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                         border-width: 1px;
@@ -860,7 +860,7 @@ export component ModernDatePickerPopup inherits PopupWindow {
                             alignment: center;
                             Text {
                                 text: "Today";
-                                font-size: 10px;
+                                font-size: 11px;
                                 font-weight: 600;
                                 color: Theme.text-secondary;
                                 vertical-alignment: center;
@@ -870,8 +870,8 @@ export component ModernDatePickerPopup inherits PopupWindow {
 
                     // Prev Month
                     Rectangle {
-                        width: 24px;
-                        height: 24px;
+                        width: 26px;
+                        height: 26px;
                         border-radius: 4px;
                         background: prev-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                         border-width: 1px;
@@ -891,7 +891,7 @@ export component ModernDatePickerPopup inherits PopupWindow {
 
                         Text {
                             text: "‹";
-                            font-size: 14px;
+                            font-size: 16px;
                             font-weight: 700;
                             color: Theme.text-primary;
                             horizontal-alignment: center;
@@ -901,8 +901,8 @@ export component ModernDatePickerPopup inherits PopupWindow {
 
                     // Next Month
                     Rectangle {
-                        width: 24px;
-                        height: 24px;
+                        width: 26px;
+                        height: 26px;
                         border-radius: 4px;
                         background: next-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                         border-width: 1px;
@@ -922,7 +922,7 @@ export component ModernDatePickerPopup inherits PopupWindow {
 
                         Text {
                             text: "›";
-                            font-size: 14px;
+                            font-size: 16px;
                             font-weight: 700;
                             color: Theme.text-primary;
                             horizontal-alignment: center;
@@ -937,10 +937,10 @@ export component ModernDatePickerPopup inherits PopupWindow {
                 spacing: 2px;
                 for day-name in ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]: Rectangle {
                     horizontal-stretch: 1;
-                    height: 18px;
+                    height: 20px;
                     Text {
                         text: day-name;
-                        font-size: 10px;
+                        font-size: 11px;
                         font-weight: 600;
                         color: Theme.text-muted;
                         horizontal-alignment: center;
@@ -955,7 +955,7 @@ export component ModernDatePickerPopup inherits PopupWindow {
                 for i in 42: Rectangle {
                     row: floor(i / 7);
                     col: mod(i, 7);
-                    height: 26px;
+                    height: 28px;
                     border-radius: 5px;
 
                     property <int> first-dow: root.get-first-dow(root.view-month, root.view-year);
@@ -987,7 +987,7 @@ export component ModernDatePickerPopup inherits PopupWindow {
                     Text {
                         text: d-num;
                         color: is-selected ? #FFFFFF : (is-cur ? Theme.text-primary : Theme.text-muted.transparentize(50%));
-                        font-size: 11px;
+                        font-size: 12px;
                         font-weight: is-selected || is-today ? 700 : 500;
                         horizontal-alignment: center;
                         vertical-alignment: center;
@@ -1013,7 +1013,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
     callback accepted(int, int);
 
     close-policy: close-on-click-outside;
-    width: 250px;
+    width: 260px;
 
     pure function pad(n: int) -> string {
         n < 10 ? ("0" + n) : ("" + n)
@@ -1027,7 +1027,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
         clip: true;
 
         VerticalLayout {
-            padding: 12px;
+            padding: 14px;
             spacing: 12px;
 
             // Header
@@ -1037,7 +1037,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
                     alignment: center;
                     Text {
                         text: "Select Time";
-                        font-size: 12px;
+                        font-size: 13px;
                         font-weight: 700;
                         color: Theme.text-primary;
                     }
@@ -1045,7 +1045,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                 // "Now" quick jump pill
                 Rectangle {
-                    height: 22px;
+                    height: 24px;
                     border-radius: 4px;
                     background: now-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                     border-width: 1px;
@@ -1067,7 +1067,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
                         alignment: center;
                         Text {
                             text: "Now";
-                            font-size: 10px;
+                            font-size: 11px;
                             font-weight: 600;
                             color: Theme.text-secondary;
                             vertical-alignment: center;
@@ -1088,8 +1088,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Hour Up
                     Rectangle {
-                        width: 52px;
-                        height: 22px;
+                        width: 56px;
+                        height: 24px;
                         border-radius: 4px;
                         background: h-up-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                         border-width: 1px;
@@ -1104,7 +1104,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                         Text {
                             text: "▲";
-                            font-size: 9px;
+                            font-size: 11px;
+                            font-weight: 700;
                             color: Theme.text-primary;
                             horizontal-alignment: center;
                             vertical-alignment: center;
@@ -1113,8 +1114,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Hour Value
                     Rectangle {
-                        width: 52px;
-                        height: 40px;
+                        width: 56px;
+                        height: 42px;
                         border-radius: 6px;
                         background: Theme.input-background;
                         border-width: 1px;
@@ -1122,7 +1123,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                         Text {
                             text: root.pad(root.current-hour);
-                            font-size: 20px;
+                            font-size: 22px;
                             font-weight: 700;
                             color: Theme.text-primary;
                             horizontal-alignment: center;
@@ -1132,8 +1133,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Hour Down
                     Rectangle {
-                        width: 52px;
-                        height: 22px;
+                        width: 56px;
+                        height: 24px;
                         border-radius: 4px;
                         background: h-dn-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                         border-width: 1px;
@@ -1148,7 +1149,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                         Text {
                             text: "▼";
-                            font-size: 9px;
+                            font-size: 11px;
+                            font-weight: 700;
                             color: Theme.text-primary;
                             horizontal-alignment: center;
                             vertical-alignment: center;
@@ -1176,8 +1178,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Minute Up
                     Rectangle {
-                        width: 52px;
-                        height: 22px;
+                        width: 56px;
+                        height: 24px;
                         border-radius: 4px;
                         background: m-up-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                         border-width: 1px;
@@ -1192,7 +1194,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                         Text {
                             text: "▲";
-                            font-size: 9px;
+                            font-size: 11px;
+                            font-weight: 700;
                             color: Theme.text-primary;
                             horizontal-alignment: center;
                             vertical-alignment: center;
@@ -1201,8 +1204,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Minute Value
                     Rectangle {
-                        width: 52px;
-                        height: 40px;
+                        width: 56px;
+                        height: 42px;
                         border-radius: 6px;
                         background: Theme.input-background;
                         border-width: 1px;
@@ -1210,7 +1213,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                         Text {
                             text: root.pad(root.current-minute);
-                            font-size: 20px;
+                            font-size: 22px;
                             font-weight: 700;
                             color: Theme.text-primary;
                             horizontal-alignment: center;
@@ -1220,8 +1223,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Minute Down
                     Rectangle {
-                        width: 52px;
-                        height: 22px;
+                        width: 56px;
+                        height: 24px;
                         border-radius: 4px;
                         background: m-dn-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                         border-width: 1px;
@@ -1236,7 +1239,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                         Text {
                             text: "▼";
-                            font-size: 9px;
+                            font-size: 11px;
+                            font-weight: 700;
                             color: Theme.text-primary;
                             horizontal-alignment: center;
                             vertical-alignment: center;
@@ -1250,7 +1254,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
                 spacing: 4px;
                 for snap-min in [0, 15, 30, 45]: Rectangle {
                     horizontal-stretch: 1;
-                    height: 24px;
+                    height: 26px;
                     border-radius: 4px;
                     background: root.current-minute == snap-min ? root.accent-color : (snap-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle);
                     border-width: 1px;
@@ -1267,7 +1271,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
                         alignment: center;
                         Text {
                             text: ":" + (snap-min < 10 ? "0" : "") + snap-min;
-                            font-size: 10px;
+                            font-size: 11px;
                             font-weight: root.current-minute == snap-min ? 700 : 500;
                             color: root.current-minute == snap-min ? #FFFFFF : Theme.text-secondary;
                             vertical-alignment: center;
@@ -1282,8 +1286,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
                 alignment: end;
 
                 Rectangle {
-                    width: 60px;
-                    height: 26px;
+                    width: 66px;
+                    height: 28px;
                     border-radius: 5px;
                     background: cancel-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                     border-width: 1px;
@@ -1298,7 +1302,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     Text {
                         text: "Cancel";
-                        font-size: 10px;
+                        font-size: 11px;
                         font-weight: 600;
                         color: Theme.text-secondary;
                         horizontal-alignment: center;
@@ -1307,8 +1311,8 @@ export component ModernTimePickerPopup inherits PopupWindow {
                 }
 
                 Rectangle {
-                    width: 75px;
-                    height: 26px;
+                    width: 82px;
+                    height: 28px;
                     border-radius: 5px;
                     background: root.accent-color;
 
@@ -1322,7 +1326,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     Text {
                         text: "Set Time";
-                        font-size: 10px;
+                        font-size: 11px;
                         font-weight: 700;
                         color: #FFFFFF;
                         horizontal-alignment: center;

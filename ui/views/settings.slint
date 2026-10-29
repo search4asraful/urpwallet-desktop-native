@@ -87,9 +87,7 @@ export component SettingsView inherits ScrollView {
             }
         }
 
-        // =====================================================================
         // SECTION 1: MASTER PIN / PASSPHRASE SECURITY
-        // =====================================================================
         Rectangle {
             background: Theme.surface;
             border-color: Theme.border;
@@ -110,14 +108,14 @@ export component SettingsView inherits ScrollView {
                         Text {
                             text: "Master PIN / Passphrase Security";
                             color: Theme.text-primary;
-                            font-size: 13px;
+                            font-size: 15px;
                             font-weight: 700;
                             vertical-alignment: center;
                         }
                         Text {
                             text: "Cryptographic protection powered by Argon2 key derivation. Auto-locks wallet on application launch.";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                             wrap: word-wrap;
                         }
                     }
@@ -161,7 +159,7 @@ export component SettingsView inherits ScrollView {
 
                             Text {
                                 text: root.pin-protected ? "Enter 6-digit PIN to update security or remove protection:" : "Set a 6-digit master PIN to lock your finances on startup:";
-                                font-size: 11px;
+                                font-size: 12px;
                                 font-weight: 600;
                                 color: Theme.text-primary;
                                 wrap: word-wrap;
@@ -245,9 +243,7 @@ export component SettingsView inherits ScrollView {
             }
         }
 
-        // =====================================================================
         // SECTION 2: THEME & VISUAL APPEARANCE
-        // =====================================================================
         Rectangle {
             background: Theme.surface;
             border-color: Theme.border;
@@ -265,14 +261,14 @@ export component SettingsView inherits ScrollView {
                         Text {
                             text: "Theme & Visual Appearance";
                             color: Theme.text-primary;
-                            font-size: 13px;
+                            font-size: 15px;
                             font-weight: 700;
                             vertical-alignment: center;
                         }
                         Text {
                             text: "Select your preferred visual style or contrast balance across the application";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                             vertical-alignment: center;
                         }
                     }
@@ -315,7 +311,7 @@ export component SettingsView inherits ScrollView {
                                 alignment: space-between;
                                 Text {
                                     text: th_item.name;
-                                    font-size: 11px;
+                                    font-size: 12px;
                                     font-weight: 700;
                                     color: Theme.text-primary;
                                     vertical-alignment: center;
@@ -328,7 +324,7 @@ export component SettingsView inherits ScrollView {
 
                             Text {
                                 text: th_item.desc;
-                                font-size: 9px;
+                                font-size: 11px;
                                 color: Theme.text-muted;
                                 wrap: word-wrap;
                             }
@@ -436,9 +432,7 @@ export component SettingsView inherits ScrollView {
             }
         }
 
-        // =====================================================================
         // SECTION 3: DISPLAY & REGIONAL PREFERENCES
-        // =====================================================================
         Rectangle {
             background: Theme.surface;
             border-color: Theme.border;
@@ -456,14 +450,14 @@ export component SettingsView inherits ScrollView {
                         Text {
                             text: "Display & Regional Preferences";
                             color: Theme.text-primary;
-                            font-size: 13px;
+                            font-size: 15px;
                             font-weight: 700;
                             vertical-alignment: center;
                         }
                         Text {
                             text: "Unified currency chips, calendar date presentation, and balance privacy masking";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                             vertical-alignment: center;
                         }
                     }
@@ -481,14 +475,14 @@ export component SettingsView inherits ScrollView {
                         border-radius: 8px;
 
                         VerticalLayout {
-                            padding: 12px;
+                            padding: 14px;
                             spacing: 10px;
 
                             HorizontalLayout {
                                 alignment: space-between;
                                 Text {
                                     text: "Base Currency";
-                                    font-size: 11px;
+                                    font-size: 13px;
                                     font-weight: 700;
                                     color: Theme.text-primary;
                                     vertical-alignment: center;
@@ -517,7 +511,7 @@ export component SettingsView inherits ScrollView {
                         border-radius: 8px;
 
                         VerticalLayout {
-                            padding: 12px;
+                            padding: 14px;
                             spacing: 12px;
 
                             // Date Format Segmented Control
@@ -528,7 +522,7 @@ export component SettingsView inherits ScrollView {
                                     alignment: space-between;
                                     Text {
                                         text: "Date Presentation Format";
-                                        font-size: 11px;
+                                        font-size: 13px;
                                         font-weight: 700;
                                         color: Theme.text-primary;
                                         vertical-alignment: center;
@@ -541,7 +535,7 @@ export component SettingsView inherits ScrollView {
 
                                 // Segmented Control Bar
                                 Rectangle {
-                                    height: 32px;
+                                    height: 34px;
                                     border-radius: 6px;
                                     background: Theme.input-background;
                                     border-color: Theme.border;
@@ -560,7 +554,7 @@ export component SettingsView inherits ScrollView {
                                             border-radius: 4px;
                                             background: root.date-format == fmt_item.fmt ? Theme.primary : (fmt-touch.has-hover ? Theme.surface-hover : Colors.transparent);
 
-                                            fmt-touch := TouchArea {
+                                             fmt-touch := TouchArea {
                                                 mouse-cursor: MouseCursor.pointer;
                                                 clicked => {
                                                     root.update-date-format(fmt_item.fmt);
@@ -571,7 +565,7 @@ export component SettingsView inherits ScrollView {
                                                 alignment: center;
                                                 Text {
                                                     text: fmt_item.label;
-                                                    font-size: 10px;
+                                                    font-size: 11px;
                                                     font-weight: root.date-format == fmt_item.fmt ? 700 : 500;
                                                     color: root.date-format == fmt_item.fmt ? #FFFFFF : Theme.text-primary;
                                                     vertical-alignment: center;
@@ -592,17 +586,17 @@ export component SettingsView inherits ScrollView {
                                 alignment: space-between;
 
                                 VerticalLayout {
-                                    spacing: 1px;
+                                    spacing: 2px;
                                     Text {
                                         text: "Balance Privacy Mode";
-                                        font-size: 11px;
+                                        font-size: 13px;
                                         font-weight: 700;
                                         color: Theme.text-primary;
                                         vertical-alignment: center;
                                     }
                                     Text {
                                         text: "Mask balances and monetary amounts across all screens";
-                                        font-size: 9px;
+                                        font-size: 11px;
                                         color: Theme.text-muted;
                                         vertical-alignment: center;
                                     }
@@ -612,18 +606,9 @@ export component SettingsView inherits ScrollView {
                                     spacing: 10px;
                                     alignment: end;
 
-                                    Text {
-                                        text: root.privacy-mode ? "Hidden (••••)" : "Visible ($1,234)";
-                                        color: root.privacy-mode ? Theme.primary : Theme.text-secondary;
-                                        font-size: 11px;
-                                        font-weight: 600;
-                                        vertical-alignment: center;
-                                    }
-
                                     // Toggle switch
                                     Rectangle {
                                         width: 40px;
-                                        height: 22px;
                                         border-radius: 11px;
                                         background: root.privacy-mode ? Theme.primary : Theme.border-strong;
                                         animate background { duration: 150ms; }
@@ -633,6 +618,15 @@ export component SettingsView inherits ScrollView {
                                             clicked => {
                                                 root.toggle-privacy();
                                             }
+                                        }
+
+                                        Text {
+                                            text: root.privacy-mode ? "Hidden (••••)" : "Visible ($1,234)";
+                                            color: root.privacy-mode ? Theme.primary : Theme.text-secondary;
+                                            height: 16px;
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            vertical-alignment: center;
                                         }
 
                                         Rectangle {
@@ -653,9 +647,7 @@ export component SettingsView inherits ScrollView {
             }
         }
 
-        // =====================================================================
         // SECTION 4: CATEGORY CATALOG
-        // =====================================================================
         Rectangle {
             background: Theme.surface;
             border-color: Theme.border;
@@ -680,7 +672,7 @@ export component SettingsView inherits ScrollView {
                         Text {
                             text: "Organize spending & income ledger classifications (" + root.categories.length + " total)";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                             vertical-alignment: center;
                         }
                     }
@@ -977,7 +969,7 @@ export component SettingsView inherits ScrollView {
                                         Text {
                                             text: "CATEGORY NAME";
                                             color: Theme.text-muted;
-                                            font-size: 9px;
+                                            font-size: 11px;
                                             font-weight: 700;
                                             vertical-alignment: center;
                                         }
@@ -993,7 +985,7 @@ export component SettingsView inherits ScrollView {
                                         Text {
                                             text: "TYPE";
                                             color: Theme.text-muted;
-                                            font-size: 9px;
+                                            font-size: 11px;
                                             font-weight: 700;
                                             vertical-alignment: center;
                                         }
@@ -1009,7 +1001,7 @@ export component SettingsView inherits ScrollView {
                                         Text {
                                             text: "USAGE / ACTIVITY";
                                             color: Theme.text-muted;
-                                            font-size: 9px;
+                                            font-size: 11px;
                                             font-weight: 700;
                                             vertical-alignment: center;
                                         }
@@ -1025,7 +1017,7 @@ export component SettingsView inherits ScrollView {
                                         Text {
                                             text: "ACTIONS";
                                             color: Theme.text-muted;
-                                            font-size: 9px;
+                                            font-size: 11px;
                                             font-weight: 700;
                                             vertical-alignment: center;
                                         }
@@ -1049,13 +1041,13 @@ export component SettingsView inherits ScrollView {
                                 Text {
                                     text: "No categories match this filter";
                                     color: Theme.text-muted;
-                                    font-size: 11px;
+                                    font-size: 12px;
                                     horizontal-alignment: center;
                                 }
                                 if root.cat-search-query != "": Text {
                                     text: "Try adjusting search query or switching spending type.";
                                     color: Theme.text-muted;
-                                    font-size: 10px;
+                                    font-size: 11px;
                                     horizontal-alignment: center;
                                 }
                             }
@@ -1069,7 +1061,7 @@ export component SettingsView inherits ScrollView {
                             }
 
                             Rectangle {
-                                height: 38px;
+                                height: 42px;
                                 background: row-touch.has-hover ? Theme.surface-hover : Colors.transparent;
 
                                 row-touch := TouchArea {}
@@ -1103,7 +1095,7 @@ export component SettingsView inherits ScrollView {
                                                 horizontal-stretch: 1;
                                                 text: cat.name;
                                                 color: Theme.text-primary;
-                                                font-size: 11px;
+                                                font-size: 13px;
                                                 font-weight: 600;
                                                 vertical-alignment: center;
                                                 overflow: elide;
@@ -1146,7 +1138,7 @@ export component SettingsView inherits ScrollView {
                                                 if cat.tx_count == 0: Text {
                                                     text: "0 transactions (unused)";
                                                     color: Theme.text-muted;
-                                                    font-size: 10px;
+                                                    font-size: 12px;
                                                     vertical-alignment: center;
                                                 }
                                             }
@@ -1191,9 +1183,32 @@ export component SettingsView inherits ScrollView {
                                                     }
                                                 }
 
-                                                if cat.tx_count > 0: Badge {
-                                                    text: "🔒 In Use";
-                                                    badge-color: Theme.text-muted;
+                                                if cat.tx_count > 0: Rectangle {
+                                                    height: 22px;
+                                                    border-radius: 4px;
+                                                    background: Theme.mode == 0 ? Theme.text-muted.transparentize(88%) : Theme.text-muted.transparentize(82%);
+                                                    HorizontalLayout {
+                                                        padding-left: 6px;
+                                                        padding-right: 6px;
+                                                        spacing: 4px;
+                                                        alignment: center;
+                                                        VerticalLayout {
+                                                            alignment: center;
+                                                            Image {
+                                                                source: @image-url("../../assets/icons/lock.svg");
+                                                                width: 10px;
+                                                                height: 10px;
+                                                                colorize: Theme.text-muted;
+                                                            }
+                                                        }
+                                                        Text {
+                                                            text: "In Use";
+                                                            color: Theme.text-muted;
+                                                            font-size: 11px;
+                                                            font-weight: 700;
+                                                            vertical-alignment: center;
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -1206,9 +1221,7 @@ export component SettingsView inherits ScrollView {
             }
         }
 
-        // =====================================================================
         // SECTION 5: DATA BACKUP, IMPORT & PORTABILITY
-        // =====================================================================
         Rectangle {
             background: Theme.surface;
             border-color: Theme.border;
@@ -1233,7 +1246,7 @@ export component SettingsView inherits ScrollView {
                         Text {
                             text: "Local SQLite database storage. Export full backups or restore historical ledger records.";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                             vertical-alignment: center;
                         }
                     }
@@ -1265,8 +1278,8 @@ export component SettingsView inherits ScrollView {
 
                             Text {
                                 text: "Active SQLite Database:";
-                                font-size: 11px;
-                                font-weight: 700;
+                                font-size: 12px;
+                                font-weight: 600;
                                 color: Theme.text-primary;
                             }
 
@@ -1284,7 +1297,7 @@ export component SettingsView inherits ScrollView {
 
                                     Text {
                                         text: root.db-storage-path;
-                                        font-size: 10px;
+                                        font-size: 11px;
                                         font-family: "monospace";
                                         color: Theme.primary;
                                         font-weight: 600;
@@ -1338,8 +1351,8 @@ export component SettingsView inherits ScrollView {
 
                             Text {
                                 text: "Export & Backup Destination:";
-                                font-size: 11px;
-                                font-weight: 700;
+                                font-size: 12px;
+                                font-weight: 600;
                                 color: Theme.text-primary;
                             }
 
@@ -1357,7 +1370,7 @@ export component SettingsView inherits ScrollView {
 
                                     Text {
                                         text: root.export-storage-path;
-                                        font-size: 10px;
+                                        font-size: 11px;
                                         font-family: "monospace";
                                         color: Theme.primary;
                                         font-weight: 600;
@@ -1415,8 +1428,8 @@ export component SettingsView inherits ScrollView {
 
                                 Text {
                                     text: "Google Drive Cloud Sync";
-                                    font-size: 11px;
-                                    font-weight: 700;
+                                    font-size: 12px;
+                                    font-weight: 600;
                                     color: Theme.text-primary;
                                     vertical-alignment: center;
                                 }
@@ -1429,7 +1442,7 @@ export component SettingsView inherits ScrollView {
 
                             Text {
                                 text: root.gdrive-connected ? ("Schedule: " + (root.gdrive-frequency == "hourly" ? "Hourly" : (root.gdrive-frequency == "every_6h" ? "Every 6h" : (root.gdrive-frequency == "weekly" ? "Weekly" : (root.gdrive-frequency == "manual" ? "Manual" : "Daily")))) + " • Last backup: " + (root.gdrive-last-backup != "" ? root.gdrive-last-backup : "Never")) : "Sync encrypted ledger snapshots directly to your personal Google Drive.";
-                                font-size: 10px;
+                                font-size: 11px;
                                 color: Theme.text-muted;
                             }
                         }
@@ -1511,9 +1524,7 @@ export component SettingsView inherits ScrollView {
             }
         }
 
-        // =====================================================================
         // DANGER ZONE (SAMPLE DEMO LEDGER)
-        // =====================================================================
         Rectangle {
             background: Theme.surface;
             border-color: Theme.warning;
@@ -1549,9 +1560,9 @@ export component SettingsView inherits ScrollView {
                         }
 
                         Text {
-                            text: "Reset local database with rich sample transactions, recurring bills, budgets, and debts. WARNING: Replaces all current records.";
+                            text: "Reset local database with rich sample transactions, recurring bills, budgets, and debts. \nWARNING: Replaces all current records.";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                             vertical-alignment: center;
                         }
                     }
@@ -1570,7 +1581,7 @@ export component SettingsView inherits ScrollView {
 
         // FOOTER BRANDING
         Rectangle {
-            height: 25px;
+            height: 30px;
 
             HorizontalLayout {
                 alignment: center;
@@ -1587,7 +1598,7 @@ export component SettingsView inherits ScrollView {
                 Text {
                     text: "urpwallet • Personal Finance • Offline Local SQLite • Standalone Native Rust + Slint";
                     color: Theme.text-muted;
-                    font-size: 10px;
+                    font-size: 11px;
                     font-weight: 500;
                     vertical-alignment: center;
                 }

@@ -1,3 +1,10 @@
+import "../assets/fonts/Inter-Regular.ttf";
+import "../assets/fonts/Inter-Medium.ttf";
+import "../assets/fonts/Inter-SemiBold.ttf";
+import "../assets/fonts/Inter-Bold.ttf";
+import "../assets/fonts/NotoSansBengali-Regular.ttf";
+import "../assets/fonts/NotoSansBengali-Bold.ttf";
+
 import { Theme } from "theme.slint";
 export { Theme } from "theme.slint";
 
@@ -33,6 +40,9 @@ import { PinLockOverlay } from "modals/lock_overlay.slint";
 export component MainWindow inherits Window {
     title: "urpwallet — Financial Planner & Budget Tracker";
     icon: @image-url("../assets/icon.png");
+    default-font-family: "Inter";
+    default-font-size: 13px;
+    default-font-weight: 400;
     min-width: 980px;
     min-height: 660px;
     preferred-width: 1140px;

@@ -42,7 +42,7 @@ export component BillsView inherits VerticalLayout {
                 Text {
                     text: "Track scheduled expenses, monthly memberships, utilities, and auto-payments";
                     color: Theme.text-muted;
-                    font-size: 10px;
+                    font-size: 12px;
                     vertical-alignment: center;
                 }
             }
@@ -80,14 +80,14 @@ export component BillsView inherits VerticalLayout {
                         spacing: 4px;
                         Text {
                             text: "No Recurring Bills or Subscriptions Scheduled";
-                            font-size: 14px;
+                            font-size: 15px;
                             font-weight: 700;
                             color: Theme.text-primary;
                             horizontal-alignment: center;
                         }
                         Text {
                             text: "Stay on top of recurring cash outflows such as Netflix, Spotify, gym memberships, rent, and utility bills.";
-                            font-size: 11px;
+                            font-size: 12px;
                             color: Theme.text-muted;
                             horizontal-alignment: center;
                         }
@@ -107,7 +107,7 @@ export component BillsView inherits VerticalLayout {
             }
 
             for bill in root.bills: Rectangle {
-                height: 56px;
+                height: 60px;
                 background: Theme.surface;
                 border-color: Theme.border;
                 border-width: 1px;
@@ -124,7 +124,7 @@ export component BillsView inherits VerticalLayout {
                         Text {
                             text: bill.name;
                             color: Theme.text-primary;
-                            font-size: 13px;
+                            font-size: 14px;
                             font-weight: 700;
                             vertical-alignment: center;
                         }
@@ -133,7 +133,7 @@ export component BillsView inherits VerticalLayout {
                             Text {
                                 text: "Next Due: " + bill.due_date;
                                 color: Theme.text-muted;
-                                font-size: 11px;
+                                font-size: 12px;
                                 vertical-alignment: center;
                             }
                             Badge {
@@ -150,18 +150,18 @@ export component BillsView inherits VerticalLayout {
                     VerticalLayout {
                         alignment: center;
                         HorizontalLayout {
-                            spacing: 6px;
+                            spacing: 8px;
                             Text {
-                                width: 90px;
+                                width: 95px;
                                 horizontal-alignment: right;
                                 vertical-alignment: center;
                                 text: bill.amount;
                                 color: bill.is_expense ? Theme.danger : Theme.primary;
-                                font-size: 14px;
+                                font-size: 15px;
                                 font-weight: 800;
                             }
                             AppButton {
-                                width: 78px;
+                                width: 82px;
                                 text: "Pay Now";
                                 small: true;
                                 btn-color: Theme.primary;
@@ -170,7 +170,7 @@ export component BillsView inherits VerticalLayout {
                                 }
                             }
                             AppButton {
-                                width: 56px;
+                                width: 58px;
                                 text: "Details";
                                 small: true;
                                 outline: true;
@@ -180,7 +180,7 @@ export component BillsView inherits VerticalLayout {
                                 }
                             }
                             AppButton {
-                                width: 48px;
+                                width: 50px;
                                 text: "Edit";
                                 small: true;
                                 outline: true;
@@ -190,7 +190,7 @@ export component BillsView inherits VerticalLayout {
                                 }
                             }
                             AppButton {
-                                width: 56px;
+                                width: 58px;
                                 text: "Delete";
                                 small: true;
                                 outline: true;
