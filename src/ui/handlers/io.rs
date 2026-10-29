@@ -284,4 +284,16 @@ pub fn register_io_handlers(ui: &MainWindow, db: &Database) {
             }
         });
     }
+
+    // 9. Reset Export Destination to Default Downloads folder
+    {
+        let ui_weak = ui.as_weak();
+        ui.on_reset_default_export_path(move || {
+            let Some(ui) = ui_weak.upgrade() else { return; };
+            let _ = Database::reset_default_export_path();
+            let default_path = Database::get_default_export_path();
+            ui.set_export_storage_path(default_path.to_string_lossy().to_string().into());
+            ui.set_settings_status_msg(format!("✓ Export destination reset to Downloads: {}", default_path.display()).into());
+        });
+    }
 }

@@ -56,13 +56,13 @@ export component AddDebtModal inherits Rectangle {
                 }
             }
 
-            Text { text: "Person Name:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Person Name:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-debt-person := AppInput {
                 placeholder-text: "Friend, colleague, or lender...";
                 text: root.person;
             }
 
-            Text { text: "Relationship Type:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Relationship Type:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             HorizontalLayout {
                 spacing: 6px;
                 AppButton {
@@ -81,13 +81,13 @@ export component AddDebtModal inherits Rectangle {
                 }
             }
 
-            Text { text: "Total Principal Amount:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Total Principal Amount:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-debt-amt := AppInput {
                 placeholder-text: "150.00";
                 text: root.amount;
             }
 
-            Text { text: "Notes / Memo:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Notes / Memo:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-debt-notes := AppInput {
                 placeholder-text: "Reason or agreement...";
                 text: root.notes;
@@ -177,7 +177,7 @@ export component RepayDebtModal inherits Rectangle {
             Text {
                 text: "Enter payment amount to record on ledger:";
                 color: Theme.text-muted;
-                font-size: 10px;
+                font-size: 12px;
                 vertical-alignment: center;
             }
 
@@ -273,7 +273,7 @@ export component DebtDetailModal inherits Rectangle {
                     Text {
                         text: "Remaining: " + root.detail-debt.remaining;
                         color: root.detail-debt.status == "settled" ? Theme.primary : (root.detail-debt.is_loan ? Theme.primary : Theme.danger);
-                        font-size: 20px;
+                        font-size: 22px;
                         font-weight: 900;
                         horizontal-alignment: center;
                         vertical-alignment: center;
@@ -281,7 +281,7 @@ export component DebtDetailModal inherits Rectangle {
                     Text {
                         text: (root.detail-debt.is_loan ? "Lent to: " : "Borrowed from: ") + root.detail-debt.person;
                         color: Theme.text-secondary;
-                        font-size: 11px;
+                        font-size: 12px;
                         font-weight: 600;
                         horizontal-alignment: center;
                         vertical-alignment: center;
@@ -295,7 +295,7 @@ export component DebtDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Direction:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: "Direction:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
                     Badge {
                         text: root.detail-debt.is_loan ? "Loan (They owe me)" : "Debt (I owe them)";
                         badge-color: root.detail-debt.is_loan ? Theme.primary : Theme.warning;
@@ -304,19 +304,19 @@ export component DebtDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Total Principal:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-debt.amount; color: Theme.text-primary; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                    Text { text: "Total Principal:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-debt.amount; color: Theme.text-primary; font-size: 12px; font-weight: 700; vertical-alignment: center; }
                 }
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Settled So Far:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-debt.settled; color: Theme.primary; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                    Text { text: "Settled So Far:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-debt.settled; color: Theme.primary; font-size: 12px; font-weight: 700; vertical-alignment: center; }
                 }
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Status:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: "Status:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
                     Badge {
                         text: root.detail-debt.status;
                         badge-color: root.detail-debt.status == "settled" ? Theme.primary : Theme.danger;
@@ -325,8 +325,8 @@ export component DebtDetailModal inherits Rectangle {
 
                 if root.detail-debt.notes != "": HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Notes / Memo:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-debt.notes; color: Theme.text-secondary; font-size: 10px; vertical-alignment: center; }
+                    Text { text: "Notes / Memo:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-debt.notes; color: Theme.text-secondary; font-size: 12px; vertical-alignment: center; }
                 }
             }
 
@@ -335,6 +335,7 @@ export component DebtDetailModal inherits Rectangle {
                 alignment: end;
 
                 AppButton {
+                    icon: @image-url("../../assets/icons/trash.svg");
                     text: "Delete";
                     small: true;
                     btn-color: Theme.danger;
@@ -346,6 +347,7 @@ export component DebtDetailModal inherits Rectangle {
                 }
 
                 AppButton {
+                    icon: @image-url("../../assets/icons/pen-edit.svg");
                     text: "Edit";
                     small: true;
                     outline: true;
@@ -357,6 +359,7 @@ export component DebtDetailModal inherits Rectangle {
                 }
 
                 if root.detail-debt.status != "settled": AppButton {
+                    icon: @image-url("../../assets/icons/bill-return.svg");
                     text: "Record Repayment";
                     small: true;
                     btn-color: Theme.primary;

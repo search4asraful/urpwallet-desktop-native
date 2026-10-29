@@ -60,19 +60,19 @@ export component AddBillModal inherits Rectangle {
                 }
             }
 
-            Text { text: "Bill or Subscription Name:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Bill or Subscription Name:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-bill-name := AppInput {
                 placeholder-text: "e.g. Netflix, Spotify, Rent, AWS, Gym...";
                 text: root.bill-name;
             }
 
-            Text { text: "Recurring Amount:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Recurring Amount:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-bill-amt := AppInput {
                 placeholder-text: "19.99";
                 text: root.bill-amount;
             }
 
-            Text { text: "Frequency / Billing Cycle:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Frequency / Billing Cycle:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             HorizontalLayout {
                 spacing: 6px;
                 for freq in [
@@ -81,7 +81,7 @@ export component AddBillModal inherits Rectangle {
                     { idx: 1, label: "Weekly" },
                     { idx: 0, label: "Daily" }
                 ]: Rectangle {
-                    height: 28px;
+                    height: 30px;
                     horizontal-stretch: 1;
                     border-radius: 6px;
                     background: root.selected-freq == freq.idx ? Theme.primary : Theme.surface-subtle;
@@ -94,8 +94,8 @@ export component AddBillModal inherits Rectangle {
                         alignment: center;
                         Text {
                             text: freq.label;
-                            font-size: 10px;
-                            font-weight: 700;
+                            font-size: 11px;
+                            font-weight: 600;
                             color: root.selected-freq == freq.idx ? #FFFFFF : Theme.text-primary;
                             vertical-alignment: center;
                         }
@@ -103,13 +103,13 @@ export component AddBillModal inherits Rectangle {
                 }
             }
 
-            Text { text: "Payee / Provider (Optional):"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Payee / Provider (Optional):"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-bill-payee := AppInput {
                 placeholder-text: "e.g. Netflix Inc, Landlord, Utility Co...";
                 text: root.bill-payee;
             }
 
-            Text { text: "Next Due Date (YYYY-MM-DD):"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Next Due Date (YYYY-MM-DD):"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-bill-date := AppInput {
                 placeholder-text: "2026-11-01 (leave blank for today)";
                 text: root.bill-next-date;
@@ -221,7 +221,7 @@ export component BillDetailModal inherits Rectangle {
                     Text {
                         text: root.detail-bill.name;
                         color: Theme.text-secondary;
-                        font-size: 11px;
+                        font-size: 12px;
                         font-weight: 600;
                         horizontal-alignment: center;
                         vertical-alignment: center;
@@ -235,13 +235,13 @@ export component BillDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Payee / Provider:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-bill.payee != "" ? root.detail-bill.payee : "None"; color: Theme.text-primary; font-size: 11px; font-weight: 600; vertical-alignment: center; }
+                    Text { text: "Payee / Provider:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-bill.payee != "" ? root.detail-bill.payee : "None"; color: Theme.text-primary; font-size: 12px; font-weight: 600; vertical-alignment: center; }
                 }
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Frequency:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: "Frequency:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
                     Badge {
                         text: root.detail-bill.frequency;
                         badge-color: Theme.info;
@@ -250,13 +250,13 @@ export component BillDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Next Due Date:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-bill.due_date; color: Theme.warning; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                    Text { text: "Next Due Date:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-bill.due_date; color: Theme.warning; font-size: 12px; font-weight: 700; vertical-alignment: center; }
                 }
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Debiting Account:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: "Debiting Account:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
                     Badge {
                         text: root.detail-bill.account_name;
                         badge-color: Theme.primary;
@@ -269,6 +269,7 @@ export component BillDetailModal inherits Rectangle {
                 alignment: end;
 
                 AppButton {
+                    icon: @image-url("../../assets/icons/trash.svg");
                     text: "Delete Bill";
                     small: true;
                     btn-color: Theme.danger;
@@ -280,6 +281,7 @@ export component BillDetailModal inherits Rectangle {
                 }
 
                 AppButton {
+                    icon: @image-url("../../assets/icons/pen-edit.svg");
                     text: "Edit Bill";
                     small: true;
                     outline: true;
@@ -291,6 +293,7 @@ export component BillDetailModal inherits Rectangle {
                 }
 
                 AppButton {
+                    icon: @image-url("../../assets/icons/paying-cash.svg");
                     text: "Pay Now";
                     small: true;
                     btn-color: Theme.primary;

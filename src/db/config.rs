@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+#[cfg(not(test))]
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 
@@ -10,10 +11,20 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn config_file_path() -> PathBuf {
-        if let Some(proj_dirs) = ProjectDirs::from("com", "urpwallet", "urpwallet") {
-            proj_dirs.config_dir().join("config.json")
-        } else {
-            PathBuf::from("data/config.json")
+        if let Ok(custom_config) = std::env::var("URPWALLET_CONFIG_PATH") {
+            return PathBuf::from(custom_config);
+        }
+        #[cfg(test)]
+        {
+            std::env::temp_dir().join("urpwallet_test_config.json")
+        }
+        #[cfg(not(test))]
+        {
+            if let Some(proj_dirs) = ProjectDirs::from("com", "urpwallet", "urpwallet") {
+                proj_dirs.config_dir().join("config.json")
+            } else {
+                PathBuf::from("data/config.json")
+            }
         }
     }
 

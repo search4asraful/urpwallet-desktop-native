@@ -7,7 +7,7 @@ pub fn map_tx_item(item: &TransactionWithDetails, privacy: bool, date_format: &s
     let tx = &item.transaction;
     let is_income = tx.tx_type == TransactionType::Income;
     let is_transfer = tx.tx_type == TransactionType::Transfer;
-    let prefix = if is_income { "+" } else if is_transfer { "⇄ " } else { "-" };
+    let prefix = if is_income { "+" } else if is_transfer { "↔ " } else { "-" };
 
     let acc_name = item.account_name.as_deref().unwrap_or("");
     let to_acc_name = item.to_account_name.as_deref().unwrap_or("");

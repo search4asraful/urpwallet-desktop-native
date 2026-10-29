@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { AccountItem } from "../models.slint";
-import { StatCard, TabButton, AppButton, Badge } from "../components.slint";
+import { StatCard, TabButton, AppButton, Badge, IconButton } from "../components.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component AccountsView inherits VerticalLayout {
@@ -95,20 +95,20 @@ export component AccountsView inherits VerticalLayout {
             spacing: 6px;
 
             if root.filtered-accounts.length == 0: Rectangle {
-                height: 90px;
+                height: 100px;
                 background: Theme.surface;
                 border-color: Theme.border;
                 border-width: 1px;
                 border-radius: 6px;
                 VerticalLayout {
                     alignment: center;
-                    spacing: 4px;
-                    Text { text: "No Accounts Found"; font-size: 13px; font-weight: 700; color: Theme.text-primary; horizontal-alignment: center; }
+                    spacing: 5px;
+                    Text { text: "No Accounts Found"; font-size: 15px; font-weight: 700; color: Theme.text-primary; horizontal-alignment: center; }
                     Text {
                         text: root.accounts-filter-tab == 1 ? "No asset accounts found." :
                               (root.accounts-filter-tab == 2 ? "No liability accounts found." :
                               "Click '+ New Account' to create your first bank account or vault.");
-                        font-size: 11px;
+                        font-size: 12px;
                         color: Theme.text-muted;
                         horizontal-alignment: center;
                     }
@@ -116,15 +116,15 @@ export component AccountsView inherits VerticalLayout {
             }
 
             for acc in root.filtered-accounts: Rectangle {
-                height: 52px;
+                height: 58px;
                 background: Theme.surface;
                 border-color: Theme.border;
                 border-width: 1px;
                 border-radius: 6px;
 
                 HorizontalLayout {
-                    padding-left: 12px;
-                    padding-right: 12px;
+                    padding-left: 14px;
+                    padding-right: 14px;
                     alignment: space-between;
                     VerticalLayout {
                         alignment: center;
@@ -134,7 +134,7 @@ export component AccountsView inherits VerticalLayout {
                             Text {
                                 text: acc.name;
                                 color: Theme.text-primary;
-                                font-size: 13px;
+                                font-size: 14px;
                                 font-weight: 700;
                                 vertical-alignment: center;
                             }
@@ -146,47 +146,47 @@ export component AccountsView inherits VerticalLayout {
                         Text {
                             text: "Currency: " + acc.currency;
                             color: Theme.text-muted;
-                            font-size: 11px;
+                            font-size: 12px;
                             vertical-alignment: center;
                         }
                     }
                     VerticalLayout {
                         alignment: center;
                         HorizontalLayout {
-                            spacing: 6px;
+                            spacing: 8px;
                             Text {
-                                width: 100px;
+                                width: 110px;
                                 horizontal-alignment: right;
                                 vertical-alignment: center;
                                 text: acc.balance;
                                 color: acc.is_liability ? Theme.danger : Theme.text-primary;
-                                font-size: 15px;
+                                font-size: 16px;
                                 font-weight: 800;
                             }
-                            AppButton {
-                                width: 54px;
-                                text: "Details";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/eye.svg");
                                 outline: true;
                                 btn-color: Theme.info;
+                                icon-color: Theme.info;
+                                tooltip: "View Details";
                                 clicked => {
                                     root.select-account(acc);
                                 }
                             }
-                            AppButton {
-                                width: 46px;
-                                text: "Edit";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/pen-edit.svg");
                                 outline: true;
                                 btn-color: Theme.primary;
+                                icon-color: Theme.primary;
+                                tooltip: "Edit";
                                 clicked => { root.open-edit-account(acc.id); }
                             }
-                            AppButton {
-                                width: 54px;
-                                text: "Delete";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/trash.svg");
                                 outline: true;
                                 btn-color: Theme.danger;
+                                icon-color: Theme.danger;
+                                tooltip: "Delete";
                                 clicked => { root.delete-account(acc.id); }
                             }
                         }

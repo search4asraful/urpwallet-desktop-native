@@ -163,14 +163,14 @@ export component ReportsView inherits ScrollView {
                         Text {
                             text: "Monthly Flow & Performance Overview";
                             color: Theme.text-primary;
-                            font-size: 13px;
+                            font-size: 14px;
                             font-weight: 700;
                             vertical-alignment: center;
                         }
                         Text {
                             text: "Aggregated monthly cash inflows, outflows, and daily pacing";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                         }
                     }
                     Badge {
@@ -187,13 +187,13 @@ export component ReportsView inherits ScrollView {
                         border-color: Theme.border;
                         border-width: 1px;
                         border-radius: 6px;
-                        height: 52px;
+                        height: 58px;
                         VerticalLayout {
                             alignment: center;
                             padding-left: 12px;
                             spacing: 2px;
-                            Text { text: "INCOME GENERATED"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
-                            Text { text: root.monthly-income; font-size: 14px; font-weight: 800; color: Theme.primary; }
+                            Text { text: "INCOME GENERATED"; font-size: 11px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: root.monthly-income; font-size: 16px; font-weight: 800; color: Theme.primary; }
                         }
                     }
                     Rectangle {
@@ -202,13 +202,13 @@ export component ReportsView inherits ScrollView {
                         border-color: Theme.border;
                         border-width: 1px;
                         border-radius: 6px;
-                        height: 52px;
+                        height: 58px;
                         VerticalLayout {
                             alignment: center;
                             padding-left: 12px;
                             spacing: 2px;
-                            Text { text: "TOTAL EXPENDITURES"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
-                            Text { text: root.monthly-expense; font-size: 14px; font-weight: 800; color: Theme.danger; }
+                            Text { text: "TOTAL EXPENDITURES"; font-size: 11px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: root.monthly-expense; font-size: 16px; font-weight: 800; color: Theme.danger; }
                         }
                     }
                     Rectangle {
@@ -217,13 +217,13 @@ export component ReportsView inherits ScrollView {
                         border-color: Theme.border;
                         border-width: 1px;
                         border-radius: 6px;
-                        height: 52px;
+                        height: 58px;
                         VerticalLayout {
                             alignment: center;
                             padding-left: 12px;
                             spacing: 2px;
-                            Text { text: "DAILY AVERAGE SPEND"; font-size: 9px; font-weight: 700; color: Theme.text-muted; }
-                            Text { text: root.daily-average; font-size: 14px; font-weight: 800; color: Theme.info; }
+                            Text { text: "DAILY AVERAGE SPEND"; font-size: 11px; font-weight: 700; color: Theme.text-muted; }
+                            Text { text: root.daily-average; font-size: 16px; font-weight: 800; color: Theme.info; }
                         }
                     }
                 }
@@ -237,14 +237,14 @@ export component ReportsView inherits ScrollView {
                         spacing: 6px;
                         Text {
                             text: "Top Expense Category:";
-                            font-size: 10px;
+                            font-size: 12px;
                             font-weight: 600;
                             color: Theme.text-muted;
                             vertical-alignment: center;
                         }
                         Text {
                             text: root.top-category-name + " (" + root.top-category-amount + ")";
-                            font-size: 10px;
+                            font-size: 12px;
                             font-weight: 700;
                             color: Theme.text-primary;
                             vertical-alignment: center;
@@ -255,14 +255,14 @@ export component ReportsView inherits ScrollView {
                         spacing: 6px;
                         Text {
                             text: "Monthly Savings Rate:";
-                            font-size: 10px;
+                            font-size: 12px;
                             font-weight: 600;
                             color: Theme.text-muted;
                             vertical-alignment: center;
                         }
                         Text {
                             text: root.savings-rate;
-                            font-size: 10px;
+                            font-size: 12px;
                             font-weight: 700;
                             color: Theme.primary;
                             vertical-alignment: center;
@@ -293,13 +293,13 @@ export component ReportsView inherits ScrollView {
                         Text {
                             text: "Weekly Cash Flow Pacing";
                             color: Theme.text-primary;
-                            font-size: 13px;
+                            font-size: 14px;
                             font-weight: 700;
                         }
                         Text {
                             text: "Week-by-week cash inflow vs. outflow distribution for this month";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                         }
                     }
 
@@ -309,22 +309,22 @@ export component ReportsView inherits ScrollView {
                         alignment: center;
 
                         HorizontalLayout {
-                            spacing: 5px;
+                            spacing: 6px;
                             alignment: center;
                             VerticalLayout {
                                 alignment: center;
                                 Rectangle { width: 8px; height: 8px; border-radius: 2px; background: Theme.primary; }
-                                Text { text: "Income"; font-size: 10px; font-weight: 600; color: Theme.text-secondary; }
+                                Text { text: "Income"; font-size: 11px; font-weight: 600; color: Theme.text-secondary; }
                             }
                         }
 
                         HorizontalLayout {
-                            spacing: 5px;
+                            spacing: 6px;
                             alignment: center;
                             VerticalLayout {
                                 alignment: center;
                                 Rectangle { width: 8px; height: 8px; border-radius: 2px; background: Theme.danger; }
-                                Text { text: "Expense"; font-size: 10px; font-weight: 600; color: Theme.text-secondary; }
+                                Text { text: "Expense"; font-size: 11px; font-weight: 600; color: Theme.text-secondary; }
                             }
                         }
                     }
@@ -346,14 +346,14 @@ export component ReportsView inherits ScrollView {
 
                         Text {
                             text: "No weekly cash flow recorded for this month.";
-                            font-size: 11px;
+                            font-size: 12px;
                             font-weight: 600;
                             color: Theme.text-secondary;
                             horizontal-alignment: center;
                         }
                         Text {
                             text: "Weekly inflow and outflow bars will visualize here once transactions are recorded in this month.";
-                            font-size: 10px;
+                            font-size: 11px;
                             color: Theme.text-muted;
                             horizontal-alignment: center;
                         }
@@ -372,7 +372,7 @@ export component ReportsView inherits ScrollView {
                         border-radius: 6px;
 
                         VerticalLayout {
-                            padding: 8px;
+                            padding: 10px;
                             spacing: 6px;
                             alignment: center;
 
@@ -381,13 +381,13 @@ export component ReportsView inherits ScrollView {
                                 alignment: space-between;
                                 Text {
                                     text: week.label;
-                                    font-size: 11px;
+                                    font-size: 12px;
                                     font-weight: 700;
                                     color: Theme.text-primary;
                                 }
                                 Text {
                                     text: week.date_range;
-                                    font-size: 9px;
+                                    font-size: 11px;
                                     font-weight: 500;
                                     color: Theme.text-muted;
                                 }
@@ -450,12 +450,12 @@ export component ReportsView inherits ScrollView {
                                     alignment: space-between;
                                     Text {
                                         text: "Income";
-                                        font-size: 9px;
+                                        font-size: 11px;
                                         color: Theme.text-muted;
                                     }
                                     Text {
                                         text: week.income;
-                                        font-size: 9px;
+                                        font-size: 11px;
                                         font-weight: 600;
                                         color: Theme.primary;
                                     }
@@ -464,12 +464,12 @@ export component ReportsView inherits ScrollView {
                                     alignment: space-between;
                                     Text {
                                         text: "Expense";
-                                        font-size: 9px;
+                                        font-size: 11px;
                                         color: Theme.text-muted;
                                     }
                                     Text {
                                         text: week.expense;
-                                        font-size: 9px;
+                                        font-size: 11px;
                                         font-weight: 600;
                                         color: Theme.danger;
                                     }
@@ -502,13 +502,13 @@ export component ReportsView inherits ScrollView {
                         Text {
                             text: "Monthly Performance & Trajectory Trend";
                             color: Theme.text-primary;
-                            font-size: 13px;
+                            font-size: 14px;
                             font-weight: 700;
                         }
                         Text {
                             text: "Comparative cash flow trajectory across the recent 4 months";
                             color: Theme.text-muted;
-                            font-size: 10px;
+                            font-size: 12px;
                         }
                     }
 
@@ -518,22 +518,22 @@ export component ReportsView inherits ScrollView {
                         alignment: center;
 
                         HorizontalLayout {
-                            spacing: 5px;
+                            spacing: 6px;
                             alignment: center;
                             VerticalLayout {
                                 alignment: center;
                                 Rectangle { width: 8px; height: 8px; border-radius: 2px; background: Theme.primary; }
-                                Text { text: "Income"; font-size: 10px; font-weight: 600; color: Theme.text-secondary; }
+                                Text { text: "Income"; font-size: 11px; font-weight: 600; color: Theme.text-secondary; }
                             }
                         }
 
                         HorizontalLayout {
-                            spacing: 5px;
+                            spacing: 6px;
                             alignment: center;
                             VerticalLayout {
                                 alignment: center;
                                 Rectangle { width: 8px; height: 8px; border-radius: 2px; background: Theme.danger; }
-                                Text { text: "Expense"; font-size: 10px; font-weight: 600; color: Theme.text-secondary; }
+                                Text { text: "Expense"; font-size: 11px; font-weight: 600; color: Theme.text-secondary; }
                             }
                         }
                     }
@@ -551,13 +551,13 @@ export component ReportsView inherits ScrollView {
                         border-radius: 6px;
 
                         VerticalLayout {
-                            padding: 8px;
+                            padding: 10px;
                             spacing: 6px;
                             alignment: center;
 
                             Text {
                                 text: trend.month_name;
-                                font-size: 11px;
+                                font-size: 12px;
                                 font-weight: 700;
                                 color: Theme.text-primary;
                                 horizontal-alignment: center;
@@ -620,12 +620,12 @@ export component ReportsView inherits ScrollView {
                                     alignment: space-between;
                                     Text {
                                         text: "Income";
-                                        font-size: 9px;
+                                        font-size: 11px;
                                         color: Theme.text-muted;
                                     }
                                     Text {
                                         text: trend.income;
-                                        font-size: 9px;
+                                        font-size: 11px;
                                         font-weight: 600;
                                         color: Theme.primary;
                                     }
@@ -634,12 +634,12 @@ export component ReportsView inherits ScrollView {
                                     alignment: space-between;
                                     Text {
                                         text: "Expense";
-                                        font-size: 9px;
+                                        font-size: 11px;
                                         color: Theme.text-muted;
                                     }
                                     Text {
                                         text: trend.expense;
-                                        font-size: 9px;
+                                        font-size: 11px;
                                         font-weight: 600;
                                         color: Theme.danger;
                                     }
@@ -670,14 +670,14 @@ export component ReportsView inherits ScrollView {
                     Text {
                         text: "Spending Breakdown by Category";
                         color: Theme.text-primary;
-                        font-size: 13px;
+                        font-size: 14px;
                         font-weight: 700;
                         vertical-alignment: center;
                     }
                     if root.category-breakdown.length > 0: Text {
                         text: "" + root.category-breakdown.length + " Categories";
                         color: Theme.text-muted;
-                        font-size: 10px;
+                        font-size: 12px;
                         font-weight: 600;
                         vertical-alignment: center;
                     }
@@ -699,14 +699,14 @@ export component ReportsView inherits ScrollView {
 
                         Text {
                             text: "No category spending recorded for this month.";
-                            font-size: 11px;
+                            font-size: 12px;
                             font-weight: 600;
                             color: Theme.text-secondary;
                             horizontal-alignment: center;
                         }
                         Text {
                             text: "Categorized expense transactions will automatically generate allocation percentages and progress bars here.";
-                            font-size: 10px;
+                            font-size: 11px;
                             color: Theme.text-muted;
                             horizontal-alignment: center;
                             wrap: word-wrap;
@@ -718,12 +718,12 @@ export component ReportsView inherits ScrollView {
                 if root.category-breakdown.length > 0: VerticalLayout {
                     spacing: 8px;
                     for item in root.category-breakdown: VerticalLayout {
-                        height: 40px;
+                        height: 42px;
                         spacing: 3px;
                         HorizontalLayout {
                             alignment: space-between;
                             HorizontalLayout {
-                                spacing: 6px;
+                                spacing: 8px;
                                 VerticalLayout {
                                     alignment: center;
                                     Rectangle {
@@ -736,7 +736,7 @@ export component ReportsView inherits ScrollView {
                                 Text {
                                     text: item.name;
                                     color: Theme.text-primary;
-                                    font-size: 11px;
+                                    font-size: 13px;
                                     font-weight: 600;
                                     vertical-alignment: center;
                                 }
@@ -744,7 +744,7 @@ export component ReportsView inherits ScrollView {
                             Text {
                                 text: item.total + " (" + Math.round(item.percentage) + "%)";
                                 color: Theme.text-secondary;
-                                font-size: 11px;
+                                font-size: 12px;
                                 font-weight: 600;
                                 vertical-alignment: center;
                             }

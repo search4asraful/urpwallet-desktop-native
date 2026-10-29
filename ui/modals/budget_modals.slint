@@ -55,13 +55,13 @@ export component AddBudgetModal inherits Rectangle {
                 }
             }
 
-            Text { text: "Budget Name:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Budget Name:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-b-name := AppInput {
                 placeholder-text: "e.g. Dining Out, Groceries...";
                 text: root.budget-name;
             }
 
-            Text { text: "Monthly Limit Amount:"; font-size: 10px; color: Theme.text-muted; }
+            Text { text: "Monthly Limit Amount:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-b-amt := AppInput {
                 placeholder-text: "500.00";
                 text: root.budget-amount;
@@ -173,7 +173,7 @@ export component BudgetDetailModal inherits Rectangle {
                     Text {
                         text: root.detail-budget.spent + " spent of " + root.detail-budget.total;
                         color: root.detail-budget.is_over ? Theme.danger : Theme.text-primary;
-                        font-size: 16px;
+                        font-size: 18px;
                         font-weight: 800;
                         vertical-alignment: center;
                     }
@@ -189,19 +189,19 @@ export component BudgetDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Monthly Limit:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-budget.total; color: Theme.text-primary; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                    Text { text: "Monthly Limit:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-budget.total; color: Theme.text-primary; font-size: 12px; font-weight: 700; vertical-alignment: center; }
                 }
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Current Month Spent:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-budget.spent; color: root.detail-budget.is_over ? Theme.danger : Theme.text-primary; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                    Text { text: "Current Month Spent:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-budget.spent; color: root.detail-budget.is_over ? Theme.danger : Theme.text-primary; font-size: 12px; font-weight: 700; vertical-alignment: center; }
                 }
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Utilization Rate:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
+                    Text { text: "Utilization Rate:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
                     Badge {
                         text: Math.round(root.detail-budget.percentage) + "%";
                         badge-color: root.detail-budget.is_over ? Theme.danger : Theme.primary;
@@ -210,8 +210,8 @@ export component BudgetDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
-                    Text { text: "Daily Safe Allowance:"; color: Theme.text-muted; font-size: 11px; vertical-alignment: center; }
-                    Text { text: root.detail-budget.daily_safe + " / day"; color: Theme.info; font-size: 11px; font-weight: 700; vertical-alignment: center; }
+                    Text { text: "Daily Safe Allowance:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text { text: root.detail-budget.daily_safe + " / day"; color: Theme.info; font-size: 12px; font-weight: 700; vertical-alignment: center; }
                 }
             }
 
@@ -220,6 +220,7 @@ export component BudgetDetailModal inherits Rectangle {
                 alignment: end;
 
                 AppButton {
+                    icon: @image-url("../../assets/icons/trash.svg");
                     text: "Delete Budget";
                     small: true;
                     btn-color: Theme.danger;
@@ -231,6 +232,7 @@ export component BudgetDetailModal inherits Rectangle {
                 }
 
                 AppButton {
+                    icon: @image-url("../../assets/icons/pen-edit.svg");
                     text: "Edit Budget";
                     small: true;
                     btn-color: Theme.primary;

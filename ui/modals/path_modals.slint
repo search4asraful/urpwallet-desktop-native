@@ -54,7 +54,7 @@ export component ChangeDbPathModal inherits Rectangle {
                     Text {
                         text: "Specify where urpwallet stores your local financial ledger";
                         color: Theme.text-muted;
-                        font-size: 10px;
+                        font-size: 12px;
                     }
                 }
 
@@ -76,13 +76,14 @@ export component ChangeDbPathModal inherits Rectangle {
 
                     Text {
                         text: "Active Database File:";
-                        font-size: 10px;
-                        font-weight: 700;
+                        font-size: 12px;
+                        font-weight: 600;
                         color: Theme.text-muted;
                     }
                     Text {
                         text: root.current-path != "" ? root.current-path : "Standard System Default";
-                        font-size: 10px;
+                        font-size: 11px;
+                        font-family: "monospace";
                         color: Theme.primary;
                         font-weight: 600;
                         wrap: word-wrap;
@@ -96,8 +97,8 @@ export component ChangeDbPathModal inherits Rectangle {
 
                 Text {
                     text: "New File Path (.db or .sqlite):";
-                    font-size: 11px;
-                    font-weight: 700;
+                    font-size: 12px;
+                    font-weight: 600;
                     color: Theme.text-primary;
                 }
 
@@ -121,7 +122,7 @@ export component ChangeDbPathModal inherits Rectangle {
             Rectangle {
                 background: Theme.surface-subtle;
                 border-radius: 6px;
-                height: 38px;
+                height: 42px;
 
                 HorizontalLayout {
                     padding-left: 10px;
@@ -132,13 +133,13 @@ export component ChangeDbPathModal inherits Rectangle {
                         spacing: 1px;
                         Text {
                             text: "Copy current ledger to new location";
-                            font-size: 10px;
+                            font-size: 12px;
                             font-weight: 600;
                             color: Theme.text-primary;
                         }
                         Text {
                             text: "Transfers your existing data if destination file does not exist yet";
-                            font-size: 10px;
+                            font-size: 11px;
                             color: Theme.text-muted;
                         }
                     }
@@ -209,6 +210,7 @@ export component ChangeExportPathModal inherits Rectangle {
     callback close();
     callback browse();
     callback apply(string);
+    callback reset-default();
 
     TouchArea {
         width: 100%;
@@ -249,7 +251,7 @@ export component ChangeExportPathModal inherits Rectangle {
                     Text {
                         text: "Choose the destination folder where JSON backups and CSV files will be saved";
                         color: Theme.text-muted;
-                        font-size: 10px;
+                        font-size: 12px;
                     }
                 }
 
@@ -271,13 +273,14 @@ export component ChangeExportPathModal inherits Rectangle {
 
                     Text {
                         text: "Current Export Destination:";
-                        font-size: 10px;
-                        font-weight: 700;
+                        font-size: 12px;
+                        font-weight: 600;
                         color: Theme.text-muted;
                     }
                     Text {
                         text: root.current-path != "" ? root.current-path : "Standard System Exports";
-                        font-size: 10px;
+                        font-size: 11px;
+                        font-family: "monospace";
                         color: Theme.info;
                         font-weight: 600;
                         wrap: word-wrap;
@@ -291,8 +294,8 @@ export component ChangeExportPathModal inherits Rectangle {
 
                 Text {
                     text: "Destination Folder Path:";
-                    font-size: 11px;
-                    font-weight: 700;
+                    font-size: 12px;
+                    font-weight: 600;
                     color: Theme.text-primary;
                 }
 
@@ -314,25 +317,40 @@ export component ChangeExportPathModal inherits Rectangle {
 
             // Actions
             HorizontalLayout {
-                alignment: end;
+                alignment: space-between;
                 spacing: 8px;
 
                 AppButton {
-                    text: "Cancel";
+                    text: "Reset to Downloads";
                     small: true;
                     outline: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
-                    clicked => { root.close(); }
-                }
-                AppButton {
-                    text: "Save Destination";
-                    small: true;
-                    btn-color: Theme.primary;
+                    btn-color: Theme.warning;
                     clicked => {
-                        if (root.new-path != "") {
-                            root.apply(root.new-path);
-                            root.close();
+                        root.reset-default();
+                        root.close();
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    AppButton {
+                        text: "Cancel";
+                        small: true;
+                        outline: true;
+                        btn-color: Theme.surface-hover;
+                        text-color: Theme.text-primary;
+                        clicked => { root.close(); }
+                    }
+                    AppButton {
+                        text: "Save Destination";
+                        small: true;
+                        btn-color: Theme.primary;
+                        clicked => {
+                            if (root.new-path != "") {
+                                root.apply(root.new-path);
+                                root.close();
+                            }
                         }
                     }
                 }
