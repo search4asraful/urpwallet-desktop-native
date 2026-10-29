@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { CategoryItem } from "../models.slint";
-import { Badge, AppButton, TabButton, AppInput, SixDigitPinInput, CurrencySelector } from "../components.slint";
+import { Badge, AppButton, TabButton, AppInput, SixDigitPinInput, CurrencySelector, IconButton } from "../components.slint";
 import { ScrollView, LineEdit } from "std-widgets.slint";
 
 export component SettingsView inherits ScrollView {
@@ -33,6 +33,7 @@ export component SettingsView inherits ScrollView {
     callback reset-default-db();
     callback select-export-folder();
     callback open-export-folder();
+    callback reset-default-export-path();
 
     callback set-master-pin(string);
     callback disable-master-pin(string);
@@ -603,8 +604,17 @@ export component SettingsView inherits ScrollView {
                                 }
 
                                 HorizontalLayout {
+                                    height: 22px;
                                     spacing: 10px;
                                     alignment: end;
+
+                                    Text {
+                                        text: root.privacy-mode ? "Hidden (••••)" : "Visible ($1,234)";
+                                        color: root.privacy-mode ? Theme.primary : Theme.text-secondary;
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        vertical-alignment: center;
+                                    }
 
                                     // Toggle switch
                                     Rectangle {
@@ -618,15 +628,6 @@ export component SettingsView inherits ScrollView {
                                             clicked => {
                                                 root.toggle-privacy();
                                             }
-                                        }
-
-                                        Text {
-                                            text: root.privacy-mode ? "Hidden (••••)" : "Visible ($1,234)";
-                                            color: root.privacy-mode ? Theme.primary : Theme.text-secondary;
-                                            height: 16px;
-                                            font-size: 12px;
-                                            font-weight: 600;
-                                            vertical-alignment: center;
                                         }
 
                                         Rectangle {
@@ -1156,11 +1157,12 @@ export component SettingsView inherits ScrollView {
 
                                             VerticalLayout {
                                                 alignment: center;
-                                                AppButton {
-                                                    text: "Edit";
-                                                    small: true;
+                                                IconButton {
+                                                    icon: @image-url("../../assets/icons/pen-edit.svg");
                                                     outline: true;
                                                     btn-color: Theme.border-strong;
+                                                    icon-color: Theme.text-primary;
+                                                    tooltip: "Edit Category";
                                                     clicked => {
                                                         root.editing-cat-id = cat.id;
                                                         root.new-cat-name = cat.name;
@@ -1173,11 +1175,12 @@ export component SettingsView inherits ScrollView {
 
                                             VerticalLayout {
                                                 alignment: center;
-                                                if cat.tx_count == 0: AppButton {
-                                                    text: "Delete";
-                                                    small: true;
+                                                if cat.tx_count == 0: IconButton {
+                                                    icon: @image-url("../../assets/icons/trash.svg");
                                                     outline: true;
                                                     btn-color: Theme.danger;
+                                                    icon-color: Theme.danger;
+                                                    tooltip: "Delete Category";
                                                     clicked => {
                                                         root.delete-category(cat.id);
                                                     }
@@ -1397,6 +1400,14 @@ export component SettingsView inherits ScrollView {
                                 outline: true;
                                 btn-color: Theme.border-strong;
                                 clicked => { root.open-export-folder(); }
+                            }
+
+                            AppButton {
+                                text: "Reset Default";
+                                small: true;
+                                outline: true;
+                                btn-color: Theme.border-strong;
+                                clicked => { root.reset-default-export-path(); }
                             }
                         }
                     }

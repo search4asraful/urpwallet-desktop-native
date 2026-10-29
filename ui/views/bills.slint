@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { BillItem } from "../models.slint";
-import { AppButton, Badge } from "../components.slint";
+import { AppButton, Badge, IconButton } from "../components.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component BillsView inherits VerticalLayout {
@@ -160,41 +160,41 @@ export component BillsView inherits VerticalLayout {
                                 font-size: 15px;
                                 font-weight: 800;
                             }
-                            AppButton {
-                                width: 82px;
-                                text: "Pay Now";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/paying-cash.svg");
                                 btn-color: Theme.primary;
+                                icon-color: #FFFFFF;
+                                tooltip: "Pay Now";
                                 clicked => {
                                     root.execute-bill-payment(bill.id);
                                 }
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Details";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/eye.svg");
                                 outline: true;
                                 btn-color: Theme.info;
+                                icon-color: Theme.info;
+                                tooltip: "View Details";
                                 clicked => {
                                     root.select-bill(bill);
                                 }
                             }
-                            AppButton {
-                                width: 50px;
-                                text: "Edit";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/pen-edit.svg");
                                 outline: true;
-                                btn-color: Theme.info;
+                                btn-color: Theme.primary;
+                                icon-color: Theme.primary;
+                                tooltip: "Edit";
                                 clicked => {
                                     root.open-edit-bill(bill.id);
                                 }
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Delete";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/trash.svg");
                                 outline: true;
                                 btn-color: Theme.danger;
+                                icon-color: Theme.danger;
+                                tooltip: "Delete";
                                 clicked => {
                                     root.delete-bill(bill.id);
                                 }

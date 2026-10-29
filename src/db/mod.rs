@@ -7,7 +7,7 @@ pub mod schema;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use rusqlite::Connection;
-use directories::ProjectDirs;
+use directories::{ProjectDirs, UserDirs};
 
 use config::AppConfig;
 pub use error::{DbError, DbResult};
@@ -107,8 +107,13 @@ impl Database {
         }
     }
 
-    /// Default export directory path: e.g. `~/.local/share/urpwallet/exports`
+    /// Default export directory path: User's Downloads directory (or data/exports fallback)
     pub fn get_default_export_path() -> PathBuf {
+        if let Some(user_dirs) = UserDirs::new() {
+            if let Some(download_dir) = user_dirs.download_dir() {
+                return download_dir.to_path_buf();
+            }
+        }
         if let Some(proj_dirs) = ProjectDirs::from("com", "urpwallet", "urpwallet") {
             proj_dirs.data_local_dir().join("exports")
         } else {
@@ -122,7 +127,11 @@ impl Database {
         if let Some(p) = cfg.export_path
             && !p.trim().is_empty()
         {
-            return PathBuf::from(p);
+            let path = PathBuf::from(&p);
+            // Ignore non-existent temporary directory paths (e.g. from prior test contamination)
+            if path.exists() || (!p.contains("/tmp/") && !p.contains("\\Temp\\")) {
+                return path;
+            }
         }
         Self::get_default_export_path()
     }
@@ -133,6 +142,13 @@ impl Database {
         std::fs::create_dir_all(p)?;
         let mut cfg = AppConfig::load();
         cfg.export_path = Some(p.to_string_lossy().to_string());
+        cfg.save()
+    }
+
+    /// Reset export directory path back to the default (User's Downloads directory)
+    pub fn reset_default_export_path() -> Result<(), std::io::Error> {
+        let mut cfg = AppConfig::load();
+        cfg.export_path = None;
         cfg.save()
     }
 
@@ -1119,5 +1135,20 @@ mod tests {
         let loaded = Database::get_configured_export_path();
         assert_eq!(loaded, custom_export);
         assert!(custom_export.exists());
+
+        // Test resetting back to default Downloads directory
+        Database::reset_default_export_path().unwrap();
+        let reset_path = Database::get_configured_export_path();
+        assert_eq!(reset_path, Database::get_default_export_path());
+    }
+
+    #[test]
+    fn test_default_export_path_is_downloads() {
+        let default_path = Database::get_default_export_path();
+        if let Some(user_dirs) = directories::UserDirs::new() {
+            if let Some(download_dir) = user_dirs.download_dir() {
+                assert_eq!(default_path, download_dir);
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { AccountItem, TransactionItem, BudgetItem, BillItem } from "../models.slint";
-import { StatCard, Badge, AppButton, ProgressBar } from "../components.slint";
+import { StatCard, Badge, AppButton, ProgressBar, IconButton } from "../components.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component DashboardView inherits ScrollView {
@@ -521,12 +521,12 @@ export component DashboardView inherits ScrollView {
                                     font-size: 13px;
                                     font-weight: 700;
                                 }
-                                AppButton {
-                                    width: 58px;
-                                    text: "View";
-                                    small: true;
+                                IconButton {
+                                    icon: @image-url("../../assets/icons/eye.svg");
                                     outline: true;
                                     btn-color: Theme.info;
+                                    icon-color: Theme.info;
+                                    tooltip: "View Details";
                                     clicked => { root.open-tx-details(tx.id); }
                                 }
                             }

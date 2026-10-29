@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { BudgetItem } from "../models.slint";
-import { AppButton, Badge, ProgressBar } from "../components.slint";
+import { AppButton, Badge, ProgressBar, IconButton } from "../components.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component BudgetsView inherits ScrollView {
@@ -136,30 +136,30 @@ export component BudgetsView inherits ScrollView {
                                 font-size: 14px;
                                 font-weight: 800;
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Details";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/eye.svg");
                                 outline: true;
                                 btn-color: Theme.info;
+                                icon-color: Theme.info;
+                                tooltip: "View Details";
                                 clicked => {
                                     root.select-budget(b);
                                 }
                             }
-                            AppButton {
-                                width: 50px;
-                                text: "Edit";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/pen-edit.svg");
                                 outline: true;
                                 btn-color: Theme.primary;
+                                icon-color: Theme.primary;
+                                tooltip: "Edit";
                                 clicked => { root.open-edit-budget(b.id); }
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Delete";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/trash.svg");
                                 outline: true;
                                 btn-color: Theme.danger;
+                                icon-color: Theme.danger;
+                                tooltip: "Delete";
                                 clicked => { root.delete-budget(b.id); }
                             }
                         }

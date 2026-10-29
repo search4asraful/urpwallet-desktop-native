@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { DebtItem } from "../models.slint";
-import { AppButton, Badge, TabButton } from "../components.slint";
+import { AppButton, Badge, TabButton, IconButton } from "../components.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component DebtsView inherits VerticalLayout {
@@ -130,39 +130,39 @@ export component DebtsView inherits VerticalLayout {
                         alignment: center;
                         HorizontalLayout {
                             spacing: 8px;
-                            if d.status != "settled": AppButton {
-                                width: 62px;
-                                text: "Repay";
-                                small: true;
+                            if d.status != "settled": IconButton {
+                                icon: @image-url("../../assets/icons/bill-return.svg");
                                 btn-color: Theme.primary;
+                                icon-color: #FFFFFF;
+                                tooltip: "Repay";
                                 clicked => {
                                     root.open-repay-debt(d.id, d.person);
                                 }
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Details";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/eye.svg");
                                 outline: true;
                                 btn-color: Theme.info;
+                                icon-color: Theme.info;
+                                tooltip: "View Details";
                                 clicked => {
                                     root.select-debt(d);
                                 }
                             }
-                            AppButton {
-                                width: 50px;
-                                text: "Edit";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/pen-edit.svg");
                                 outline: true;
-                                btn-color: Theme.info;
+                                btn-color: Theme.primary;
+                                icon-color: Theme.primary;
+                                tooltip: "Edit";
                                 clicked => { root.open-edit-debt(d.id); }
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Delete";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/trash.svg");
                                 outline: true;
                                 btn-color: Theme.danger;
+                                icon-color: Theme.danger;
+                                tooltip: "Delete";
                                 clicked => { root.delete-debt(d.id); }
                             }
                         }

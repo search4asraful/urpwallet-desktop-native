@@ -269,6 +269,7 @@ export component Badge inherits Rectangle {
 
 export component AppButton inherits Rectangle {
     in property <string> text;
+    in property <image> icon;
     in property <color> btn-color: Theme.primary;
     in property <color> text-color: Colors.transparent;
     in property <bool> outline: false;
@@ -295,9 +296,19 @@ export component AppButton inherits Rectangle {
         padding-left: small ? 10px : 14px;
         padding-right: small ? 10px : 14px;
         alignment: center;
-        spacing: 4px;
+        spacing: 6px;
 
-        Text {
+        if root.icon.width > 0: VerticalLayout {
+            alignment: center;
+            Image {
+                source: root.icon;
+                width: small ? 13px : 15px;
+                height: small ? 13px : 15px;
+                colorize: root.text-color != Colors.transparent ? root.text-color : (root.outline ? ((root.btn-color == Theme.surface-hover || root.btn-color == Theme.surface-subtle || root.btn-color == Theme.border || root.btn-color == Theme.border-strong) ? Theme.text-primary : root.btn-color) : ((root.btn-color == Theme.surface-hover || root.btn-color == Theme.surface-subtle) ? Theme.text-primary : #FFFFFF));
+            }
+        }
+
+        if root.text != "": Text {
             text: root.text;
             color: root.text-color != Colors.transparent ? root.text-color : (root.outline ? ((root.btn-color == Theme.surface-hover || root.btn-color == Theme.surface-subtle || root.btn-color == Theme.border || root.btn-color == Theme.border-strong) ? Theme.text-primary : root.btn-color) : ((root.btn-color == Theme.surface-hover || root.btn-color == Theme.surface-subtle) ? Theme.text-primary : #FFFFFF));
             font-size: small ? 12px : 13px;
@@ -334,6 +345,48 @@ export component CloseButton inherits Rectangle {
         LineTo { x: 10; y: 10; }
         MoveTo { x: 10; y: 0; }
         LineTo { x: 0; y: 10; }
+    }
+}
+
+export component IconButton inherits Rectangle {
+    in property <image> icon;
+    in property <color> btn-color: Theme.surface-subtle;
+    in property <color> icon-color: Theme.text-primary;
+    in property <bool> outline: false;
+    in property <bool> small: true;
+    in property <length> size: small ? 28px : 34px;
+    in property <length> icon-size: small ? 14px : 16px;
+    in property <bool> enabled: true;
+    in property <string> tooltip: "";
+    callback clicked();
+
+    width: root.size;
+    height: root.size;
+    border-radius: 6px;
+    opacity: root.enabled ? 1.0 : 0.45;
+    background: !root.enabled ? Colors.transparent : (touch.pressed ? (root.outline ? root.btn-color.transparentize(70%) : root.btn-color.darker(15%)) : (touch.has-hover ? (root.outline ? root.btn-color.transparentize(82%) : root.btn-color.darker(8%)) : (root.outline ? Colors.transparent : root.btn-color)));
+    border-color: root.outline ? (touch.has-hover ? root.btn-color : root.btn-color.transparentize(40%)) : Theme.border;
+    border-width: 1px;
+
+    touch := TouchArea {
+        width: 100%;
+        height: 100%;
+        mouse-cursor: MouseCursor.pointer;
+        enabled: root.enabled;
+        clicked => { root.clicked(); }
+    }
+
+    VerticalLayout {
+        alignment: center;
+        HorizontalLayout {
+            alignment: center;
+            Image {
+                source: root.icon;
+                width: root.icon-size;
+                height: root.icon-size;
+                colorize: root.icon-color;
+            }
+        }
     }
 }
 

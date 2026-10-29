@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { AccountItem } from "../models.slint";
-import { StatCard, TabButton, AppButton, Badge } from "../components.slint";
+import { StatCard, TabButton, AppButton, Badge, IconButton } from "../components.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component AccountsView inherits VerticalLayout {
@@ -163,30 +163,30 @@ export component AccountsView inherits VerticalLayout {
                                 font-size: 16px;
                                 font-weight: 800;
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Details";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/eye.svg");
                                 outline: true;
                                 btn-color: Theme.info;
+                                icon-color: Theme.info;
+                                tooltip: "View Details";
                                 clicked => {
                                     root.select-account(acc);
                                 }
                             }
-                            AppButton {
-                                width: 50px;
-                                text: "Edit";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/pen-edit.svg");
                                 outline: true;
                                 btn-color: Theme.primary;
+                                icon-color: Theme.primary;
+                                tooltip: "Edit";
                                 clicked => { root.open-edit-account(acc.id); }
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Delete";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/trash.svg");
                                 outline: true;
                                 btn-color: Theme.danger;
+                                icon-color: Theme.danger;
+                                tooltip: "Delete";
                                 clicked => { root.delete-account(acc.id); }
                             }
                         }

@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { TransactionItem } from "../models.slint";
-import { Badge, AppButton, TabButton, AppInput } from "../components.slint";
+import { Badge, AppButton, TabButton, AppInput, IconButton } from "../components.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component TransactionsView inherits VerticalLayout {
@@ -337,28 +337,28 @@ export component TransactionsView inherits VerticalLayout {
                                 font-size: 14px;
                                 font-weight: 700;
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Details";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/eye.svg");
                                 outline: true;
                                 btn-color: Theme.info;
+                                icon-color: Theme.info;
+                                tooltip: "View Details";
                                 clicked => { root.open-tx-details(tx.id); }
                             }
-                            AppButton {
-                                width: 50px;
-                                text: "Edit";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/pen-edit.svg");
                                 outline: true;
                                 btn-color: Theme.primary;
+                                icon-color: Theme.primary;
+                                tooltip: "Edit";
                                 clicked => { root.open-edit-tx(tx.id); }
                             }
-                            AppButton {
-                                width: 58px;
-                                text: "Delete";
-                                small: true;
+                            IconButton {
+                                icon: @image-url("../../assets/icons/trash.svg");
                                 outline: true;
                                 btn-color: Theme.danger;
+                                icon-color: Theme.danger;
+                                tooltip: "Delete";
                                 clicked => { root.delete-transaction(tx.id); }
                             }
                         }

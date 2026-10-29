@@ -210,6 +210,7 @@ export component ChangeExportPathModal inherits Rectangle {
     callback close();
     callback browse();
     callback apply(string);
+    callback reset-default();
 
     TouchArea {
         width: 100%;
@@ -316,25 +317,40 @@ export component ChangeExportPathModal inherits Rectangle {
 
             // Actions
             HorizontalLayout {
-                alignment: end;
+                alignment: space-between;
                 spacing: 8px;
 
                 AppButton {
-                    text: "Cancel";
+                    text: "Reset to Downloads";
                     small: true;
                     outline: true;
-                    btn-color: Theme.surface-hover;
-                    text-color: Theme.text-primary;
-                    clicked => { root.close(); }
-                }
-                AppButton {
-                    text: "Save Destination";
-                    small: true;
-                    btn-color: Theme.primary;
+                    btn-color: Theme.warning;
                     clicked => {
-                        if (root.new-path != "") {
-                            root.apply(root.new-path);
-                            root.close();
+                        root.reset-default();
+                        root.close();
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    AppButton {
+                        text: "Cancel";
+                        small: true;
+                        outline: true;
+                        btn-color: Theme.surface-hover;
+                        text-color: Theme.text-primary;
+                        clicked => { root.close(); }
+                    }
+                    AppButton {
+                        text: "Save Destination";
+                        small: true;
+                        btn-color: Theme.primary;
+                        clicked => {
+                            if (root.new-path != "") {
+                                root.apply(root.new-path);
+                                root.close();
+                            }
                         }
                     }
                 }

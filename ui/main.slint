@@ -51,6 +51,7 @@ export component MainWindow inherits Window {
 
     // Navigation & State
     in-out property <int> active-tab: 0; // 0:Dash, 1:Tx, 2:Accounts, 3:Budgets, 4:Bills, 5:Debts, 6:Reports, 7:Settings
+    in-out property <bool> sidebar-collapsed: false;
     in-out property <bool> privacy-mode: false;
     in-out property <bool> pin-protected: false;
     in-out property <bool> is-locked: false;
@@ -87,6 +88,7 @@ export component MainWindow inherits Window {
     callback select-export-folder();
     callback set-custom-export-path(string);
     callback open-export-folder();
+    callback reset-default-export-path();
 
     // Google Drive state
     in-out property <bool> show-gdrive-modal: false;
@@ -292,6 +294,7 @@ export component MainWindow inherits Window {
         HorizontalLayout {
             // SIDEBAR NAVIGATION
             Sidebar {
+                collapsed <=> root.sidebar-collapsed;
                 active-tab <=> root.active-tab;
                 privacy-mode <=> root.privacy-mode;
                 gdrive-connected: root.gdrive-connected;
@@ -510,6 +513,7 @@ export component MainWindow inherits Window {
                     reset-default-db => { root.reset-default-db(); }
                     select-export-folder => { root.select-export-folder(); }
                     open-export-folder => { root.open-export-folder(); }
+                    reset-default-export-path => { root.reset-default-export-path(); }
 
                     set-master-pin(pin) => { root.set-master-pin(pin); }
                     disable-master-pin(pin) => { root.disable-master-pin(pin); }
@@ -750,6 +754,7 @@ export component MainWindow inherits Window {
             close => { root.show-change-export-modal = false; }
             browse => { root.select-export-folder(); }
             apply(p) => { root.set-custom-export-path(p); }
+            reset-default => { root.reset-default-export-path(); }
         }
 
         // MASTER PIN LOCK SCREEN OVERLAY

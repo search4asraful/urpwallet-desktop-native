@@ -335,6 +335,7 @@ export component DebtDetailModal inherits Rectangle {
                 alignment: end;
 
                 AppButton {
+                    icon: @image-url("../../assets/icons/trash.svg");
                     text: "Delete";
                     small: true;
                     btn-color: Theme.danger;
@@ -346,6 +347,7 @@ export component DebtDetailModal inherits Rectangle {
                 }
 
                 AppButton {
+                    icon: @image-url("../../assets/icons/pen-edit.svg");
                     text: "Edit";
                     small: true;
                     outline: true;
@@ -357,6 +359,7 @@ export component DebtDetailModal inherits Rectangle {
                 }
 
                 if root.detail-debt.status != "settled": AppButton {
+                    icon: @image-url("../../assets/icons/bill-return.svg");
                     text: "Record Repayment";
                     small: true;
                     btn-color: Theme.primary;
