@@ -1,20 +1,21 @@
 export struct CurrencyItem {
     code: string,
     label: string,
+    symbol: string,
 }
 
 export global CurrencyModel {
     out property <[CurrencyItem]> row-1: [
-        { code: "BDT", label: "BDT (৳)" },
-        { code: "USD", label: "USD ($)" },
-        { code: "EUR", label: "EUR (€)" },
-        { code: "GBP", label: "GBP (£)" },
+        { code: "BDT", label: "BDT", symbol: "৳" },
+        { code: "USD", label: "USD", symbol: "$" },
+        { code: "EUR", label: "EUR", symbol: "€" },
+        { code: "GBP", label: "GBP", symbol: "£" },
     ];
     out property <[CurrencyItem]> row-2: [
-        { code: "INR", label: "INR (₹)" },
-        { code: "CAD", label: "CAD (CA$)" },
-        { code: "AUD", label: "AUD (AU$)" },
-        { code: "JPY", label: "JPY (¥)" },
+        { code: "INR", label: "INR", symbol: "₹" },
+        { code: "CAD", label: "CAD", symbol: "CA$" },
+        { code: "AUD", label: "AUD", symbol: "AU$" },
+        { code: "JPY", label: "JPY", symbol: "¥" },
     ];
 }
 
@@ -99,6 +100,7 @@ export struct CategoryItem {
     name: string,
     cat_type: string,
     color: string,
+    color_val: color,
     tx_count: int,
 }
 

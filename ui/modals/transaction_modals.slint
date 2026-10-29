@@ -430,7 +430,7 @@ export component AddTransactionModal inherits Rectangle {
                                         root.account-name = acc.name;
                                     }
                                 }
-                                HorizontalLayout {
+                                VerticalLayout {
                                     padding-left: 6px;
                                     padding-right: 6px;
                                     alignment: center;
@@ -441,6 +441,7 @@ export component AddTransactionModal inherits Rectangle {
                                         font-weight: 600;
                                         overflow: elide;
                                         horizontal-alignment: center;
+                                        vertical-alignment: center;
                                     }
                                 }
                             }
@@ -487,7 +488,7 @@ export component AddTransactionModal inherits Rectangle {
                                         root.to-account-name = acc.name;
                                     }
                                 }
-                                HorizontalLayout {
+                                VerticalLayout {
                                     padding-left: 6px;
                                     padding-right: 6px;
                                     alignment: center;
@@ -498,6 +499,7 @@ export component AddTransactionModal inherits Rectangle {
                                         font-weight: 600;
                                         overflow: elide;
                                         horizontal-alignment: center;
+                                        vertical-alignment: center;
                                     }
                                 }
                             }
@@ -528,7 +530,7 @@ export component AddTransactionModal inherits Rectangle {
                                     mouse-cursor: MouseCursor.pointer;
                                     clicked => { root.toggle-cat-filter(); }
                                 }
-                                HorizontalLayout {
+                                VerticalLayout {
                                     padding-left: 6px;
                                     padding-right: 6px;
                                     alignment: center;
@@ -537,6 +539,8 @@ export component AddTransactionModal inherits Rectangle {
                                         font-size: 10px;
                                         color: Theme.text-secondary;
                                         font-weight: 600;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
                                     }
                                 }
                             }

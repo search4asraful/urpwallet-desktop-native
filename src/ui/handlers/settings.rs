@@ -1,9 +1,9 @@
 use slint::ComponentHandle;
-use urpwallet::db::models::{CategoryType, CreateCategoryInput};
+use urpwallet::db::models::{CategoryType, CreateCategoryInput, UpdateCategoryInput};
 use urpwallet::db::Database;
 
 use crate::MainWindow;
-use crate::ui::refresh::{refresh_categories, refresh_ui};
+use crate::ui::refresh::{filter_categories_in_memory, refresh_ui};
 
 /// Registers all settings-related event handlers on the main window.
 pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
@@ -191,6 +191,41 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
     {
         let ui_weak = ui.as_weak();
         let db_clone = db.clone();
+        ui.on_edit_category(move |id, name, cat_type_idx, color| {
+            let Some(ui) = ui_weak.upgrade() else { return; };
+            let name_str = name.trim().to_string();
+            if name_str.is_empty() {
+                ui.set_settings_status_msg("Category name cannot be empty".into());
+                return;
+            }
+            let cat_type = if cat_type_idx == 1 {
+                CategoryType::Income
+            } else {
+                CategoryType::Expense
+            };
+            let input = UpdateCategoryInput {
+                name: Some(name_str.clone()),
+                category_type: Some(cat_type),
+                icon: None,
+                color: Some(color.to_string()),
+                parent_id: None,
+            };
+
+            match db_clone.update_category(id.as_str(), input) {
+                Ok(_) => {
+                    ui.set_settings_status_msg(format!("Category '{name_str}' updated successfully").into());
+                    refresh_ui(&ui, &db_clone);
+                }
+                Err(e) => {
+                    ui.set_settings_status_msg(e.user_friendly_message().into());
+                }
+            }
+        });
+    }
+
+    {
+        let ui_weak = ui.as_weak();
+        let db_clone = db.clone();
         ui.on_delete_category(move |id| {
             let Some(ui) = ui_weak.upgrade() else { return; };
             match db_clone.delete_category(id.as_str()) {
@@ -226,11 +261,20 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
     // Filter Categories Tab
     {
         let ui_weak = ui.as_weak();
-        let db_clone = db.clone();
         ui.on_filter_categories(move |tab| {
             let Some(ui) = ui_weak.upgrade() else { return; };
             ui.set_cat_catalog_filter(tab);
-            refresh_categories(&ui, &db_clone);
+            filter_categories_in_memory(&ui);
+        });
+    }
+
+    // Search Categories in real-time
+    {
+        let ui_weak = ui.as_weak();
+        ui.on_search_categories(move |query| {
+            let Some(ui) = ui_weak.upgrade() else { return; };
+            ui.set_cat_search_query(query);
+            filter_categories_in_memory(&ui);
         });
     }
 }

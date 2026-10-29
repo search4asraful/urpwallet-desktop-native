@@ -25,9 +25,9 @@ export component PinDigitInput inherits Rectangle {
         input.text = "";
     }
 
-    width: 44px;
-    height: 48px;
-    border-radius: 8px;
+    width: 38px;
+    height: 42px;
+    border-radius: 7px;
     background: input.has-focus ? Theme.primary-subtle : Theme.input-background;
     border-width: input.has-focus ? 2px : 1px;
     border-color: input.has-focus ? Theme.primary : (root.value != "" ? Theme.primary : Theme.input-border);
@@ -45,7 +45,7 @@ export component PinDigitInput inherits Rectangle {
         height: 100%;
         text: root.value != "" ? (root.is-masked ? "●" : root.value) : (input.has-focus ? "" : "·");
         color: root.value != "" ? Theme.text-primary : Theme.text-muted;
-        font-size: root.value != "" ? (root.is-masked ? 14px : 18px) : 20px;
+        font-size: root.value != "" ? (root.is-masked ? 14px : 16px) : 18px;
         font-weight: 700;
         horizontal-alignment: center;
         vertical-alignment: center;
@@ -126,8 +126,8 @@ export component SixDigitPinInput inherits Rectangle {
     }
 
     HorizontalLayout {
-        spacing: 8px;
-        alignment: start;
+        spacing: 6px;
+        alignment: center;
 
         d1 := PinDigitInput {
             is-masked: root.is-masked;
@@ -469,12 +469,15 @@ export component AppInput inherits Rectangle {
         padding-right: 10px;
         spacing: 4px;
 
-        if root.prefix-text != "": Text {
-            text: root.prefix-text;
-            color: input.has-focus ? root.focus-border-color : Theme.text-muted;
-            font-size: root.font-size;
-            font-weight: 700;
-            vertical-alignment: center;
+        if root.prefix-text != "": VerticalLayout {
+            alignment: center;
+            Text {
+                text: root.prefix-text;
+                color: input.has-focus ? root.focus-border-color : Theme.text-muted;
+                font-size: root.font-size;
+                font-weight: 700;
+                vertical-alignment: center;
+            }
         }
 
         Rectangle {
@@ -602,8 +605,8 @@ export component CurrencySelector inherits VerticalLayout {
         spacing: 6px;
         for curr in CurrencyModel.row-1: Rectangle {
             horizontal-stretch: 1;
-            height: 28px;
-            border-radius: 5px;
+            height: 30px;
+            border-radius: 6px;
             background: root.selected-currency == curr.code ? Theme.primary : (touch1.has-hover ? Theme.surface-hover : Theme.input-background);
             border-color: root.selected-currency == curr.code ? Theme.primary : (touch1.has-hover ? Theme.border-strong : Theme.border);
             border-width: 1px;
@@ -618,12 +621,38 @@ export component CurrencySelector inherits VerticalLayout {
 
             HorizontalLayout {
                 alignment: center;
+                spacing: 4px;
+                padding-left: 4px;
+                padding-right: 4px;
+
                 Text {
-                    text: curr.label;
-                    font-size: 10px;
-                    font-weight: 700;
+                    text: curr.code;
+                    font-size: 11px;
+                    font-weight: root.selected-currency == curr.code ? 800 : 600;
                     color: root.selected-currency == curr.code ? #FFFFFF : Theme.text-primary;
                     vertical-alignment: center;
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        border-radius: 3px;
+                        height: 16px;
+                        background: root.selected-currency == curr.code ? #FFFFFF.transparentize(80%) : (Theme.mode == 0 ? #000000.transparentize(92%) : #FFFFFF.transparentize(90%));
+                        VerticalLayout {
+                            padding-left: 4px;
+                            padding-right: 4px;
+                            alignment: center;
+                            Text {
+                                text: curr.symbol;
+                                font-size: 10px;
+                                font-weight: 700;
+                                color: root.selected-currency == curr.code ? #FFFFFF : Theme.text-secondary;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -633,8 +662,8 @@ export component CurrencySelector inherits VerticalLayout {
         spacing: 6px;
         for curr in CurrencyModel.row-2: Rectangle {
             horizontal-stretch: 1;
-            height: 28px;
-            border-radius: 5px;
+            height: 30px;
+            border-radius: 6px;
             background: root.selected-currency == curr.code ? Theme.primary : (touch2.has-hover ? Theme.surface-hover : Theme.input-background);
             border-color: root.selected-currency == curr.code ? Theme.primary : (touch2.has-hover ? Theme.border-strong : Theme.border);
             border-width: 1px;
@@ -649,12 +678,38 @@ export component CurrencySelector inherits VerticalLayout {
 
             HorizontalLayout {
                 alignment: center;
+                spacing: 4px;
+                padding-left: 4px;
+                padding-right: 4px;
+
                 Text {
-                    text: curr.label;
-                    font-size: 10px;
-                    font-weight: 700;
+                    text: curr.code;
+                    font-size: 11px;
+                    font-weight: root.selected-currency == curr.code ? 800 : 600;
                     color: root.selected-currency == curr.code ? #FFFFFF : Theme.text-primary;
                     vertical-alignment: center;
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        border-radius: 3px;
+                        height: 16px;
+                        background: root.selected-currency == curr.code ? #FFFFFF.transparentize(80%) : (Theme.mode == 0 ? #000000.transparentize(92%) : #FFFFFF.transparentize(90%));
+                        VerticalLayout {
+                            padding-left: 4px;
+                            padding-right: 4px;
+                            alignment: center;
+                            Text {
+                                text: curr.symbol;
+                                font-size: 10px;
+                                font-weight: 700;
+                                color: root.selected-currency == curr.code ? #FFFFFF : Theme.text-secondary;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
                 }
             }
         }

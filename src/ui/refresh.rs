@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use chrono::{Datelike, Utc};
-use slint::{ModelRc, VecModel};
+use slint::{Model, ModelRc, VecModel};
 
 use urpwallet::db::models::{AccountType, DebtType, TransactionFilter, TransactionType, TransactionWithDetails};
 use urpwallet::db::Database;
@@ -145,6 +145,21 @@ pub fn apply_debts_filter(ui: &MainWindow, debt_items: &[DebtItem]) {
     ui.set_filtered_debts(ModelRc::from(Rc::new(VecModel::from(filtered))));
 }
 
+/// Parses a hex color string into a slint::Color, with fallback to emerald.
+pub fn parse_hex_color(hex: &str) -> slint::Color {
+    let hex = hex.trim().trim_start_matches('#');
+    if hex.len() == 6 {
+        if let (Ok(r), Ok(g), Ok(b)) = (
+            u8::from_str_radix(&hex[0..2], 16),
+            u8::from_str_radix(&hex[2..4], 16),
+            u8::from_str_radix(&hex[4..6], 16),
+        ) {
+            return slint::Color::from_argb_u8(255, r, g, b);
+        }
+    }
+    slint::Color::from_argb_u8(255, 16, 185, 129)
+}
+
 /// Refreshes and updates categories state for settings and transaction modal.
 pub fn refresh_categories(ui: &MainWindow, db: &Database) -> Vec<CategoryItem> {
     let categories = db.list_categories_with_counts().unwrap_or_default();
@@ -165,7 +180,8 @@ pub fn refresh_categories(ui: &MainWindow, db: &Database) -> Vec<CategoryItem> {
                 id: c.id.into(),
                 name: c.name.into(),
                 cat_type: cat_type_str.into(),
-                color: c.color.into(),
+                color: c.color.clone().into(),
+                color_val: parse_hex_color(&c.color),
                 tx_count: count as i32,
             }
         })
@@ -181,17 +197,58 @@ pub fn refresh_categories(ui: &MainWindow, db: &Database) -> Vec<CategoryItem> {
     cat_items
 }
 
-/// Applies active category catalog filter tab (0: All, 1: Expense, 2: Income).
+/// Applies active category catalog filter tab (0: All, 1: Expense, 2: Income) and search query in memory.
 pub fn apply_categories_filter(ui: &MainWindow, cat_items: &[CategoryItem]) {
     let tab = ui.get_cat_catalog_filter();
+    let query = ui.get_cat_search_query().to_string().to_lowercase();
+    let query_trimmed = query.trim().to_string();
+
     let filtered: Vec<CategoryItem> = cat_items
         .iter()
-        .filter(|c| match tab {
-            1 => c.cat_type == "expense",
-            2 => c.cat_type == "income",
-            _ => true,
+        .filter(|c| {
+            let tab_match = match tab {
+                1 => c.cat_type == "expense",
+                2 => c.cat_type == "income",
+                _ => true,
+            };
+            if !tab_match {
+                return false;
+            }
+            if query_trimmed.is_empty() {
+                true
+            } else {
+                c.name.to_lowercase().contains(&query_trimmed)
+            }
         })
         .cloned()
+        .collect();
+    ui.set_filtered_categories(ModelRc::from(Rc::new(VecModel::from(filtered))));
+}
+
+/// In-memory category filtering for search query and tab switches without re-querying the database.
+pub fn filter_categories_in_memory(ui: &MainWindow) {
+    let tab = ui.get_cat_catalog_filter();
+    let query = ui.get_cat_search_query().to_string().to_lowercase();
+    let query_trimmed = query.trim().to_string();
+
+    let all_categories = ui.get_categories();
+    let filtered: Vec<CategoryItem> = all_categories
+        .iter()
+        .filter(|c| {
+            let tab_match = match tab {
+                1 => c.cat_type == "expense",
+                2 => c.cat_type == "income",
+                _ => true,
+            };
+            if !tab_match {
+                return false;
+            }
+            if query_trimmed.is_empty() {
+                true
+            } else {
+                c.name.to_lowercase().contains(&query_trimmed)
+            }
+        })
         .collect();
     ui.set_filtered_categories(ModelRc::from(Rc::new(VecModel::from(filtered))));
 }
@@ -440,4 +497,28 @@ pub fn refresh_ui(ui: &MainWindow, db: &Database) {
 
     // 7. Categories for Modals & Settings Catalog
     refresh_categories(ui, db);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_hex_color() {
+        let emerald = parse_hex_color("#10B981");
+        assert_eq!(emerald.red(), 0x10);
+        assert_eq!(emerald.green(), 0xB9);
+        assert_eq!(emerald.blue(), 0x81);
+
+        let blue = parse_hex_color("3B82F6");
+        assert_eq!(blue.red(), 0x3B);
+        assert_eq!(blue.green(), 0x82);
+        assert_eq!(blue.blue(), 0xF6);
+
+        // Fallback on invalid string
+        let fallback = parse_hex_color("invalid");
+        assert_eq!(fallback.red(), 16);
+        assert_eq!(fallback.green(), 185);
+        assert_eq!(fallback.blue(), 129);
+    }
 }

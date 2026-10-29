@@ -132,6 +132,7 @@ export component MainWindow inherits Window {
     in-out property <int> accounts-filter-tab: 0; // 0: All, 1: Assets, 2: Liabilities
     in-out property <int> debts-filter-tab: 0; // 0: All, 1: Lent, 2: Borrowed
     in-out property <int> cat-catalog-filter: 0; // 0: All, 1: Expense, 2: Income
+    in-out property <string> cat-search-query: "";
     in-out property <bool> modal-cat-show-all: false;
 
     // MODAL STATE
@@ -261,10 +262,12 @@ export component MainWindow inherits Window {
     callback update-date-format(string);
     callback reset-and-seed-demo();
     callback add-category(string, int, string);
+    callback edit-category(string, string, int, string);
     callback delete-category(string);
     callback filter-accounts(int);
     callback filter-debts(int);
     callback filter-categories(int);
+    callback search-categories(string);
     callback toggle-modal-cat-filter();
     callback toggle-tx-selection(string);
     callback select-all-txs(bool);
@@ -476,6 +479,7 @@ export component MainWindow inherits Window {
                     categories: root.categories;
                     filtered-categories: root.filtered-categories;
                     cat-catalog-filter <=> root.cat-catalog-filter;
+                    cat-search-query <=> root.cat-search-query;
                     cat-expense-count: root.cat-expense-count;
                     cat-income-count: root.cat-income-count;
                     show-add-cat-form <=> root.show-add-cat-form;
@@ -490,12 +494,11 @@ export component MainWindow inherits Window {
                     gdrive-last-backup: root.gdrive-last-backup;
 
                     filter-categories(tab) => { root.filter-categories(tab); }
+                    search-categories(query) => { root.search-categories(query); }
 
                     select-db-file => { root.select-db-file(); }
-                    open-edit-db-path => { root.show-change-db-modal = true; }
                     reset-default-db => { root.reset-default-db(); }
                     select-export-folder => { root.select-export-folder(); }
-                    open-edit-export-path => { root.show-change-export-modal = true; }
                     open-export-folder => { root.open-export-folder(); }
 
                     set-master-pin(pin) => { root.set-master-pin(pin); }
@@ -505,12 +508,14 @@ export component MainWindow inherits Window {
                     toggle-privacy => { root.toggle-privacy(); }
                     update-date-format(fmt) => { root.update-date-format(fmt); }
                     add-category(name, type, color) => { root.add-category(name, type, color); }
+                    edit-category(id, name, type, color) => { root.edit-category(id, name, type, color); }
                     delete-category(id) => { root.delete-category(id); }
                     export-data(fmt) => { root.export-data(fmt); }
                     import-backup => { root.import-backup(); }
                     reset-and-seed-demo => { root.reset-and-seed-demo(); }
                     open-gdrive-modal => { root.open-gdrive-modal(); }
                     gdrive-backup-now => { root.gdrive-backup-now(); }
+                    gdrive-disconnect => { root.gdrive-disconnect(); }
                 }
             }
         }
