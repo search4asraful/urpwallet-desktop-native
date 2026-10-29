@@ -1,16 +1,20 @@
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
 
+!ifndef BIN_DIR
+  !define BIN_DIR "target\release"
+!endif
+
 Name "urpwallet"
-OutFile "target/installer/urpwallet-x86_64-setup.exe"
+OutFile "target\installer\urpwallet-x86_64-setup.exe"
 InstallDir "$PROGRAMFILES64\urpwallet"
 InstallDirRegKey HKLM "Software\urpwallet" "Install_Dir"
 RequestExecutionLevel admin
 
 ; Visual Styling
 !define MUI_ABORTWARNING
-!define MUI_ICON "assets/icon.ico"
-!define MUI_UNICON "assets/icon.ico"
+!define MUI_ICON "assets\icon.ico"
+!define MUI_UNICON "assets\icon.ico"
 
 ; Wizard Pages
 !insertmacro MUI_PAGE_WELCOME
@@ -29,8 +33,8 @@ Section "urpwallet (required)" SecCore
     SectionIn RO
 
     SetOutPath "$INSTDIR"
-    File "target/release/urpwallet.exe"
-    File /nonfatal "assets/icon.ico"
+    File "${BIN_DIR}\urpwallet.exe"
+    File /nonfatal "assets\icon.ico"
 
     ; Write installation registry keys
     WriteRegStr HKLM "Software\urpwallet" "Install_Dir" "$INSTDIR"

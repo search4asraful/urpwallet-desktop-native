@@ -33,7 +33,19 @@ jobs:
       - name: Build NSIS Installer
         run: |
           New-Item -ItemType Directory -Force -Path target\installer
-          makensis installer.nsi
+          if (-not (Test-Path "target\release\urpwallet.exe")) {
+            $found = Get-ChildItem -Path target -Filter "urpwallet.exe" -Recurse | Select-Object -First 1
+            if ($found) {
+              New-Item -ItemType Directory -Force -Path target\release
+              Copy-Item $found.FullName "target\release\urpwallet.exe" -Force
+              Write-Host "Found urpwallet.exe at $($found.FullName), copied to target\release\urpwallet.exe"
+            } else {
+              Write-Host "Listing contents of target directory:"
+              Get-ChildItem -Path target -Recurse
+              throw "urpwallet.exe was not found in target directory!"
+            }
+          }
+          makensis /V4 installer.nsi
 
       - name: Upload Windows Setup to Release
         uses: softprops/action-gh-release@v2
