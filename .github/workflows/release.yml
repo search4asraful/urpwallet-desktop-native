@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p target/installer
-          makensis installer.nsi
+          "/c/Program Files (x86)/NSIS/makensis.exe" installer.nsi
 
       - name: Upload Windows Setup to Release
         uses: softprops/action-gh-release@v2
