@@ -49,6 +49,7 @@ export struct TransactionItem {
     note: string,
     payment_type: string,
     status: string,
+    selected: bool,
 }
 
 export struct BudgetItem {
@@ -106,6 +107,27 @@ export struct CategorySpendingItem {
     color: string,
     total: string,
     percentage: float,
+}
+
+export struct WeeklyFlowItem {
+    label: string,
+    date_range: string,
+    income: string,
+    expense: string,
+    net: string,
+    is_positive: bool,
+    income_ratio: float,
+    expense_ratio: float,
+}
+
+export struct MonthlyTrendItem {
+    month_name: string,
+    income: string,
+    expense: string,
+    net: string,
+    is_positive: bool,
+    income_ratio: float,
+    expense_ratio: float,
 }
 
 export struct GDriveBackupItem {

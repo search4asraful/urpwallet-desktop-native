@@ -1,17 +1,18 @@
 use std::rc::Rc;
-use chrono::Utc;
+use chrono::{Datelike, Utc};
 use slint::{ModelRc, VecModel};
 
 use urpwallet::db::models::{AccountType, DebtType, TransactionFilter, TransactionType, TransactionWithDetails};
 use urpwallet::db::Database;
 use urpwallet::logic::{
-    calculate_cash_flow, calculate_category_breakdown, calculate_net_worth, calculate_safe_to_spend,
-    format_currency,
+    calculate_cash_flow, calculate_category_breakdown, calculate_monthly_trends,
+    calculate_net_worth, calculate_safe_to_spend, calculate_weekly_flow, format_currency,
+    format_date,
 };
 
 use crate::{
     AccountItem, BillItem, BudgetItem, CategoryItem, CategorySpendingItem, DebtItem, MainWindow,
-    TransactionItem,
+    MonthlyTrendItem, TransactionItem, WeeklyFlowItem,
 };
 use crate::ui::mappers::map_tx_item;
 
@@ -98,6 +99,11 @@ pub fn refresh_debts(ui: &MainWindow, db: &Database) -> Vec<DebtItem> {
         .ok()
         .flatten()
         .unwrap_or_else(|| "BDT".to_string());
+    let date_fmt = db
+        .get_setting("date_format")
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| "YYYY-MM-DD".to_string());
 
     let debts = db.list_debts(false).unwrap_or_default();
     let debt_items: Vec<DebtItem> = debts
@@ -113,7 +119,7 @@ pub fn refresh_debts(ui: &MainWindow, db: &Database) -> Vec<DebtItem> {
                 remaining: format_currency(rem, &base_currency, privacy).into(),
                 status: d.status.as_str().into(),
                 is_loan: d.debt_type == DebtType::LoanOwedToMe,
-                due_date: d.due_date.unwrap_or_default().into(),
+                due_date: d.due_date.as_deref().map(|dt| format_date(dt, &date_fmt)).unwrap_or_default().into(),
                 notes: d.notes.unwrap_or_default().into(),
             }
         })
@@ -224,6 +230,11 @@ pub fn refresh_transactions(
         .ok()
         .flatten()
         .unwrap_or_else(|| "BDT".to_string());
+    let date_fmt = db
+        .get_setting("date_format")
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| "YYYY-MM-DD".to_string());
     let current_month = Utc::now().format("%Y-%m").to_string();
 
     let default_filter = TransactionFilter {
@@ -238,7 +249,7 @@ pub fn refresh_transactions(
     ui.set_balance_change(format_currency(cash_flow.net_delta, &base_currency, privacy).into());
     ui.set_savings_rate(format!("{}%", cash_flow.savings_rate).into());
 
-    let recent: Vec<TransactionItem> = all_txs.iter().take(8).map(|item| map_tx_item(item, privacy)).collect();
+    let recent: Vec<TransactionItem> = all_txs.iter().take(8).map(|item| map_tx_item(item, privacy, &date_fmt)).collect();
     ui.set_recent_transactions(ModelRc::from(Rc::new(VecModel::from(recent))));
 
     // Build filter for all-transactions respecting active search query and filter tab
@@ -265,7 +276,7 @@ pub fn refresh_transactions(
         all_txs.clone()
     };
 
-    let all_items: Vec<TransactionItem> = display_txs.iter().map(|item| map_tx_item(item, privacy)).collect();
+    let all_items: Vec<TransactionItem> = display_txs.iter().map(|item| map_tx_item(item, privacy, &date_fmt)).collect();
     ui.set_all_transactions(ModelRc::from(Rc::new(VecModel::from(all_items.clone()))));
 
     (all_items, all_txs)
@@ -289,7 +300,7 @@ pub fn refresh_ui(ui: &MainWindow, db: &Database) {
         .ok()
         .flatten()
         .unwrap_or_else(|| "YYYY-MM-DD".to_string());
-    ui.set_date_format(date_fmt.into());
+    ui.set_date_format(date_fmt.clone().into());
 
     let current_date = Utc::now().date_naive();
     let current_month = Utc::now().format("%Y-%m").to_string();
@@ -336,7 +347,7 @@ pub fn refresh_ui(ui: &MainWindow, db: &Database) {
                 id: bill.id.into(),
                 name: bill.name.into(),
                 amount_raw: bill.amount.to_string().into(),
-                due_date: bill.next_date.into(),
+                due_date: format_date(&bill.next_date, &date_fmt).into(),
                 amount: format_currency(bill.amount, &base_currency, privacy).into(),
                 is_expense: bill.bill_type == TransactionType::Expense,
                 frequency: bill.frequency.as_str().into(),
@@ -353,8 +364,12 @@ pub fn refresh_ui(ui: &MainWindow, db: &Database) {
     // 5. Debts & Loans
     refresh_debts(ui, db);
 
-    // 6. Category Breakdown for Reports View
+    // 6. Reports View Metrics: Category Breakdown, Weekly Flow, Monthly Trends
+    let cash_flow = calculate_cash_flow(&all_txs, &current_month);
     let breakdown = calculate_category_breakdown(&all_txs, &current_month);
+    let top_category_name = breakdown.first().map(|c| c.category_name.clone()).unwrap_or_else(|| "None".to_string());
+    let top_category_amount = breakdown.first().map(|c| format_currency(c.total, &base_currency, privacy)).unwrap_or_else(|| format_currency(0.0, &base_currency, privacy));
+
     let breakdown_items: Vec<CategorySpendingItem> = breakdown
         .into_iter()
         .map(|cat| CategorySpendingItem {
@@ -365,6 +380,63 @@ pub fn refresh_ui(ui: &MainWindow, db: &Database) {
         })
         .collect();
     ui.set_category_breakdown(ModelRc::from(Rc::new(VecModel::from(breakdown_items))));
+
+    let now_utc = Utc::now();
+    let current_year = now_utc.year();
+    let current_month_num = now_utc.month();
+    let current_day = now_utc.day();
+
+    // Weekly Flow
+    let weekly = calculate_weekly_flow(&all_txs, current_year, current_month_num);
+    let weekly_items: Vec<WeeklyFlowItem> = weekly
+        .into_iter()
+        .map(|w| {
+            let net_prefix = if w.net > 0.0 { "+" } else if w.net < 0.0 { "-" } else { "" };
+            let net_str = format!("{}{}", net_prefix, format_currency(w.net.abs(), &base_currency, privacy));
+            WeeklyFlowItem {
+                label: w.label.into(),
+                date_range: w.date_range.into(),
+                income: format_currency(w.income, &base_currency, privacy).into(),
+                expense: format_currency(w.expense, &base_currency, privacy).into(),
+                net: net_str.into(),
+                is_positive: w.is_positive,
+                income_ratio: w.income_ratio as f32,
+                expense_ratio: w.expense_ratio as f32,
+            }
+        })
+        .collect();
+    ui.set_weekly_flow(ModelRc::from(Rc::new(VecModel::from(weekly_items))));
+
+    // Monthly Trends (Past 4 months)
+    let monthly_trends = calculate_monthly_trends(&all_txs, current_year, current_month_num, 4);
+    let monthly_trend_items: Vec<MonthlyTrendItem> = monthly_trends
+        .into_iter()
+        .map(|m| {
+            let net_prefix = if m.net > 0.0 { "+" } else if m.net < 0.0 { "-" } else { "" };
+            let net_str = format!("{}{}", net_prefix, format_currency(m.net.abs(), &base_currency, privacy));
+            MonthlyTrendItem {
+                month_name: m.month_name.into(),
+                income: format_currency(m.income, &base_currency, privacy).into(),
+                expense: format_currency(m.expense, &base_currency, privacy).into(),
+                net: net_str.into(),
+                is_positive: m.is_positive,
+                income_ratio: m.income_ratio as f32,
+                expense_ratio: m.expense_ratio as f32,
+            }
+        })
+        .collect();
+    ui.set_monthly_trends(ModelRc::from(Rc::new(VecModel::from(monthly_trend_items))));
+
+    // Daily Average Expense
+    let days_elapsed = current_day.max(1);
+    let daily_avg = cash_flow.expense / (days_elapsed as f64);
+    ui.set_daily_average_expense(format_currency(daily_avg, &base_currency, privacy).into());
+
+    ui.set_top_category_name(top_category_name.into());
+    ui.set_top_category_amount(top_category_amount.into());
+
+    let has_reports_data = cash_flow.income > 0.0 || cash_flow.expense > 0.0 || !all_txs.is_empty();
+    ui.set_reports_has_data(has_reports_data);
 
     // 7. Categories for Modals & Settings Catalog
     refresh_categories(ui, db);

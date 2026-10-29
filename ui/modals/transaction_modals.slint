@@ -1,6 +1,6 @@
 import { Theme } from "../theme.slint";
 import { AccountItem, CategoryItem, TransactionItem } from "../models.slint";
-import { AppButton, Badge, AppInput, CloseButton } from "../components.slint";
+import { AppButton, Badge, AppInput, AppTextEdit, CloseButton, ModernDatePickerPopup, ModernTimePickerPopup } from "../components.slint";
 
 export component AddTransactionModal inherits Rectangle {
     width: 100%;
@@ -11,6 +11,7 @@ export component AddTransactionModal inherits Rectangle {
     in property <string> tx-id: "";
     in-out property <int> tx-type: 0;
     in property <string> amount: "";
+    in property <string> currency-symbol: "$";
     in-out property <string> account-id: "";
     in-out property <string> account-name: "";
     in-out property <string> to-account-id: "";
@@ -20,6 +21,18 @@ export component AddTransactionModal inherits Rectangle {
     in property <string> payee: "";
     in property <string> note: "";
     in property <string> date: "";
+    in property <string> time: "";
+    in property <string> date-format: "YYYY-MM-DD";
+    in-out property <int> date-year: 2026;
+    in-out property <int> date-month: 10;
+    in-out property <int> date-day: 1;
+    in-out property <int> time-hour: 12;
+    in-out property <int> time-minute: 0;
+    in property <int> today-year: 2026;
+    in property <int> today-month: 10;
+    in property <int> today-day: 1;
+    in property <int> today-hour: 12;
+    in property <int> today-minute: 0;
     in property <string> modal-error: "";
     in-out property <bool> cat-show-all: false;
 
@@ -27,15 +40,29 @@ export component AddTransactionModal inherits Rectangle {
     in property <[CategoryItem]> categories: [];
     in property <[CategoryItem]> modal-categories: [];
 
+    property <color> active-type-color: root.tx-type == 0 ? Theme.danger : (root.tx-type == 1 ? Theme.primary : Theme.info);
+    property <color> active-type-subtle: root.tx-type == 0 ? Theme.danger-subtle : (root.tx-type == 1 ? Theme.primary-subtle : Theme.info-subtle);
+
     callback close();
+    callback cancel-clicked();
     callback tx-type-changed(int);
     callback toggle-cat-filter();
-    callback submit(bool, string, int, string, string, string, string, string, string, string);
+    callback submit(bool, string, int, string, string, string, string, string, string, string, string);
+    callback save-clicked(bool, string, int, string, string, string, string, string, string, string, string);
+
+    forward-focus: input-amount;
+
+    init => {
+        input-amount.focus();
+    }
 
     TouchArea {
         width: 100%;
         height: 100%;
-        clicked => { root.close(); }
+        clicked => {
+            root.close();
+            root.cancel-clicked();
+        }
     }
 
     Rectangle {
@@ -56,6 +83,7 @@ export component AddTransactionModal inherits Rectangle {
         VerticalLayout {
             padding: 18px;
             spacing: 12px;
+            alignment: start;
 
             // Header
             HorizontalLayout {
@@ -63,15 +91,19 @@ export component AddTransactionModal inherits Rectangle {
                 VerticalLayout {
                     alignment: center;
                     Text {
-                        text: root.is-editing ? "Edit Transaction" :
-                              (root.tx-type == 0 ? "New Expense" : (root.tx-type == 1 ? "New Income" : "Transfer Funds"));
+                        text: root.is-editing ?
+                              (root.tx-type == 0 ? "Edit Expense" : (root.tx-type == 1 ? "Edit Income" : "Edit Transfer")) :
+                              (root.tx-type == 0 ? "New Expense" : (root.tx-type == 1 ? "New Income" : "New Transfer"));
                         color: Theme.text-primary;
                         font-size: 15px;
                         font-weight: 700;
                     }
                 }
                 CloseButton {
-                    clicked => { root.close(); }
+                    clicked => {
+                        root.close();
+                        root.cancel-clicked();
+                    }
                 }
             }
 
@@ -113,52 +145,239 @@ export component AddTransactionModal inherits Rectangle {
             // Two-Column Form Body
             HorizontalLayout {
                 spacing: 16px;
+                alignment: start;
 
                 // Column 1: Financial Inputs & Details
                 VerticalLayout {
-                    horizontal-stretch: 1;
+                    width: 294px;
                     spacing: 8px;
+                    alignment: start;
 
+                    // 1. Hero Amount Field (Full Width)
+                    VerticalLayout {
+                        spacing: 3px;
+                        Text {
+                            text: "Amount";
+                            font-size: 10px;
+                            color: Theme.text-muted;
+                            font-weight: 600;
+                        }
+                        input-amount := AppInput {
+                            height: 36px;
+                            font-size: 15px;
+                            prefix-text: root.currency-symbol != "" ? root.currency-symbol : "$";
+                            placeholder-text: "0.00";
+                            text: root.amount;
+                            focus-border-color: root.active-type-color;
+                        }
+                    }
+
+                    // 2. Date & Time Row (Side-by-side 60% / 40%)
                     HorizontalLayout {
-                        height: 50px;
                         spacing: 8px;
+
+                        // Date (60%)
                         VerticalLayout {
-                            horizontal-stretch: 1;
+                            horizontal-stretch: 3;
                             spacing: 3px;
-                            Text { text: "Amount"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
-                            input-amount := AppInput {
-                                placeholder-text: "0.00";
-                                text: root.amount;
+                            Text {
+                                text: "Date";
+                                font-size: 10px;
+                                color: Theme.text-muted;
+                                font-weight: 600;
+                            }
+
+                            HorizontalLayout {
+                                spacing: 4px;
+
+                                input-date := AppInput {
+                                    placeholder-text: root.date-format;
+                                    text: root.date;
+                                    focus-border-color: root.active-type-color;
+                                }
+
+                                Rectangle {
+                                    width: 32px;
+                                    height: 32px;
+                                    border-radius: 6px;
+                                    background: cal-touch.has-hover ? Theme.surface-hover : Theme.input-background;
+                                    border-width: 1px;
+                                    border-color: cal-touch.has-hover ? root.active-type-color : Theme.input-border;
+
+                                    cal-touch := TouchArea {
+                                        width: 100%;
+                                        height: 100%;
+                                        mouse-cursor: MouseCursor.pointer;
+                                        clicked => {
+                                            date-picker.show();
+                                        }
+                                    }
+
+                                    Path {
+                                        width: 14px;
+                                        height: 14px;
+                                        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+                                        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+                                        stroke: cal-touch.has-hover ? root.active-type-color : Theme.text-muted;
+                                        stroke-width: 1.5px;
+
+                                        MoveTo { x: 1; y: 3; }
+                                        LineTo { x: 13; y: 3; }
+                                        LineTo { x: 13; y: 13; }
+                                        LineTo { x: 1; y: 13; }
+                                        Close {}
+                                        MoveTo { x: 1; y: 6; }
+                                        LineTo { x: 13; y: 6; }
+                                        MoveTo { x: 4; y: 1; }
+                                        LineTo { x: 4; y: 4; }
+                                        MoveTo { x: 10; y: 1; }
+                                        LineTo { x: 10; y: 4; }
+                                    }
+
+                                    date-picker := ModernDatePickerPopup {
+                                        x: -130px;
+                                        y: parent.height + 6px;
+                                        accent-color: root.active-type-color;
+                                        selected-year: root.date-year;
+                                        selected-month: root.date-month;
+                                        selected-day: root.date-day;
+                                        today-year: root.today-year;
+                                        today-month: root.today-month;
+                                        today-day: root.today-day;
+                                        accepted(y, m, d) => {
+                                            root.date-year = y;
+                                            root.date-month = m;
+                                            root.date-day = d;
+                                            if root.date-format == "DD/MM/YYYY" {
+                                                input-date.text = (d < 10 ? "0" : "") + d + "/" + (m < 10 ? "0" : "") + m + "/" + y;
+                                            } else if root.date-format == "MM/DD/YYYY" {
+                                                input-date.text = (m < 10 ? "0" : "") + m + "/" + (d < 10 ? "0" : "") + d + "/" + y;
+                                            } else {
+                                                input-date.text = "" + y + "-" + (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
+
+                        // Time (40%)
                         VerticalLayout {
-                            horizontal-stretch: 1;
+                            horizontal-stretch: 2;
                             spacing: 3px;
-                            Text { text: "Date"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
-                            input-date := AppInput {
-                                placeholder-text: "YYYY-MM-DD";
-                                text: root.date;
+                            Text {
+                                text: "Time";
+                                font-size: 10px;
+                                color: Theme.text-muted;
+                                font-weight: 600;
+                            }
+
+                            HorizontalLayout {
+                                spacing: 4px;
+
+                                input-time := AppInput {
+                                    placeholder-text: "HH:MM";
+                                    text: root.time;
+                                    focus-border-color: root.active-type-color;
+                                }
+
+                                Rectangle {
+                                    width: 32px;
+                                    height: 32px;
+                                    border-radius: 6px;
+                                    background: time-touch.has-hover ? Theme.surface-hover : Theme.input-background;
+                                    border-width: 1px;
+                                    border-color: time-touch.has-hover ? root.active-type-color : Theme.input-border;
+
+                                    time-touch := TouchArea {
+                                        width: 100%;
+                                        height: 100%;
+                                        mouse-cursor: MouseCursor.pointer;
+                                        clicked => {
+                                            time-picker.show();
+                                        }
+                                    }
+
+                                    // Vector Clock Icon
+                                    Rectangle {
+                                        width: 14px;
+                                        height: 14px;
+                                        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+                                        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+                                        border-radius: 7px;
+                                        border-width: 1.5px;
+                                        border-color: time-touch.has-hover ? root.active-type-color : Theme.text-muted;
+
+                                        Path {
+                                            width: 14px;
+                                            height: 14px;
+                                            stroke: time-touch.has-hover ? root.active-type-color : Theme.text-muted;
+                                            stroke-width: 1.5px;
+
+                                            MoveTo { x: 7; y: 3.5; }
+                                            LineTo { x: 7; y: 7; }
+                                            LineTo { x: 9.5; y: 7; }
+                                        }
+
+                                        Rectangle {
+                                            x: 6px;
+                                            y: 6px;
+                                            width: 2px;
+                                            height: 2px;
+                                            border-radius: 1px;
+                                            background: time-touch.has-hover ? root.active-type-color : Theme.text-muted;
+                                        }
+                                    }
+
+                                    time-picker := ModernTimePickerPopup {
+                                        x: -218px;
+                                        y: parent.height + 6px;
+                                        accent-color: root.active-type-color;
+                                        selected-hour: root.time-hour;
+                                        selected-minute: root.time-minute;
+                                        today-hour: root.today-hour;
+                                        today-minute: root.today-minute;
+                                        accepted(h, min) => {
+                                            root.time-hour = h;
+                                            root.time-minute = min;
+                                            input-time.text = "" + (h < 10 ? "0" : "") + h + ":" + (min < 10 ? "0" : "") + min;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
 
+                    // 3. Payee / Merchant
                     VerticalLayout {
-                        height: 50px;
                         spacing: 3px;
-                        Text { text: "Payee / Merchant"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
+                        Text {
+                            text: "Payee / Merchant";
+                            font-size: 10px;
+                            color: Theme.text-muted;
+                            font-weight: 600;
+                        }
                         input-payee := AppInput {
                             placeholder-text: "Merchant, store, or employer...";
                             text: root.payee;
+                            focus-border-color: root.active-type-color;
                         }
                     }
 
+                    // 4. Note / Description (Expanded Multi-line TextEdit)
                     VerticalLayout {
-                        height: 50px;
                         spacing: 3px;
-                        Text { text: "Note / Description"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
-                        input-note := AppInput {
-                            placeholder-text: "Optional note...";
+                        Text {
+                            text: "Note / Description";
+                            font-size: 10px;
+                            color: Theme.text-muted;
+                            font-weight: 600;
+                        }
+                        input-note := AppTextEdit {
+                            height: 72px;
+                            placeholder-text: "Optional note or description...";
                             text: root.note;
+                            focus-border-color: root.active-type-color;
                         }
                     }
 
@@ -172,49 +391,63 @@ export component AddTransactionModal inherits Rectangle {
 
                 // Column 2: Account & Category Selectors
                 VerticalLayout {
-                    horizontal-stretch: 1;
+                    width: 294px;
                     spacing: 10px;
+                    alignment: start;
 
                     // 1. Source Account Selector
                     VerticalLayout {
                         spacing: 4px;
+                        alignment: start;
                         HorizontalLayout {
                             alignment: space-between;
                             Text { text: "Source Account"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
                             if root.account-name != "": Text {
                                 text: root.account-name;
                                 font-size: 10px;
-                                color: Theme.primary;
+                                color: root.active-type-color;
                                 font-weight: 700;
                             }
                         }
                         GridLayout {
                             spacing: 4px;
                             for acc[i] in root.accounts: Rectangle {
+                                horizontal-stretch: 1;
                                 row: floor(i / 2);
                                 col: mod(i, 2);
                                 height: 26px;
                                 border-radius: 4px;
-                                background: acc.id == root.account-id ? Theme.primary : Theme.surface-subtle;
-                                border-color: acc.id == root.account-id ? Theme.primary : Theme.border;
+                                background: acc.id == root.account-id ? root.active-type-color : Theme.surface-subtle;
+                                border-color: acc.id == root.account-id ? root.active-type-color : Theme.border;
                                 border-width: 1px;
 
                                 TouchArea {
+                                    width: 100%;
+                                    height: 100%;
+                                    mouse-cursor: MouseCursor.pointer;
                                     clicked => {
                                         root.account-id = acc.id;
                                         root.account-name = acc.name;
                                     }
                                 }
                                 HorizontalLayout {
-                                    padding: 4px;
+                                    padding-left: 6px;
+                                    padding-right: 6px;
                                     alignment: center;
                                     Text {
                                         text: acc.name;
                                         font-size: 10px;
                                         color: acc.id == root.account-id ? #ffffff : Theme.text-primary;
                                         font-weight: 600;
+                                        overflow: elide;
+                                        horizontal-alignment: center;
                                     }
                                 }
+                            }
+                            if root.accounts.length == 1: Rectangle {
+                                row: 0;
+                                col: 1;
+                                horizontal-stretch: 1;
                             }
                         }
                     }
@@ -222,6 +455,7 @@ export component AddTransactionModal inherits Rectangle {
                     // 2A. Destination Account (If Transfer)
                     if root.tx-type == 2: VerticalLayout {
                         spacing: 4px;
+                        alignment: start;
                         HorizontalLayout {
                             alignment: space-between;
                             Text { text: "Destination Account"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
@@ -235,6 +469,7 @@ export component AddTransactionModal inherits Rectangle {
                         GridLayout {
                             spacing: 4px;
                             for acc[i] in root.accounts: Rectangle {
+                                horizontal-stretch: 1;
                                 row: floor(i / 2);
                                 col: mod(i, 2);
                                 height: 26px;
@@ -244,21 +479,32 @@ export component AddTransactionModal inherits Rectangle {
                                 border-width: 1px;
 
                                 TouchArea {
+                                    width: 100%;
+                                    height: 100%;
+                                    mouse-cursor: MouseCursor.pointer;
                                     clicked => {
                                         root.to-account-id = acc.id;
                                         root.to-account-name = acc.name;
                                     }
                                 }
                                 HorizontalLayout {
-                                    padding: 4px;
+                                    padding-left: 6px;
+                                    padding-right: 6px;
                                     alignment: center;
                                     Text {
                                         text: acc.name;
                                         font-size: 10px;
                                         color: acc.id == root.to-account-id ? #ffffff : Theme.text-primary;
                                         font-weight: 600;
+                                        overflow: elide;
+                                        horizontal-alignment: center;
                                     }
                                 }
+                            }
+                            if root.accounts.length == 1: Rectangle {
+                                row: 0;
+                                col: 1;
+                                horizontal-stretch: 1;
                             }
                         }
                     }
@@ -266,6 +512,7 @@ export component AddTransactionModal inherits Rectangle {
                     // 2B. Category Grid (If Expense or Income)
                     if root.tx-type != 2: VerticalLayout {
                         spacing: 4px;
+                        alignment: start;
                         HorizontalLayout {
                             alignment: space-between;
                             Text { text: "Category"; font-size: 10px; color: Theme.text-muted; font-weight: 600; }
@@ -276,6 +523,9 @@ export component AddTransactionModal inherits Rectangle {
                                 border-color: Theme.border;
                                 border-width: 1px;
                                 TouchArea {
+                                    width: 100%;
+                                    height: 100%;
+                                    mouse-cursor: MouseCursor.pointer;
                                     clicked => { root.toggle-cat-filter(); }
                                 }
                                 HorizontalLayout {
@@ -295,15 +545,19 @@ export component AddTransactionModal inherits Rectangle {
                         GridLayout {
                             spacing: 4px;
                             for cat[i] in root.modal-categories: Rectangle {
+                                horizontal-stretch: 1;
                                 row: floor(i / 2);
                                 col: mod(i, 2);
                                 height: 26px;
                                 border-radius: 4px;
-                                background: cat.id == root.category-id ? Theme.primary-subtle : Theme.surface-subtle;
-                                border-color: cat.id == root.category-id ? Theme.primary : Theme.border;
+                                background: cat.id == root.category-id ? root.active-type-subtle : Theme.surface-subtle;
+                                border-color: cat.id == root.category-id ? root.active-type-color : Theme.border;
                                 border-width: cat.id == root.category-id ? 1.5px : 1px;
 
                                 TouchArea {
+                                    width: 100%;
+                                    height: 100%;
+                                    mouse-cursor: MouseCursor.pointer;
                                     clicked => {
                                         root.category-id = cat.id;
                                         root.category-name = cat.name;
@@ -326,12 +580,17 @@ export component AddTransactionModal inherits Rectangle {
                                     Text {
                                         text: cat.name;
                                         font-size: 10px;
-                                        color: cat.id == root.category-id ? Theme.primary : Theme.text-primary;
+                                        color: cat.id == root.category-id ? root.active-type-color : Theme.text-primary;
                                         font-weight: cat.id == root.category-id ? 700 : 500;
                                         overflow: elide;
                                         vertical-alignment: center;
                                     }
                                 }
+                            }
+                            if root.modal-categories.length == 1: Rectangle {
+                                row: 0;
+                                col: 1;
+                                horizontal-stretch: 1;
                             }
                         }
                     }
@@ -348,13 +607,16 @@ export component AddTransactionModal inherits Rectangle {
                     small: true;
                     btn-color: Theme.surface-hover;
                     text-color: Theme.text-primary;
-                    clicked => { root.close(); }
+                    clicked => {
+                        root.close();
+                        root.cancel-clicked();
+                    }
                 }
 
                 AppButton {
                     text: root.is-editing ? "Save Changes" : "Save Transaction";
                     small: true;
-                    btn-color: root.tx-type == 0 ? Theme.danger : (root.tx-type == 1 ? Theme.primary : Theme.info);
+                    btn-color: root.active-type-color;
                     clicked => {
                         root.submit(
                             root.is-editing,
@@ -366,7 +628,21 @@ export component AddTransactionModal inherits Rectangle {
                             root.category-id,
                             input-payee.text,
                             input-note.text,
-                            input-date.text
+                            input-date.text,
+                            input-time.text
+                        );
+                        root.save-clicked(
+                            root.is-editing,
+                            root.tx-id,
+                            root.tx-type,
+                            input-amount.text,
+                            root.account-id,
+                            root.to-account-id,
+                            root.category-id,
+                            input-payee.text,
+                            input-note.text,
+                            input-date.text,
+                            input-time.text
                         );
                     }
                 }

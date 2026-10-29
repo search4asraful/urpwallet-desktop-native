@@ -231,6 +231,18 @@ pub struct Transaction {
     pub created_at: String,
 }
 
+impl Transaction {
+    /// Returns the parsed NaiveDateTime if date and time are valid.
+    pub fn naive_date_time(&self) -> Option<chrono::NaiveDateTime> {
+        let date = chrono::NaiveDate::parse_from_str(&self.date, "%Y-%m-%d").ok()?;
+        let time_str = self.time.as_deref().unwrap_or("00:00");
+        let time = chrono::NaiveTime::parse_from_str(time_str, "%H:%M")
+            .or_else(|_| chrono::NaiveTime::parse_from_str(time_str, "%H:%M:%S"))
+            .unwrap_or_else(|_| chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+        Some(chrono::NaiveDateTime::new(date, time))
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TransactionWithDetails {
     pub transaction: Transaction,
@@ -260,6 +272,19 @@ pub struct CreateTransactionInput {
     pub note: Option<String>,
     pub status: Option<TransactionStatus>,
     pub payment_type: Option<PaymentType>,
+}
+
+impl CreateTransactionInput {
+    /// Parses the date and time fields into a unified NaiveDateTime.
+    pub fn naive_date_time(&self) -> Option<chrono::NaiveDateTime> {
+        let date_str = self.date.as_deref()?;
+        let date = chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d").ok()?;
+        let time_str = self.time.as_deref().unwrap_or("00:00");
+        let time = chrono::NaiveTime::parse_from_str(time_str, "%H:%M")
+            .or_else(|_| chrono::NaiveTime::parse_from_str(time_str, "%H:%M:%S"))
+            .unwrap_or_else(|_| chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+        Some(chrono::NaiveDateTime::new(date, time))
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -538,4 +563,75 @@ pub struct FullBackupData {
     pub bills_subscriptions: Vec<BillSubscription>,
     pub debts: Vec<Debt>,
     pub settings: Vec<(String, String)>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Datelike, Timelike};
+
+    #[test]
+    fn test_transaction_naive_date_time() {
+        let tx = Transaction {
+            id: "tx-1".into(),
+            account_id: "acc-1".into(),
+            to_account_id: None,
+            category_id: None,
+            tx_type: TransactionType::Expense,
+            amount: 50.0,
+            currency: "USD".into(),
+            date: "2026-10-29".into(),
+            time: Some("14:30".into()),
+            payee: Some("Store".into()),
+            note: Some("Coffee".into()),
+            status: TransactionStatus::Cleared,
+            payment_type: PaymentType::Cash,
+            created_at: "2026-10-29T14:30:00Z".into(),
+        };
+
+        let dt = tx.naive_date_time().expect("valid datetime");
+        assert_eq!(dt.year(), 2026);
+        assert_eq!(dt.month(), 10);
+        assert_eq!(dt.day(), 29);
+        assert_eq!(dt.hour(), 14);
+        assert_eq!(dt.minute(), 30);
+
+        // Test with missing time (defaults to 00:00)
+        let mut tx_no_time = tx.clone();
+        tx_no_time.time = None;
+        let dt_no_time = tx_no_time.naive_date_time().expect("valid date with default time");
+        assert_eq!(dt_no_time.hour(), 0);
+        assert_eq!(dt_no_time.minute(), 0);
+
+        // Test with invalid date
+        let mut tx_invalid_date = tx.clone();
+        tx_invalid_date.date = "invalid-date".into();
+        assert!(tx_invalid_date.naive_date_time().is_none());
+    }
+
+    #[test]
+    fn test_create_transaction_input_naive_date_time() {
+        let input = CreateTransactionInput {
+            id: None,
+            account_id: "acc-1".into(),
+            to_account_id: None,
+            category_id: None,
+            tx_type: TransactionType::Income,
+            amount: 1000.0,
+            currency: Some("USD".into()),
+            date: Some("2026-12-25".into()),
+            time: Some("09:15".into()),
+            payee: None,
+            note: None,
+            status: None,
+            payment_type: None,
+        };
+
+        let dt = input.naive_date_time().expect("valid datetime");
+        assert_eq!(dt.year(), 2026);
+        assert_eq!(dt.month(), 12);
+        assert_eq!(dt.day(), 25);
+        assert_eq!(dt.hour(), 9);
+        assert_eq!(dt.minute(), 15);
+    }
 }

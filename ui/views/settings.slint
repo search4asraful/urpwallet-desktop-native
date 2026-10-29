@@ -50,10 +50,8 @@ export component SettingsView inherits ScrollView {
     callback gdrive-backup-now();
 
     VerticalLayout {
-        padding-left: 12px;
-        padding-right: 12px;
         padding-top: 8px;
-        padding-bottom: 20px;
+        padding-bottom: 15px;
         spacing: 14px;
 
         // STATUS MESSAGE BANNER (if present)
@@ -489,11 +487,14 @@ export component SettingsView inherits ScrollView {
                                     horizontal-stretch: 1;
                                     height: 28px;
                                     border-radius: 5px;
-                                    background: root.date-format == fmt_item.fmt ? Theme.info : Theme.surface;
+                                    background: root.date-format == fmt_item.fmt ? Theme.info : (fmt-touch.has-hover ? Theme.surface-hover : Theme.surface);
                                     border-color: root.date-format == fmt_item.fmt ? Theme.info : Theme.border;
                                     border-width: 1px;
 
-                                    TouchArea {
+                                    fmt-touch := TouchArea {
+                                        width: 100%;
+                                        height: 100%;
+                                        mouse-cursor: MouseCursor.pointer;
                                         clicked => {
                                             root.update-date-format(fmt_item.fmt);
                                         }
@@ -1218,7 +1219,6 @@ export component SettingsView inherits ScrollView {
 
         // FOOTER BRANDING
         Rectangle {
-            background: Theme.surface-subtle;
             height: 25px;
 
             HorizontalLayout {
