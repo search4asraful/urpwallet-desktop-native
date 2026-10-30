@@ -4,6 +4,7 @@ use urpwallet::db::Database;
 
 use crate::MainWindow;
 use crate::ui::refresh::{filter_categories_in_memory, refresh_ui};
+use crate::ui::toast::{show_error, show_success};
 
 /// Registers all settings-related event handlers on the main window.
 pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
@@ -106,10 +107,10 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
             match db_clone.set_master_pin(new_pin.as_str()) {
                 Ok(_) => {
                     ui.set_pin_protected(true);
-                    ui.set_settings_status_msg("Master PIN enabled/updated successfully".into());
+                    show_success(&ui, "Master PIN enabled/updated successfully");
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(e.user_friendly_message().into());
+                    show_error(&ui, e.user_friendly_message());
                 }
             }
         });
@@ -123,10 +124,10 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
             match db_clone.disable_master_pin(current_pin.as_str()) {
                 Ok(_) => {
                     ui.set_pin_protected(false);
-                    ui.set_settings_status_msg("Master PIN disabled".into());
+                    show_success(&ui, "Master PIN disabled");
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(e.user_friendly_message().into());
+                    show_error(&ui, e.user_friendly_message());
                 }
             }
         });
@@ -141,7 +142,7 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
             let curr_str = currency.as_str();
             let _ = db_clone.set_setting("base_currency", curr_str);
             ui.set_base_currency(currency.clone());
-            ui.set_settings_status_msg(format!("Base currency updated to {curr_str}").into());
+            show_success(&ui, format!("Base currency updated to {curr_str}"));
             refresh_ui(&ui, &db_clone);
         });
     }
@@ -154,7 +155,7 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
             let fmt_str = fmt.as_str();
             let _ = db_clone.set_setting("date_format", fmt_str);
             ui.set_date_format(fmt.clone());
-            ui.set_settings_status_msg(format!("Date presentation format set to {fmt_str}").into());
+            show_success(&ui, format!("Date presentation format set to {fmt_str}"));
             refresh_ui(&ui, &db_clone);
         });
     }
@@ -167,7 +168,7 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
             let Some(ui) = ui_weak.upgrade() else { return; };
             let name_str = name.trim().to_string();
             if name_str.is_empty() {
-                ui.set_settings_status_msg("Category name cannot be empty".into());
+                show_error(&ui, "Category name cannot be empty");
                 return;
             }
             let cat_type = if cat_type_idx == 1 {
@@ -186,11 +187,11 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
 
             match db_clone.create_category(input) {
                 Ok(_) => {
-                    ui.set_settings_status_msg(format!("Category '{name_str}' created successfully").into());
+                    show_success(&ui, format!("Category '{name_str}' created successfully"));
                     refresh_ui(&ui, &db_clone);
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(e.user_friendly_message().into());
+                    show_error(&ui, e.user_friendly_message());
                 }
             }
         });
@@ -203,7 +204,7 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
             let Some(ui) = ui_weak.upgrade() else { return; };
             let name_str = name.trim().to_string();
             if name_str.is_empty() {
-                ui.set_settings_status_msg("Category name cannot be empty".into());
+                show_error(&ui, "Category name cannot be empty");
                 return;
             }
             let cat_type = if cat_type_idx == 1 {
@@ -221,11 +222,11 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
 
             match db_clone.update_category(id.as_str(), input) {
                 Ok(_) => {
-                    ui.set_settings_status_msg(format!("Category '{name_str}' updated successfully").into());
+                    show_success(&ui, format!("Category '{name_str}' updated successfully"));
                     refresh_ui(&ui, &db_clone);
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(e.user_friendly_message().into());
+                    show_error(&ui, e.user_friendly_message());
                 }
             }
         });
@@ -238,11 +239,11 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
             let Some(ui) = ui_weak.upgrade() else { return; };
             match db_clone.delete_category(id.as_str()) {
                 Ok(_) => {
-                    ui.set_settings_status_msg("Category deleted successfully".into());
+                    show_success(&ui, "Category deleted successfully");
                     refresh_ui(&ui, &db_clone);
                 }
                 Err(e) => {
-                    ui.set_settings_status_msg(e.user_friendly_message().into());
+                    show_error(&ui, e.user_friendly_message());
                 }
             }
         });
@@ -256,11 +257,11 @@ pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
             let Some(ui) = ui_weak.upgrade() else { return; };
             match db_clone.reset_and_seed_demo() {
                 Ok(_) => {
-                    ui.set_settings_status_msg("Demo data successfully reset and seeded!".into());
+                    show_success(&ui, "Demo data successfully reset and seeded!");
                     refresh_ui(&ui, &db_clone);
                 }
                 Err(_) => {
-                    ui.set_settings_status_msg("Unable to reset demo data. Please try again.".into());
+                    show_error(&ui, "Unable to reset demo data. Please try again.");
                 }
             }
         });

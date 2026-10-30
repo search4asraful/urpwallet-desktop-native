@@ -39,10 +39,11 @@ import { GoogleDriveModal } from "modals/gdrive_modal.slint";
 import { ChangeDbPathModal, ChangeExportPathModal } from "modals/path_modals.slint";
 import { PinLockOverlay } from "modals/lock_overlay.slint";
 import { ConfirmDeleteModal } from "modals/confirm_modal.slint";
+import { ToastMessage } from "components.slint";
 
 export component MainWindow inherits Window {
     title: "urpwallet — Financial Planner & Budget Tracker";
-    icon: @image-url("../assets/icon.png");
+    icon: @image-url("../assets/icon.svg");
     default-font-family: "Inter";
     default-font-size: 13px;
     default-font-weight: 400;
@@ -84,6 +85,13 @@ export component MainWindow inherits Window {
     in-out property <string> new-cat-name: "";
     in-out property <int> new-cat-type: 0; // 0: expense, 1: income
     in-out property <string> new-cat-color: "#10B981";
+
+    // Floating Popup / Flash Toast Notification State
+    in-out property <bool> toast-visible: false;
+    in-out property <string> toast-message: "";
+    in-out property <string> toast-type: "success"; // "success" | "error" | "info"
+
+    callback dismiss-toast();
 
     callback select-db-file();
     callback set-custom-db-path(string, bool);
@@ -543,7 +551,6 @@ export component MainWindow inherits Window {
 
                 // TAB 7: SETTINGS & PREFERENCES
                 if root.active-tab == 7: SettingsView {
-                    settings-status-msg: root.settings-status-msg;
                     pin-protected: root.pin-protected;
                     base-currency: root.base-currency;
                     privacy-mode <=> root.privacy-mode;
@@ -648,9 +655,6 @@ export component MainWindow inherits Window {
             tx-type-changed(t) => { root.modal-tx-type-changed(t); }
             toggle-cat-filter => { root.toggle-modal-cat-filter(); }
             submit(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date, time) => {
-                root.submit-save-tx(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date, time);
-            }
-            save-clicked(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date, time) => {
                 root.submit-save-tx(is_ed, id, t, amt, acc, to_acc, cat, payee, note, date, time);
             }
         }
@@ -861,6 +865,23 @@ export component MainWindow inherits Window {
                 }
                 root.show-confirm-delete-modal = false;
             }
+        }
+
+        // FLOATING POPUP / FLASH TOAST NOTIFICATION
+        toast := ToastMessage {
+            x: round((root.width - self.width) / 2 / 1px) * 1px;
+            y: root.toast-visible ? 20px : -80px;
+            opacity: root.toast-visible ? 1.0 : 0.0;
+            toast-text: root.toast-message;
+            toast-type: root.toast-type;
+            is-open: root.toast-visible;
+            close => {
+                root.toast-visible = false;
+                root.dismiss-toast();
+            }
+
+            animate y { duration: 240ms; easing: ease-out; }
+            animate opacity { duration: 200ms; easing: ease-out; }
         }
     }
 }

@@ -14,6 +14,7 @@ use urpwallet::logic::{format_date, parse_date_input};
 use crate::MainWindow;
 use crate::ui::mappers::map_tx_item;
 use crate::ui::refresh::{refresh_categories, refresh_transactions, refresh_ui};
+use crate::ui::toast::{show_error, show_success};
 
 fn sync_tx_selection_ui(ui: &MainWindow, selected_set: &HashSet<String>) {
     let model = ui.get_all_transactions();
@@ -389,6 +390,7 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
                     Ok(_) => {
                         ui.set_show_add_tx_modal(false);
                         refresh_ui(&ui, &db_clone);
+                        show_success(&ui, if is_editing { "Transaction updated successfully" } else { "Transaction recorded successfully" });
                     }
                     Err(e) => {
                         ui.set_modal_error(e.user_friendly_message().into());
@@ -421,10 +423,16 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
         ui.on_delete_transaction(move |id| {
             let Some(ui) = ui_weak.upgrade() else { return; };
             let id_str = id.to_string();
-            if db_clone.delete_transaction(id_str.as_str()).is_ok() {
-                selected_ids_clone.borrow_mut().remove(&id_str);
-                ui.set_selected_tx_count(selected_ids_clone.borrow().len() as i32);
-                refresh_ui(&ui, &db_clone);
+            match db_clone.delete_transaction(id_str.as_str()) {
+                Ok(_) => {
+                    selected_ids_clone.borrow_mut().remove(&id_str);
+                    ui.set_selected_tx_count(selected_ids_clone.borrow().len() as i32);
+                    refresh_ui(&ui, &db_clone);
+                    show_success(&ui, "Transaction deleted successfully");
+                }
+                Err(e) => {
+                    show_error(&ui, format!("Failed to delete transaction: {}", e.user_friendly_message()));
+                }
             }
         });
     }
@@ -494,7 +502,7 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
             if let Ok(count) = db_clone.delete_transactions_bulk(&ids) {
                 selected_ids_clone.borrow_mut().clear();
                 ui.set_selected_tx_count(0);
-                ui.set_settings_status_msg(format!("Successfully deleted {count} transactions").into());
+                show_success(&ui, format!("Successfully deleted {count} transactions"));
                 refresh_ui(&ui, &db_clone);
             }
         });

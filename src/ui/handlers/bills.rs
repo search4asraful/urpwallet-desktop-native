@@ -5,6 +5,7 @@ use urpwallet::db::Database;
 
 use crate::MainWindow;
 use crate::ui::refresh::refresh_ui;
+use crate::ui::toast::{show_error, show_success};
 
 /// Registers all bill-related event handlers on the main window.
 pub fn register_bill_handlers(ui: &MainWindow, db: &Database) {
@@ -63,8 +64,8 @@ pub fn register_bill_handlers(ui: &MainWindow, db: &Database) {
                     next_date.trim().to_string()
                 };
 
-                if is_editing {
-                    let _ = db_clone.update_bill(
+                let res = if is_editing {
+                    db_clone.update_bill(
                         bill_id.as_str(),
                         UpdateBillInput {
                             name: Some(name.trim().to_string()),
@@ -78,9 +79,9 @@ pub fn register_bill_handlers(ui: &MainWindow, db: &Database) {
                             auto_record: None,
                             is_active: None,
                         },
-                    );
+                    )
                 } else {
-                    let _ = db_clone.create_bill(CreateBillInput {
+                    db_clone.create_bill(CreateBillInput {
                         id: None,
                         name: name.trim().to_string(),
                         amount,
@@ -92,11 +93,19 @@ pub fn register_bill_handlers(ui: &MainWindow, db: &Database) {
                         next_date: date_str,
                         auto_record: Some(false),
                         is_active: Some(true),
-                    });
-                }
+                    })
+                };
 
                 ui.set_show_add_bill_modal(false);
-                refresh_ui(&ui, &db_clone);
+                match res {
+                    Ok(_) => {
+                        refresh_ui(&ui, &db_clone);
+                        show_success(&ui, if is_editing { "Recurring bill updated successfully" } else { "Recurring bill created successfully" });
+                    }
+                    Err(e) => {
+                        show_error(&ui, format!("Failed to save bill: {}", e.user_friendly_message()));
+                    }
+                }
             },
         );
     }
@@ -107,8 +116,14 @@ pub fn register_bill_handlers(ui: &MainWindow, db: &Database) {
         let db_clone = db.clone();
         ui.on_execute_bill_payment(move |bill_id| {
             let Some(ui) = ui_weak.upgrade() else { return; };
-            if db_clone.execute_bill_payment(bill_id.as_str()).is_ok() {
-                refresh_ui(&ui, &db_clone);
+            match db_clone.execute_bill_payment(bill_id.as_str()) {
+                Ok(_) => {
+                    refresh_ui(&ui, &db_clone);
+                    show_success(&ui, "Bill payment recorded successfully");
+                }
+                Err(e) => {
+                    show_error(&ui, format!("Failed to record bill payment: {}", e.user_friendly_message()));
+                }
             }
         });
     }
@@ -119,8 +134,14 @@ pub fn register_bill_handlers(ui: &MainWindow, db: &Database) {
         let db_clone = db.clone();
         ui.on_delete_bill(move |id| {
             let Some(ui) = ui_weak.upgrade() else { return; };
-            if db_clone.delete_bill(id.as_str()).is_ok() {
-                refresh_ui(&ui, &db_clone);
+            match db_clone.delete_bill(id.as_str()) {
+                Ok(_) => {
+                    refresh_ui(&ui, &db_clone);
+                    show_success(&ui, "Recurring bill deleted successfully");
+                }
+                Err(e) => {
+                    show_error(&ui, format!("Failed to delete bill: {}", e.user_friendly_message()));
+                }
             }
         });
     }

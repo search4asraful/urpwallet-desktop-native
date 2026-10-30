@@ -4,6 +4,7 @@ use urpwallet::db::Database;
 
 use crate::MainWindow;
 use crate::ui::refresh::{refresh_debts, refresh_ui};
+use crate::ui::toast::{show_error, show_success};
 
 /// Registers all debt-related event handlers on the main window.
 pub fn register_debt_handlers(ui: &MainWindow, db: &Database) {
@@ -40,8 +41,8 @@ pub fn register_debt_handlers(ui: &MainWindow, db: &Database) {
 
             let debt_type = if type_int == 0 { DebtType::LoanOwedToMe } else { DebtType::DebtIOwe };
 
-            if is_editing {
-                let _ = db_clone.update_debt(
+            let res = if is_editing {
+                db_clone.update_debt(
                     debt_id.as_str(),
                     UpdateDebtInput {
                         debt_type: Some(debt_type),
@@ -52,9 +53,9 @@ pub fn register_debt_handlers(ui: &MainWindow, db: &Database) {
                         notes: Some(if notes.trim().is_empty() { None } else { Some(notes.trim().to_string()) }),
                         status: None,
                     },
-                );
+                )
             } else {
-                let _ = db_clone.create_debt(CreateDebtInput {
+                db_clone.create_debt(CreateDebtInput {
                     id: None,
                     debt_type,
                     person_name: person.trim().to_string(),
@@ -62,11 +63,19 @@ pub fn register_debt_handlers(ui: &MainWindow, db: &Database) {
                     settled_amount: Some(0.0),
                     due_date: if due_date.trim().is_empty() { None } else { Some(due_date.trim().to_string()) },
                     notes: if notes.trim().is_empty() { None } else { Some(notes.trim().to_string()) },
-                });
-            }
+                })
+            };
 
             ui.set_show_add_debt_modal(false);
-            refresh_ui(&ui, &db_clone);
+            match res {
+                Ok(_) => {
+                    refresh_ui(&ui, &db_clone);
+                    show_success(&ui, if is_editing { "Debt record updated successfully" } else { "Debt record created successfully" });
+                }
+                Err(e) => {
+                    show_error(&ui, format!("Failed to save debt record: {}", e.user_friendly_message()));
+                }
+            }
         });
     }
 
@@ -85,10 +94,16 @@ pub fn register_debt_handlers(ui: &MainWindow, db: &Database) {
                 .list_accounts(false)
                 .ok()
                 .and_then(|a| a.first().map(|acc| acc.id.clone()));
-            let _ = db_clone.record_debt_payment(debt_id.as_str(), amount, acc_id.as_deref());
-
-            ui.set_show_repay_debt_modal(false);
-            refresh_ui(&ui, &db_clone);
+            match db_clone.record_debt_payment(debt_id.as_str(), amount, acc_id.as_deref()) {
+                Ok(_) => {
+                    ui.set_show_repay_debt_modal(false);
+                    refresh_ui(&ui, &db_clone);
+                    show_success(&ui, "Debt repayment recorded successfully");
+                }
+                Err(e) => {
+                    show_error(&ui, format!("Failed to record repayment: {}", e.user_friendly_message()));
+                }
+            }
         });
     }
 
@@ -98,8 +113,14 @@ pub fn register_debt_handlers(ui: &MainWindow, db: &Database) {
         let db_clone = db.clone();
         ui.on_delete_debt(move |id| {
             let Some(ui) = ui_weak.upgrade() else { return; };
-            if db_clone.delete_debt(id.as_str()).is_ok() {
-                refresh_ui(&ui, &db_clone);
+            match db_clone.delete_debt(id.as_str()) {
+                Ok(_) => {
+                    refresh_ui(&ui, &db_clone);
+                    show_success(&ui, "Debt record deleted successfully");
+                }
+                Err(e) => {
+                    show_error(&ui, format!("Failed to delete debt: {}", e.user_friendly_message()));
+                }
             }
         });
     }

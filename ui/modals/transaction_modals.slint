@@ -49,7 +49,6 @@ export component AddTransactionModal inherits Rectangle {
     callback tx-type-changed(int);
     callback toggle-cat-filter();
     callback submit(bool, string, int, string, string, string, string, string, string, string, string);
-    callback save-clicked(bool, string, int, string, string, string, string, string, string, string, string);
 
     forward-focus: input-amount;
 
@@ -151,7 +150,7 @@ export component AddTransactionModal inherits Rectangle {
                 // Column 1: Financial Inputs & Details
                 VerticalLayout {
                     width: 294px;
-                    height: 36px;
+                    height: 250px;
                     spacing: 8px;
                     alignment: start;
 
@@ -588,19 +587,6 @@ export component AddTransactionModal inherits Rectangle {
                     btn-color: root.active-type-color;
                     clicked => {
                         root.submit(
-                            root.is-editing,
-                            root.tx-id,
-                            root.tx-type,
-                            input-amount.text,
-                            root.account-id,
-                            root.to-account-id,
-                            root.category-id,
-                            input-payee.text,
-                            input-note.text,
-                            input-date.text,
-                            input-time.text
-                        );
-                        root.save-clicked(
                             root.is-editing,
                             root.tx-id,
                             root.tx-type,

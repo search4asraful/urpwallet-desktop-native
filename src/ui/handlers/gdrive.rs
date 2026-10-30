@@ -6,6 +6,7 @@ use urpwallet::gdrive;
 
 use crate::{GDriveBackupItem, MainWindow};
 use crate::ui::refresh::refresh_ui;
+use crate::ui::toast::{show_error, show_success};
 
 /// Converts technical Google Drive errors into clean, human-readable explanations.
 fn humanize_gdrive_error(context: &str, raw_err: &str) -> String {
@@ -272,13 +273,17 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                     let Some(ui) = ui_bg.upgrade() else { return; };
                     match res {
                         Ok(file) => {
-                            ui.set_gdrive_status_msg(format!("✓ Backup uploaded: {}", file.name).into());
+                            let msg = format!("Backup uploaded: {}", file.name);
+                            ui.set_gdrive_status_msg(format!("✓ {msg}").into());
                             ui.set_gdrive_error_msg("".into());
                             refresh_gdrive_state(&ui, &db_bg);
+                            show_success(&ui, msg);
                         }
                         Err(e) => {
-                            ui.set_gdrive_error_msg(humanize_gdrive_error("upload", &e.to_string()).into());
+                            let err_msg = humanize_gdrive_error("upload", &e.to_string());
+                            ui.set_gdrive_error_msg(err_msg.clone().into());
                             ui.set_gdrive_status_msg("".into());
+                            show_error(&ui, err_msg);
                         }
                     }
                     ui.set_gdrive_loading(false);
@@ -348,9 +353,12 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                             ui.set_gdrive_status_msg("✓ Ledger restored successfully from Google Drive!".into());
                             ui.set_gdrive_error_msg("".into());
                             refresh_ui(&ui, &db_bg);
+                            show_success(&ui, "Ledger restored successfully from Google Drive!");
                         }
                         Err(e) => {
-                            ui.set_gdrive_error_msg(humanize_gdrive_error("restore", &e.to_string()).into());
+                            let err_msg = humanize_gdrive_error("restore", &e.to_string());
+                            ui.set_gdrive_error_msg(err_msg.clone().into());
+                            show_error(&ui, err_msg);
                         }
                     }
                     ui.set_gdrive_loading(false);
@@ -379,9 +387,12 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                         Ok(_) => {
                             ui.set_gdrive_status_msg("Backup deleted from Google Drive".into());
                             refresh_gdrive_state(&ui, &db_bg);
+                            show_success(&ui, "Backup deleted from Google Drive");
                         }
                         Err(e) => {
-                            ui.set_gdrive_error_msg(humanize_gdrive_error("delete", &e.to_string()).into());
+                            let err_msg = humanize_gdrive_error("delete", &e.to_string());
+                            ui.set_gdrive_error_msg(err_msg.clone().into());
+                            show_error(&ui, err_msg);
                         }
                     }
                     ui.set_gdrive_loading(false);
@@ -408,9 +419,12 @@ pub fn register_gdrive_handlers(ui: &MainWindow, db: &Database) {
                     ui.set_gdrive_status_msg("✓ Google Drive configuration saved successfully".into());
                     ui.set_gdrive_error_msg("".into());
                     refresh_gdrive_state(&ui, &db_clone);
+                    show_success(&ui, "Google Drive configuration saved successfully");
                 }
                 Err(e) => {
-                    ui.set_gdrive_error_msg(humanize_gdrive_error("config", &e.to_string()).into());
+                    let err_msg = humanize_gdrive_error("config", &e.to_string());
+                    ui.set_gdrive_error_msg(err_msg.clone().into());
+                    show_error(&ui, err_msg);
                 }
             }
         });

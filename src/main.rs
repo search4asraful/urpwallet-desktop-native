@@ -73,6 +73,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // 5. Wire all event handlers & callbacks
+    {
+        let ui_weak = main_window.as_weak();
+        main_window.on_dismiss_toast(move || {
+            if let Some(ui) = ui_weak.upgrade() {
+                crate::ui::toast::dismiss_toast(&ui);
+            }
+        });
+    }
+
     register_settings_handlers(&main_window, &db);
     register_transaction_handlers(&main_window, &db);
     register_account_handlers(&main_window, &db);
@@ -116,6 +125,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             println!("Scheduled backup uploaded to Google Drive: {}", file.name);
                             refresh_gdrive_state(&ui, &db_clone);
                             ui.set_gdrive_status_msg(format!("✓ Scheduled backup synced: {}", file.name).into());
+                            crate::ui::toast::show_success(&ui, format!("Scheduled backup synced: {}", file.name));
                         }
                         urpwallet::gdrive::SyncResult::AlreadyUpToDate { last_backup_time, .. } => {
                             ui.set_gdrive_last_backup(last_backup_time.into());

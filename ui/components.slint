@@ -1484,3 +1484,106 @@ export component ModernTimePickerPopup inherits PopupWindow {
     }
 }
 
+export component ToastMessage inherits Rectangle {
+    in property <string> toast-text: "";
+    in property <string> toast-type: "success"; // "success" | "error" | "info"
+    in property <bool> is-open: false;
+    callback close();
+
+    property <color> accent-color: root.toast-type == "error" ? Theme.danger : (root.toast-type == "info" ? Theme.info : Theme.primary);
+    property <color> subtle-bg: root.toast-type == "error" ? Theme.danger-subtle : (root.toast-type == "info" ? Theme.info-subtle : Theme.primary-subtle);
+
+    width: min(520px, max(320px, msg-layout.preferred-width + 100px));
+    height: max(50px, content-layout.preferred-height + 14px);
+
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: root.accent-color.transparentize(40%);
+    background: Theme.mode == 0 ? #FFFFFF : (Theme.mode == 1 ? #151922 : (Theme.mode == 2 ? #121216 : #0D1F18));
+    drop-shadow-offset-y: 6px;
+    drop-shadow-blur: 16px;
+    drop-shadow-color: #000000.transparentize(60%);
+    clip: true;
+
+    // Shield touches so background elements aren't accidentally clicked
+    TouchArea {
+        enabled: root.is-open;
+    }
+
+    // Left accent colored bar
+    Rectangle {
+        x: 0;
+        y: 0;
+        width: 4px;
+        height: 100%;
+        background: root.accent-color;
+    }
+
+    content-layout := HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 12px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        spacing: 12px;
+        alignment: space-between;
+
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: start;
+
+            // Icon circle
+            Rectangle {
+                width: 28px;
+                height: 28px;
+                border-radius: 14px;
+                background: root.subtle-bg;
+                border-width: 1px;
+                border-color: root.accent-color.transparentize(70%);
+                y: round((parent.height - self.height) / 2 / 1px) * 1px;
+
+                Image {
+                    width: 15px;
+                    height: 15px;
+                    x: round((parent.width - self.width) / 2 / 1px) * 1px;
+                    y: round((parent.height - self.height) / 2 / 1px) * 1px;
+                    source: root.toast-type == "error" ? @image-url("../assets/icons/alert-triangle.svg") : (root.toast-type == "info" ? @image-url("../assets/icons/info.svg") : @image-url("../assets/icons/check.svg"));
+                    colorize: root.accent-color;
+                }
+            }
+
+            // Message text container
+            msg-layout := VerticalLayout {
+                alignment: center;
+                spacing: 2px;
+
+                Text {
+                    text: root.toast-type == "error" ? "Error" : (root.toast-type == "info" ? "Notice" : "Success");
+                    font-size: 11px;
+                    font-weight: 700;
+                    letter-spacing: 0.3px;
+                    color: root.accent-color;
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: root.toast-text;
+                    color: Theme.text-primary;
+                    font-size: 12px;
+                    font-weight: 500;
+                    wrap: word-wrap;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // Close Dismiss Button
+        VerticalLayout {
+            alignment: center;
+            CloseButton {
+                small: true;
+                clicked => { root.close(); }
+            }
+        }
+    }
+}
+

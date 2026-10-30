@@ -5,6 +5,7 @@ use urpwallet::db::Database;
 
 use crate::{MainWindow, BudgetCategoryOption};
 use crate::ui::refresh::refresh_ui;
+use crate::ui::toast::{show_error, show_success};
 
 /// Registers all budget-related event handlers on the main window.
 pub fn register_budget_handlers(ui: &MainWindow, db: &Database) {
@@ -144,8 +145,8 @@ pub fn register_budget_handlers(ui: &MainWindow, db: &Database) {
             let start_date = format!("{}-01", year_month);
             let end_date = format!("{}-31", year_month);
 
-            if is_editing {
-                let _ = db_clone.update_budget(
+            let res = if is_editing {
+                db_clone.update_budget(
                     b_id.as_str(),
                     UpdateBudgetInput {
                         name: Some(name.trim().to_string()),
@@ -156,9 +157,9 @@ pub fn register_budget_handlers(ui: &MainWindow, db: &Database) {
                         start_date: None,
                         end_date: None,
                     },
-                );
+                )
             } else {
-                let _ = db_clone.create_budget(CreateBudgetInput {
+                db_clone.create_budget(CreateBudgetInput {
                     id: None,
                     name: name.trim().to_string(),
                     amount,
@@ -167,11 +168,19 @@ pub fn register_budget_handlers(ui: &MainWindow, db: &Database) {
                     category_ids: selected_ids,
                     start_date,
                     end_date,
-                });
-            }
+                })
+            };
 
             ui.set_show_add_budget_modal(false);
-            refresh_ui(&ui, &db_clone);
+            match res {
+                Ok(_) => {
+                    refresh_ui(&ui, &db_clone);
+                    show_success(&ui, if is_editing { "Monthly budget updated successfully" } else { "Monthly budget created successfully" });
+                }
+                Err(e) => {
+                    show_error(&ui, format!("Failed to save budget: {}", e.user_friendly_message()));
+                }
+            }
         });
     }
 
@@ -181,8 +190,14 @@ pub fn register_budget_handlers(ui: &MainWindow, db: &Database) {
         let db_clone = db.clone();
         ui.on_delete_budget(move |id| {
             let Some(ui) = ui_weak.upgrade() else { return; };
-            if db_clone.delete_budget(id.as_str()).is_ok() {
-                refresh_ui(&ui, &db_clone);
+            match db_clone.delete_budget(id.as_str()) {
+                Ok(_) => {
+                    refresh_ui(&ui, &db_clone);
+                    show_success(&ui, "Monthly budget deleted successfully");
+                }
+                Err(e) => {
+                    show_error(&ui, format!("Failed to delete budget: {}", e.user_friendly_message()));
+                }
             }
         });
     }

@@ -88,7 +88,7 @@ jobs:
           cp target/release/urpwallet target/AppDir/usr/bin/urpwallet
           cp urpwallet.desktop target/AppDir/urpwallet.desktop
           cp urpwallet.desktop target/AppDir/usr/share/applications/urpwallet.desktop
-          cp assets/icon.png target/AppDir/usr/share/icons/hicolor/scalable/apps/urpwallet.png
+          cp assets/icon.svg target/AppDir/usr/share/icons/hicolor/scalable/apps/urpwallet.svg
           cp assets/icon-256.png target/AppDir/usr/share/icons/hicolor/256x256/apps/urpwallet.png
           cp assets/icon-256.png target/AppDir/urpwallet.png
           ln -sf urpwallet.png target/AppDir/.DirIcon
