@@ -7,6 +7,14 @@ use crate::ui::refresh::{filter_categories_in_memory, refresh_ui};
 
 /// Registers all settings-related event handlers on the main window.
 pub fn register_settings_handlers(ui: &MainWindow, db: &Database) {
+    // Toggle Sidebar Collapsed
+    {
+        let db_clone = db.clone();
+        ui.on_toggle_sidebar_collapsed(move |collapsed| {
+            let _ = db_clone.set_setting("sidebar_collapsed", if collapsed { "true" } else { "false" });
+        });
+    }
+
     // A. Toggle Privacy Mode
     {
         let ui_weak = ui.as_weak();

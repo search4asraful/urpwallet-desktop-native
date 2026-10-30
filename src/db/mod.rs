@@ -327,8 +327,8 @@ impl Database {
         self.with_conn(|conn| repository::budgets::list_budgets(conn))
     }
 
-    pub fn list_budgets_with_progress(&self) -> DbResult<Vec<BudgetWithProgress>> {
-        self.with_conn(|conn| repository::budgets::list_budgets_with_progress(conn))
+    pub fn list_budgets_with_progress(&self, base_currency: Option<&str>) -> DbResult<Vec<BudgetWithProgress>> {
+        self.with_conn(|conn| repository::budgets::list_budgets_with_progress(conn, base_currency))
     }
 
     pub fn update_budget(&self, id: &str, input: UpdateBudgetInput) -> DbResult<Budget> {
@@ -986,6 +986,7 @@ mod tests {
             amount: 300.0,
             period: BudgetPeriod::Monthly,
             category_id: Some(cat.id.clone()),
+            category_ids: vec![cat.id.clone()],
             start_date: "2026-10-01".into(),
             end_date: "2026-10-31".into(),
         }).unwrap();
@@ -1023,13 +1024,129 @@ mod tests {
             payment_type: None,
         }).unwrap();
 
-        let progress = db.list_budgets_with_progress().unwrap();
+        let progress = db.list_budgets_with_progress(Some("USD")).unwrap();
         assert_eq!(progress.len(), 1);
         let b = &progress[0];
         assert_eq!(b.budget.id, budget.id);
         assert_eq!(b.spent, 120.0);
         assert_eq!(b.remaining, 180.0);
         assert_eq!(b.spent_percentage, 40.0);
+    }
+
+    #[test]
+    fn test_budget_multiple_chosen_categories_tracking() {
+        let db = Database::open_in_memory().unwrap();
+
+        let acc = db.create_account(CreateAccountInput {
+            id: Some("acc_multi".into()),
+            name: "Main Checking".into(),
+            account_type: AccountType::Bank,
+            currency: Some("USD".into()),
+            balance: Some(5000.0),
+            color: None,
+            icon: None,
+        }).unwrap();
+
+        let cat1 = db.create_category(CreateCategoryInput {
+            id: Some("cat_groceries_test".into()),
+            name: "Groceries".into(),
+            category_type: CategoryType::Expense,
+            icon: None,
+            color: None,
+            parent_id: None,
+        }).unwrap();
+
+        let cat2 = db.create_category(CreateCategoryInput {
+            id: Some("cat_dining_test".into()),
+            name: "Dining Out".into(),
+            category_type: CategoryType::Expense,
+            icon: None,
+            color: None,
+            parent_id: None,
+        }).unwrap();
+
+        let cat_other = db.create_category(CreateCategoryInput {
+            id: Some("cat_tech_test".into()),
+            name: "Electronics".into(),
+            category_type: CategoryType::Expense,
+            icon: None,
+            color: None,
+            parent_id: None,
+        }).unwrap();
+
+        // Budget for both Groceries and Dining Out
+        let budget = db.create_budget(CreateBudgetInput {
+            id: Some("b_food_total".into()),
+            name: "All Food & Dining".into(),
+            amount: 400.0,
+            period: BudgetPeriod::Monthly,
+            category_id: None,
+            category_ids: vec![cat1.id.clone(), cat2.id.clone()],
+            start_date: "2026-10-01".into(),
+            end_date: "2026-10-31".into(),
+        }).unwrap();
+
+        // Tx 1 in cat1 (Groceries): $100 -> SHOULD BE TRACKED
+        db.create_transaction(CreateTransactionInput {
+            id: None,
+            account_id: acc.id.clone(),
+            to_account_id: None,
+            category_id: Some(cat1.id.clone()),
+            tx_type: TransactionType::Expense,
+            amount: 100.0,
+            currency: None,
+            date: Some("2026-10-05".into()),
+            time: None,
+            payee: None,
+            note: None,
+            status: None,
+            payment_type: None,
+        }).unwrap();
+
+        // Tx 2 in cat2 (Dining Out): $50 -> SHOULD BE TRACKED
+        db.create_transaction(CreateTransactionInput {
+            id: None,
+            account_id: acc.id.clone(),
+            to_account_id: None,
+            category_id: Some(cat2.id.clone()),
+            tx_type: TransactionType::Expense,
+            amount: 50.0,
+            currency: None,
+            date: Some("2026-10-10".into()),
+            time: None,
+            payee: None,
+            note: None,
+            status: None,
+            payment_type: None,
+        }).unwrap();
+
+        // Tx 3 in cat_other (Electronics): $200 -> SHOULD NOT BE TRACKED BY THIS BUDGET
+        db.create_transaction(CreateTransactionInput {
+            id: None,
+            account_id: acc.id.clone(),
+            to_account_id: None,
+            category_id: Some(cat_other.id.clone()),
+            tx_type: TransactionType::Expense,
+            amount: 200.0,
+            currency: None,
+            date: Some("2026-10-15".into()),
+            time: None,
+            payee: None,
+            note: None,
+            status: None,
+            payment_type: None,
+        }).unwrap();
+
+        let progress = db.list_budgets_with_progress(Some("USD")).unwrap();
+        assert_eq!(progress.len(), 1);
+        let b = &progress[0];
+        assert_eq!(b.budget.id, budget.id);
+        // Only 100 + 50 = 150 should be tracked, NOT 350!
+        assert_eq!(b.spent, 150.0);
+        assert_eq!(b.remaining, 250.0);
+        assert_eq!(b.spent_percentage, 37.5);
+        assert!(b.category_name.as_ref().unwrap().contains("Groceries"));
+        assert!(b.category_name.as_ref().unwrap().contains("Dining Out"));
     }
 
     #[test]

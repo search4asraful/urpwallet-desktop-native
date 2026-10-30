@@ -18,6 +18,7 @@ export component Sidebar inherits Rectangle {
     callback toggle-privacy();
     callback set-theme(int);
     callback gdrive-backup-now();
+    callback toggle-collapsed(bool);
 
     VerticalLayout {
         padding: root.collapsed ? 8px : 12px;
@@ -45,6 +46,7 @@ export component Sidebar inherits Rectangle {
                             clicked => {
                                 if root.collapsed {
                                     root.collapsed = false;
+                                    root.toggle-collapsed(false);
                                 }
                             }
                         }
@@ -95,6 +97,7 @@ export component Sidebar inherits Rectangle {
                         mouse-cursor: MouseCursor.pointer;
                         clicked => {
                             root.collapsed = true;
+                            root.toggle-collapsed(true);
                         }
                     }
                     VerticalLayout {
@@ -122,6 +125,7 @@ export component Sidebar inherits Rectangle {
                 mouse-cursor: MouseCursor.pointer;
                 clicked => {
                     root.collapsed = false;
+                    root.toggle-collapsed(false);
                 }
             }
             HorizontalLayout {

@@ -167,15 +167,17 @@ pub fn import_full_backup(conn: &mut Connection, backup: &FullBackupData) -> DbR
 
     // 4. Budgets
     for b in &backup.budgets {
+        let cat_ids_json = serde_json::to_string(&b.category_ids).unwrap_or_else(|_| "[]".to_string());
         tx.execute(
-            "INSERT INTO budgets (id, name, amount, period, category_id, start_date, end_date, created_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO budgets (id, name, amount, period, category_id, category_ids, start_date, end_date, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![
                 b.id,
                 b.name,
                 b.amount,
                 b.period.as_str(),
                 b.category_id,
+                cat_ids_json,
                 b.start_date,
                 b.end_date,
                 b.created_at

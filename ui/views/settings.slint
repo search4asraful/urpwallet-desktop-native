@@ -1,5 +1,5 @@
 import { Theme } from "../theme.slint";
-import { CategoryItem } from "../models.slint";
+import { CategoryItem, CurrencyModel } from "../models.slint";
 import { Badge, AppButton, TabButton, AppInput, SixDigitPinInput, CurrencySelector, IconButton } from "../components.slint";
 import { ScrollView, LineEdit } from "std-widgets.slint";
 
@@ -609,7 +609,7 @@ export component SettingsView inherits ScrollView {
                                     alignment: end;
 
                                     Text {
-                                        text: root.privacy-mode ? "Hidden (••••)" : "Visible ($1,234)";
+                                        text: root.privacy-mode ? "Hidden (••••)" : ("Visible (" + CurrencyModel.get-symbol(root.base-currency) + "1,234)");
                                         color: root.privacy-mode ? Theme.primary : Theme.text-secondary;
                                         font-size: 12px;
                                         font-weight: 600;
@@ -1137,7 +1137,7 @@ export component SettingsView inherits ScrollView {
                                                     badge-color: Theme.text-secondary;
                                                 }
                                                 if cat.tx_count == 0: Text {
-                                                    text: "0 transactions (unused)";
+                                                    text: "Unused";
                                                     color: Theme.text-muted;
                                                     font-size: 12px;
                                                     vertical-alignment: center;
@@ -1187,7 +1187,7 @@ export component SettingsView inherits ScrollView {
                                                 }
 
                                                 if cat.tx_count > 0: Rectangle {
-                                                    height: 22px;
+                                                    height: 26px;
                                                     border-radius: 4px;
                                                     background: Theme.mode == 0 ? Theme.text-muted.transparentize(88%) : Theme.text-muted.transparentize(82%);
                                                     HorizontalLayout {
@@ -1199,17 +1199,10 @@ export component SettingsView inherits ScrollView {
                                                             alignment: center;
                                                             Image {
                                                                 source: @image-url("../../assets/icons/lock.svg");
-                                                                width: 10px;
-                                                                height: 10px;
+                                                                width: 14px;
+                                                                height: 16px;
                                                                 colorize: Theme.text-muted;
                                                             }
-                                                        }
-                                                        Text {
-                                                            text: "In Use";
-                                                            color: Theme.text-muted;
-                                                            font-size: 11px;
-                                                            font-weight: 700;
-                                                            vertical-alignment: center;
                                                         }
                                                     }
                                                 }

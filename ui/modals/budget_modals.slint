@@ -1,6 +1,7 @@
 import { Theme } from "../theme.slint";
-import { BudgetItem } from "../models.slint";
+import { BudgetItem, BudgetCategoryOption } from "../models.slint";
 import { AppButton, Badge, ProgressBar, AppInput, CloseButton } from "../components.slint";
+import { ScrollView } from "std-widgets.slint";
 
 export component AddBudgetModal inherits Rectangle {
     width: 100%;
@@ -11,10 +12,14 @@ export component AddBudgetModal inherits Rectangle {
     in property <string> budget-id: "";
     in property <string> budget-name: "";
     in property <string> budget-amount: "";
-    in property <string> budget-category-id: "";
+    in property <string> currency-symbol: "$";
+    in property <[BudgetCategoryOption]> categories: [];
+    in property <int> selected-category-count: 0;
 
     callback close();
-    callback submit(bool, string, string, string, string);
+    callback toggle-category(string);
+    callback select-all-categories(bool);
+    callback submit(bool, string, string, string);
 
     TouchArea {
         width: 100%;
@@ -23,7 +28,7 @@ export component AddBudgetModal inherits Rectangle {
     }
 
     Rectangle {
-        width: 360px;
+        width: 420px;
         height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
         x: round((parent.width - self.width) / 2 / 1px) * 1px;
         y: round((parent.height - self.height) / 2 / 1px) * 1px;
@@ -57,14 +62,132 @@ export component AddBudgetModal inherits Rectangle {
 
             Text { text: "Budget Name:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-b-name := AppInput {
-                placeholder-text: "e.g. Dining Out, Groceries...";
+                placeholder-text: "e.g. Dining & Groceries, Utilities...";
                 text: root.budget-name;
             }
 
             Text { text: "Monthly Limit Amount:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-b-amt := AppInput {
                 placeholder-text: "500.00";
+                prefix-text: root.currency-symbol;
                 text: root.budget-amount;
+            }
+
+            // Chosen Categories Field (Multiple Allowed)
+            HorizontalLayout {
+                alignment: space-between;
+                HorizontalLayout {
+                    spacing: 6px;
+                    Text {
+                        text: "Categories to Track:";
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: Theme.text-muted;
+                        vertical-alignment: center;
+                    }
+                    Badge {
+                        text: root.selected-category-count > 0 ? (root.selected-category-count + " Selected") : "All Categories";
+                        badge-color: root.selected-category-count > 0 ? Theme.primary : Theme.info;
+                    }
+                }
+                HorizontalLayout {
+                    spacing: 4px;
+                    AppButton {
+                        text: "All";
+                        small: true;
+                        btn-color: Theme.surface-hover;
+                        text-color: Theme.text-secondary;
+                        clicked => { root.select-all-categories(true); }
+                    }
+                    AppButton {
+                        text: "Clear";
+                        small: true;
+                        btn-color: Theme.surface-hover;
+                        text-color: Theme.text-secondary;
+                        clicked => { root.select-all-categories(false); }
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 130px;
+                background: Theme.surface-subtle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 6px;
+
+                ScrollView {
+                    VerticalLayout {
+                        padding: 6px;
+                        spacing: 4px;
+
+                        GridLayout {
+                            spacing: 4px;
+                            for cat[i] in root.categories: Rectangle {
+                                horizontal-stretch: 1;
+                                row: floor(i / 2);
+                                col: mod(i, 2);
+                                height: 32px;
+                                border-radius: 5px;
+                                background: cat.selected ? Theme.primary.transparentize(85%) : Theme.surface;
+                                border-color: cat.selected ? Theme.primary : Theme.border;
+                                border-width: cat.selected ? 1.5px : 1px;
+
+                                TouchArea {
+                                    width: 100%;
+                                    height: 100%;
+                                    mouse-cursor: MouseCursor.pointer;
+                                    clicked => {
+                                        root.toggle-category(cat.id);
+                                    }
+                                }
+
+                                HorizontalLayout {
+                                    padding-left: 8px;
+                                    padding-right: 8px;
+                                    spacing: 6px;
+                                    alignment: start;
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Rectangle {
+                                           width: 8px;
+                                           height: 8px;
+                                           border-radius: 4px;
+                                           background: Theme.primary;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: cat.name;
+                                        font-size: 11px;
+                                        font-weight: cat.selected ? 700 : 500;
+                                        color: cat.selected ? Theme.primary : Theme.text-primary;
+                                        overflow: elide;
+                                        vertical-alignment: center;
+                                        horizontal-stretch: 1;
+                                    }
+
+                                    if cat.selected: VerticalLayout {
+                                        alignment: center;
+                                        Image {
+                                            width: 12px;
+                                            height: 12px;
+                                            source: @image-url("../../assets/icons/check.svg");
+                                            colorize: Theme.primary;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                text: "Select categories to track specifically. If none selected, tracks all expenses.";
+                font-size: 11px;
+                color: Theme.text-muted;
             }
 
             HorizontalLayout {
@@ -86,8 +209,7 @@ export component AddBudgetModal inherits Rectangle {
                             root.is-editing,
                             root.budget-id,
                             input-b-name.text,
-                            input-b-amt.text,
-                            root.budget-category-id
+                            input-b-amt.text
                         );
                     }
                 }
@@ -105,7 +227,7 @@ export component BudgetDetailModal inherits Rectangle {
 
     callback close();
     callback open-edit-budget(string);
-    callback delete-budget(string);
+    callback request-delete-budget(string, string, string);
 
     TouchArea {
         width: 100%;
@@ -114,7 +236,7 @@ export component BudgetDetailModal inherits Rectangle {
     }
 
     Rectangle {
-        width: 380px;
+        width: 400px;
         height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
         x: round((parent.width - self.width) / 2 / 1px) * 1px;
         y: round((parent.height - self.height) / 2 / 1px) * 1px;
@@ -189,6 +311,19 @@ export component BudgetDetailModal inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: space-between;
+                    Text { text: "Tracked Categories:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
+                    Text {
+                        text: root.detail-budget.category_name != "" ? root.detail-budget.category_name : "All Categories";
+                        color: Theme.text-primary;
+                        font-size: 12px;
+                        font-weight: 700;
+                        overflow: elide;
+                        vertical-alignment: center;
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
                     Text { text: "Monthly Limit:"; color: Theme.text-muted; font-size: 12px; vertical-alignment: center; }
                     Text { text: root.detail-budget.total; color: Theme.text-primary; font-size: 12px; font-weight: 700; vertical-alignment: center; }
                 }
@@ -226,8 +361,11 @@ export component BudgetDetailModal inherits Rectangle {
                     btn-color: Theme.danger;
                     outline: true;
                     clicked => {
-                        root.delete-budget(root.detail-budget.id);
-                        root.close();
+                        root.request-delete-budget(
+                            root.detail-budget.id,
+                            root.detail-budget.name,
+                            "Monthly Limit: " + root.detail-budget.total
+                        );
                     }
                 }
 

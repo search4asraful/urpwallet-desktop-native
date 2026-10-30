@@ -28,6 +28,24 @@ impl AppConfig {
         }
     }
 
+    pub fn exchange_rates_file_path() -> PathBuf {
+        if let Ok(custom_path) = std::env::var("URPWALLET_RATES_PATH") {
+            return PathBuf::from(custom_path);
+        }
+        #[cfg(test)]
+        {
+            std::env::temp_dir().join("urpwallet_test_exchange_rates.json")
+        }
+        #[cfg(not(test))]
+        {
+            if let Some(proj_dirs) = ProjectDirs::from("com", "urpwallet", "urpwallet") {
+                proj_dirs.config_dir().join("exchange_rates.json")
+            } else {
+                PathBuf::from("data/exchange_rates.json")
+            }
+        }
+    }
+
     pub fn load() -> Self {
         let path = Self::config_file_path();
         if let Ok(content) = std::fs::read_to_string(&path)

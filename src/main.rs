@@ -33,12 +33,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     main_window.set_pin_protected(is_pin_enabled);
     main_window.set_is_locked(is_pin_enabled);
 
-    // 4. Initial Theme & Privacy Setup
+    // 4. Initial Theme, Privacy & Layout Setup
     let initial_privacy = db
         .get_setting("privacy_mode")?
         .map(|v| v == "true" || v == "1")
         .unwrap_or(false);
     main_window.set_privacy_mode(initial_privacy);
+
+    let initial_sidebar_collapsed = db
+        .get_setting("sidebar_collapsed")?
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false);
+    main_window.set_sidebar_collapsed(initial_sidebar_collapsed);
 
     let initial_theme = db
         .get_setting("theme")?
@@ -51,6 +57,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => 1,
     };
     main_window.global::<Theme>().set_mode(theme_mode);
+
+    // Initial Exchange Rates Setup (loads exchange_rates.json and checks 24h sync)
+    urpwallet::logic::load_cached_exchange_rates();
+    {
+        let ui_weak = main_window.as_weak();
+        let db_clone = db.clone();
+        urpwallet::logic::check_and_spawn_rates_update_with_callback(Some(move || {
+            let _ = slint::invoke_from_event_loop(move || {
+                if let Some(ui) = ui_weak.upgrade() {
+                    refresh_ui(&ui, &db_clone);
+                }
+            });
+        }));
+    }
 
     // 5. Wire all event handlers & callbacks
     register_settings_handlers(&main_window, &db);
@@ -74,6 +94,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             db.clone(),
             std::time::Duration::from_secs(60),
             move |sync_res| {
+                // Check 24-hour exchange rates sync
+                {
+                    let ui_weak = ui_weak.clone();
+                    let db_clone = db_clone.clone();
+                    urpwallet::logic::check_and_spawn_rates_update_with_callback(Some(move || {
+                        let _ = slint::invoke_from_event_loop(move || {
+                            if let Some(ui) = ui_weak.upgrade() {
+                                refresh_ui(&ui, &db_clone);
+                            }
+                        });
+                    }));
+                }
+
                 let ui_weak = ui_weak.clone();
                 let db_clone = db_clone.clone();
                 let _ = slint::invoke_from_event_loop(move || {

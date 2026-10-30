@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use crate::db::models::{Account, TransactionType, TransactionWithDetails};
+use crate::logic::currency::convert_currency;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CashFlowSummary {
@@ -19,21 +20,22 @@ pub struct CategorySpendingItem {
     pub percentage: f64,
 }
 
-/// Calculates the total net worth across all non-archived accounts.
-pub fn calculate_net_worth(accounts: &[Account]) -> f64 {
+/// Calculates the total net worth across all non-archived accounts converted to `base_currency`.
+pub fn calculate_net_worth(accounts: &[Account], base_currency: &str) -> f64 {
     let mut sum = 0.0;
     for acc in accounts {
         if !acc.is_archived {
-            sum += acc.balance;
+            sum += convert_currency(acc.balance, &acc.currency, base_currency);
         }
     }
     (sum * 100.0).round() / 100.0
 }
 
-/// Computes monthly cash flow metrics (income, expenses, net savings, savings rate).
+/// Computes monthly cash flow metrics (income, expenses, net savings, savings rate) converted to `base_currency`.
 pub fn calculate_cash_flow(
     transactions: &[TransactionWithDetails],
     month_prefix: &str, // e.g. "2026-10"
+    base_currency: &str,
 ) -> CashFlowSummary {
     let mut income = 0.0;
     let mut expense = 0.0;
@@ -41,9 +43,11 @@ pub fn calculate_cash_flow(
     for item in transactions {
         let tx = &item.transaction;
         if tx.date.starts_with(month_prefix) {
+            let tx_curr = item.account_currency.as_deref().unwrap_or(&tx.currency);
+            let converted = convert_currency(tx.amount, tx_curr, base_currency);
             match tx.tx_type {
-                TransactionType::Income => income += tx.amount,
-                TransactionType::Expense => expense += tx.amount,
+                TransactionType::Income => income += converted,
+                TransactionType::Expense => expense += converted,
                 TransactionType::Transfer => {} // Transfers between own accounts do not impact cash flow
             }
         }
@@ -64,10 +68,11 @@ pub fn calculate_cash_flow(
     }
 }
 
-/// Computes category breakdown for expense transactions in a given month.
+/// Computes category breakdown for expense transactions in a given month converted to `base_currency`.
 pub fn calculate_category_breakdown(
     transactions: &[TransactionWithDetails],
     month_prefix: &str,
+    base_currency: &str,
 ) -> Vec<CategorySpendingItem> {
     struct CatAccumulator {
         name: String,
@@ -87,7 +92,10 @@ pub fn calculate_category_breakdown(
             let color = item.category_color.clone().unwrap_or_else(|| "#64748B".into());
             let icon = item.category_icon.clone().unwrap_or_else(|| "CircleDollarSign".into());
 
-            total_expense += tx.amount;
+            let tx_curr = item.account_currency.as_deref().unwrap_or(&tx.currency);
+            let converted = convert_currency(tx.amount, tx_curr, base_currency);
+
+            total_expense += converted;
 
             let entry = map.entry(cat_id).or_insert(CatAccumulator {
                 name,
@@ -95,7 +103,7 @@ pub fn calculate_category_breakdown(
                 icon,
                 total: 0.0,
             });
-            entry.total += tx.amount;
+            entry.total += converted;
         }
     }
 
@@ -137,11 +145,12 @@ pub struct WeeklyFlow {
     pub expense_ratio: f64,
 }
 
-/// Calculates income, expenses, and net pacing broken down by week for a specific month.
+/// Calculates income, expenses, and net pacing broken down by week for a specific month converted to `base_currency`.
 pub fn calculate_weekly_flow(
     transactions: &[TransactionWithDetails],
     year: i32,
     month: u32,
+    base_currency: &str,
 ) -> Vec<WeeklyFlow> {
     let days_in_month = match month {
         2 => {
@@ -171,9 +180,11 @@ pub fn calculate_weekly_flow(
                         _ => 4,
                     };
                     if week_idx < num_weeks {
+                        let tx_curr = item.account_currency.as_deref().unwrap_or(&tx.currency);
+                        let converted = convert_currency(tx.amount, tx_curr, base_currency);
                         match tx.tx_type {
-                            TransactionType::Income => weekly_income[week_idx] += tx.amount,
-                            TransactionType::Expense => weekly_expense[week_idx] += tx.amount,
+                            TransactionType::Income => weekly_income[week_idx] += converted,
+                            TransactionType::Expense => weekly_expense[week_idx] += converted,
                             TransactionType::Transfer => {}
                         }
                     }
@@ -235,12 +246,13 @@ pub struct MonthlyTrend {
     pub expense_ratio: f64,
 }
 
-/// Calculates monthly performance trajectory across the past N months.
+/// Calculates monthly performance trajectory across the past N months converted to `base_currency`.
 pub fn calculate_monthly_trends(
     transactions: &[TransactionWithDetails],
     current_year: i32,
     current_month: u32,
     months_count: usize,
+    base_currency: &str,
 ) -> Vec<MonthlyTrend> {
     let mut months = Vec::new();
     let mut y = current_year;
@@ -265,7 +277,7 @@ pub fn calculate_monthly_trends(
 
     for (year, month) in months {
         let prefix = format!("{:04}-{:02}", year, month);
-        let cf = calculate_cash_flow(transactions, &prefix);
+        let cf = calculate_cash_flow(transactions, &prefix, base_currency);
         if cf.income > max_val {
             max_val = cf.income;
         }
@@ -342,7 +354,36 @@ mod tests {
         ];
 
         // 5200 - 350 = 4850.0
-        assert_eq!(calculate_net_worth(&accounts), 4850.0);
+        assert_eq!(calculate_net_worth(&accounts, "USD"), 4850.0);
+
+        // Multi-currency test: 100 USD + 100 EUR in USD base (1 EUR = 1.08 USD) -> 100 + 108 = 208 USD
+        let multi_accounts = vec![
+            Account {
+                id: "acc_usd".into(),
+                name: "USD Acc".into(),
+                account_type: AccountType::Bank,
+                currency: "USD".into(),
+                balance: 100.0,
+                color: "".into(),
+                icon: "".into(),
+                is_archived: false,
+                created_at: "".into(),
+                updated_at: "".into(),
+            },
+            Account {
+                id: "acc_eur".into(),
+                name: "EUR Acc".into(),
+                account_type: AccountType::Bank,
+                currency: "EUR".into(),
+                balance: 100.0,
+                color: "".into(),
+                icon: "".into(),
+                is_archived: false,
+                created_at: "".into(),
+                updated_at: "".into(),
+            },
+        ];
+        assert_eq!(calculate_net_worth(&multi_accounts, "USD"), 208.0);
     }
 
     #[test]
@@ -404,7 +445,7 @@ mod tests {
             },
         ];
 
-        let summary = calculate_cash_flow(&txs, "2026-10");
+        let summary = calculate_cash_flow(&txs, "2026-10", "USD");
         assert_eq!(summary.income, 4000.0);
         assert_eq!(summary.expense, 1000.0);
         assert_eq!(summary.net_delta, 3000.0);
@@ -471,7 +512,7 @@ mod tests {
             },
         ];
 
-        let flow = calculate_weekly_flow(&txs, 2026, 10);
+        let flow = calculate_weekly_flow(&txs, 2026, 10, "USD");
         assert_eq!(flow.len(), 5);
         assert_eq!(flow[0].income, 2000.0);
         assert_eq!(flow[0].expense, 0.0);
@@ -516,7 +557,7 @@ mod tests {
             },
         ];
 
-        let trends = calculate_monthly_trends(&txs, 2026, 10, 3);
+        let trends = calculate_monthly_trends(&txs, 2026, 10, 3, "USD");
         assert_eq!(trends.len(), 3); // Aug, Sep, Oct
         assert_eq!(trends[1].month_prefix, "2026-09");
         assert_eq!(trends[1].income, 3000.0);

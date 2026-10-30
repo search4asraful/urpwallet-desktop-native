@@ -17,6 +17,20 @@ export global CurrencyModel {
         { code: "AUD", label: "AUD", symbol: "AU$" },
         { code: "JPY", label: "JPY", symbol: "¥" },
     ];
+
+    pure public function get-symbol(code: string) -> string {
+        if code == "BDT" { return "৳"; }
+        if code == "USD" { return "$"; }
+        if code == "EUR" { return "€"; }
+        if code == "GBP" { return "£"; }
+        if code == "INR" { return "₹"; }
+        if code == "CAD" { return "CA$"; }
+        if code == "AUD" { return "A$"; }
+        if code == "JPY" { return "¥"; }
+        if code == "CHF" { return "CHF"; }
+        if code == "CNY" { return "¥"; }
+        return "$";
+    }
 }
 
 export struct AccountItem {
@@ -102,6 +116,13 @@ export struct CategoryItem {
     color: string,
     color_val: color,
     tx_count: int,
+}
+
+export struct BudgetCategoryOption {
+    id: string,
+    name: string,
+    color: string,
+    selected: bool,
 }
 
 export struct CategorySpendingItem {

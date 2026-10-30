@@ -34,6 +34,30 @@ fn sync_tx_selection_ui(ui: &MainWindow, selected_set: &HashSet<String>) {
     ui.set_selected_tx_count(selected_count);
 }
 
+fn parse_time_flexible(s: &str) -> Option<NaiveTime> {
+    let trimmed = s.trim();
+    if let Ok(t) = NaiveTime::parse_from_str(trimmed, "%H:%M") {
+        return Some(t);
+    }
+    if let Ok(t) = NaiveTime::parse_from_str(trimmed, "%H:%M:%S") {
+        return Some(t);
+    }
+    let upper = trimmed.to_uppercase();
+    if let Ok(t) = NaiveTime::parse_from_str(&upper, "%I:%M %p") {
+        return Some(t);
+    }
+    if let Ok(t) = NaiveTime::parse_from_str(&upper, "%I:%M%p") {
+        return Some(t);
+    }
+    if let Ok(t) = NaiveTime::parse_from_str(&upper, "%l:%M %p") {
+        return Some(t);
+    }
+    if let Ok(t) = NaiveTime::parse_from_str(&upper, "%l:%M%p") {
+        return Some(t);
+    }
+    None
+}
+
 /// Registers all transaction-related event handlers on the main window.
 pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
     let selected_ids = Rc::new(RefCell::new(HashSet::<String>::new()));
@@ -93,16 +117,25 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
             ui.set_today_minute(now.minute() as i32);
             ui.set_modal_error("".into());
 
+            let base_currency = db_clone
+                .get_setting("base_currency")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "BDT".to_string());
+            let mut curr_sym = urpwallet::logic::get_currency_symbol(&base_currency);
+
             if let Ok(accs) = db_clone.list_accounts(false) {
                 if let Some(first) = accs.first() {
                     ui.set_modal_account_id(first.id.clone().into());
                     ui.set_modal_account_name(first.name.clone().into());
+                    curr_sym = urpwallet::logic::get_currency_symbol(&first.currency);
                 }
                 if accs.len() > 1 {
                     ui.set_modal_to_account_id(accs[1].id.clone().into());
                     ui.set_modal_to_account_name(accs[1].name.clone().into());
                 }
             }
+            ui.set_modal_currency_symbol(curr_sym.into());
 
             ui.set_modal_cat_show_all(false);
             let cat_filter = match tx_type {
@@ -197,14 +230,14 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
                 };
 
                 let time_str = tx.time.clone().unwrap_or_else(|| now.format("%H:%M").to_string());
-                let (time_hour, time_minute) = match NaiveTime::parse_from_str(&time_str, "%H:%M")
-                    .or_else(|_| NaiveTime::parse_from_str(&time_str, "%H:%M:%S"))
-                {
-                    Ok(t) => (t.hour() as i32, t.minute() as i32),
-                    Err(_) => (now.hour() as i32, now.minute() as i32),
+                let (time_hour, time_minute) = match parse_time_flexible(&time_str) {
+                    Some(t) => (t.hour() as i32, t.minute() as i32),
+                    None => (now.hour() as i32, now.minute() as i32),
                 };
 
                 let formatted_date = format_date(&tx.date, &date_fmt);
+                let curr_sym = urpwallet::logic::get_currency_symbol(&tx.currency);
+                ui.set_modal_currency_symbol(curr_sym.into());
                 ui.set_modal_payee(tx.payee.unwrap_or_default().into());
                 ui.set_modal_note(tx.note.unwrap_or_default().into());
                 ui.set_modal_date(formatted_date.into());
@@ -304,12 +337,10 @@ pub fn register_transaction_handlers(ui: &MainWindow, db: &Database) {
                     time.trim().to_string()
                 };
 
-                let parsed_time = match NaiveTime::parse_from_str(&time_str, "%H:%M")
-                    .or_else(|_| NaiveTime::parse_from_str(&time_str, "%H:%M:%S"))
-                {
-                    Ok(t) => t,
-                    Err(_) => {
-                        ui.set_modal_error("Please enter a valid time in HH:MM format (e.g. 14:30)".into());
+                let parsed_time = match parse_time_flexible(&time_str) {
+                    Some(t) => t,
+                    None => {
+                        ui.set_modal_error("Please enter a valid time (e.g. 14:30 or 02:30 PM)".into());
                         return;
                     }
                 };

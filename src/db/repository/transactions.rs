@@ -290,7 +290,20 @@ pub fn update_transaction(
         Some(val) => val,
         None => old_tx.category_id.clone(),
     };
-    let new_currency = input.currency.unwrap_or(old_tx.currency);
+    let new_currency = match input.currency {
+        Some(c) => c,
+        None if new_account_id != old_tx.account_id => {
+            let account_currency: Option<String> = conn
+                .query_row(
+                    "SELECT currency FROM accounts WHERE id = ?1",
+                    params![new_account_id],
+                    |row| row.get(0),
+                )
+                .optional()?;
+            account_currency.unwrap_or(old_tx.currency)
+        }
+        None => old_tx.currency,
+    };
     let new_date = input.date.unwrap_or(old_tx.date);
     let new_time = match input.time {
         Some(val) => val,

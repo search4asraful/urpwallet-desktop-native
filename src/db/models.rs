@@ -349,6 +349,8 @@ pub struct Budget {
     pub amount: f64,
     pub period: BudgetPeriod,
     pub category_id: Option<String>,
+    #[serde(default)]
+    pub category_ids: Vec<String>,
     pub start_date: String,
     pub end_date: String,
     pub created_at: String,
@@ -372,6 +374,8 @@ pub struct CreateBudgetInput {
     pub amount: f64,
     pub period: BudgetPeriod,
     pub category_id: Option<String>,
+    #[serde(default)]
+    pub category_ids: Vec<String>,
     pub start_date: String,
     pub end_date: String,
 }
@@ -382,6 +386,7 @@ pub struct UpdateBudgetInput {
     pub amount: Option<f64>,
     pub period: Option<BudgetPeriod>,
     pub category_id: Option<Option<String>>,
+    pub category_ids: Option<Vec<String>>,
     pub start_date: Option<String>,
     pub end_date: Option<String>,
 }

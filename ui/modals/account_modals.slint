@@ -1,5 +1,5 @@
 import { Theme } from "../theme.slint";
-import { AccountItem } from "../models.slint";
+import { AccountItem, CurrencyModel } from "../models.slint";
 import { AppButton, Badge, AppInput, CurrencySelector, CloseButton } from "../components.slint";
 
 export component AddAccountModal inherits Rectangle {
@@ -100,6 +100,7 @@ export component AddAccountModal inherits Rectangle {
             Text { text: "Balance:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-acc-bal := AppInput {
                 placeholder-text: "0.00";
+                prefix-text: CurrencyModel.get-symbol(root.currency);
                 text: root.balance;
             }
 
@@ -161,7 +162,7 @@ export component AccountDetailModal inherits Rectangle {
 
     callback close();
     callback open-edit-account(string);
-    callback delete-account(string);
+    callback request-delete-account(string, string, string);
 
     TouchArea {
         width: 100%;
@@ -278,8 +279,11 @@ export component AccountDetailModal inherits Rectangle {
                     btn-color: Theme.danger;
                     outline: true;
                     clicked => {
-                        root.delete-account(root.detail-acc.id);
-                        root.close();
+                        root.request-delete-account(
+                            root.detail-acc.id,
+                            root.detail-acc.name,
+                            "Balance: " + root.detail-acc.balance + " (" + root.detail-acc.currency + ")"
+                        );
                     }
                 }
 

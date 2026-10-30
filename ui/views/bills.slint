@@ -12,7 +12,7 @@ export component BillsView inherits VerticalLayout {
     callback select-bill(BillItem);
     callback execute-bill-payment(string);
     callback open-edit-bill(string);
-    callback delete-bill(string);
+    callback request-delete-bill(string, string, string);
 
     // Dedicated Header & Action Bar
     Rectangle {
@@ -107,7 +107,7 @@ export component BillsView inherits VerticalLayout {
             }
 
             for bill in root.bills: Rectangle {
-                height: 60px;
+                height: 86px;
                 background: Theme.surface;
                 border-color: Theme.border;
                 border-width: 1px;
@@ -129,13 +129,15 @@ export component BillsView inherits VerticalLayout {
                             vertical-alignment: center;
                         }
                         HorizontalLayout {
-                            spacing: 6px;
                             Text {
                                 text: "Next Due: " + bill.due_date;
                                 color: Theme.text-muted;
                                 font-size: 12px;
                                 vertical-alignment: center;
                             }
+                        }
+                        HorizontalLayout {
+                            spacing: 6px;
                             Badge {
                                 text: bill.frequency;
                                 badge-color: Theme.info;
@@ -152,7 +154,6 @@ export component BillsView inherits VerticalLayout {
                         HorizontalLayout {
                             spacing: 8px;
                             Text {
-                                width: 95px;
                                 horizontal-alignment: right;
                                 vertical-alignment: center;
                                 text: bill.amount;
@@ -196,7 +197,11 @@ export component BillsView inherits VerticalLayout {
                                 icon-color: Theme.danger;
                                 tooltip: "Delete";
                                 clicked => {
-                                    root.delete-bill(bill.id);
+                                    root.request-delete-bill(
+                                        bill.id,
+                                        bill.name,
+                                        "Amount: " + bill.amount + " (" + bill.frequency + ") • Next: " + bill.due_date
+                                    );
                                 }
                             }
                         }

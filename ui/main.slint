@@ -10,11 +10,13 @@ export { Theme } from "theme.slint";
 
 import {
     AccountItem, TransactionItem, BudgetItem, BillItem, DebtItem, CategoryItem,
-    CategorySpendingItem, WeeklyFlowItem, MonthlyTrendItem, GDriveBackupItem
+    CategorySpendingItem, WeeklyFlowItem, MonthlyTrendItem, GDriveBackupItem, CurrencyModel,
+    BudgetCategoryOption
 } from "models.slint";
 export {
     AccountItem, TransactionItem, BudgetItem, BillItem, DebtItem, CategoryItem,
-    CategorySpendingItem, WeeklyFlowItem, MonthlyTrendItem, GDriveBackupItem
+    CategorySpendingItem, WeeklyFlowItem, MonthlyTrendItem, GDriveBackupItem, CurrencyModel,
+    BudgetCategoryOption
 } from "models.slint";
 
 import { Sidebar } from "views/sidebar.slint";
@@ -36,6 +38,7 @@ import { AddDebtModal, RepayDebtModal, DebtDetailModal } from "modals/debt_modal
 import { GoogleDriveModal } from "modals/gdrive_modal.slint";
 import { ChangeDbPathModal, ChangeExportPathModal } from "modals/path_modals.slint";
 import { PinLockOverlay } from "modals/lock_overlay.slint";
+import { ConfirmDeleteModal } from "modals/confirm_modal.slint";
 
 export component MainWindow inherits Window {
     title: "urpwallet — Financial Planner & Budget Tracker";
@@ -154,7 +157,51 @@ export component MainWindow inherits Window {
         root.show-add-bill-modal || root.show-bill-detail-modal ||
         root.show-add-debt-modal || root.show-repay-debt-modal || root.show-debt-detail-modal ||
         root.show-gdrive-modal ||
+        root.show-confirm-delete-modal ||
         root.is-locked;
+
+    // CONFIRM DELETE POPUP WINDOW STATE
+    in-out property <bool> show-confirm-delete-modal: false;
+    in-out property <string> confirm-delete-type: "";
+    in-out property <string> confirm-delete-id: "";
+    in-out property <string> confirm-delete-title: "Confirm Deletion";
+    in-out property <string> confirm-delete-item-name: "";
+    in-out property <string> confirm-delete-item-info: "";
+    in-out property <string> confirm-delete-type-label: "";
+    in-out property <string> confirm-delete-consequence: "";
+
+    public function open-delete-dialog(item-type: string, id: string, name: string, detail-info: string) {
+        root.confirm-delete-type = item-type;
+        root.confirm-delete-id = id;
+        root.confirm-delete-item-name = name;
+        root.confirm-delete-item-info = detail-info;
+        if item-type == "account" {
+            root.confirm-delete-title = "Delete Account";
+            root.confirm-delete-type-label = "ACCOUNT";
+            root.confirm-delete-consequence = "• All transactions associated with this account will be permanently deleted.\n• Any recurring bills or scheduled payments linked to this account will be removed.\n• Net worth and total balance calculations will update immediately.\n• This action is permanent and cannot be undone.";
+        } else if item-type == "budget" {
+            root.confirm-delete-title = "Delete Monthly Budget";
+            root.confirm-delete-type-label = "BUDGET";
+            root.confirm-delete-consequence = "• This monthly budget ceiling and its daily safe-to-spend pacing will be removed.\n• Dynamic daily safe-to-spend allowance recommendations will be recalculated.\n• Your recorded transactions and category expense history will NOT be deleted.";
+        } else if item-type == "bill" {
+            root.confirm-delete-title = "Delete Recurring Bill";
+            root.confirm-delete-type-label = "RECURRING BILL";
+            root.confirm-delete-consequence = "• Upcoming payment reminders and automatic recurring generation will be stopped.\n• Past transactions and payments already executed will NOT be deleted.\n• You will need to re-create the schedule if you wish to track it again.";
+        } else if item-type == "debt" {
+            root.confirm-delete-title = "Delete Debt / Loan Record";
+            root.confirm-delete-type-label = "DEBT / LOAN";
+            root.confirm-delete-consequence = "• This debt record and all recorded repayment history will be permanently erased.\n• Total liabilities and net worth calculations will no longer reflect this record.\n• This action is permanent and cannot be undone.";
+        } else if item-type == "transactions_bulk" {
+            root.confirm-delete-title = "Bulk Delete Transactions";
+            root.confirm-delete-type-label = "BULK DELETE";
+            root.confirm-delete-consequence = "• The selected " + detail-info + " will be permanently removed from your history.\n• Account balances will be automatically recalculated and adjusted.\n• Category spending totals, safe-to-spend, and reports will update immediately.\n• This action is permanent and cannot be undone.";
+        } else if item-type == "transaction" {
+            root.confirm-delete-title = "Delete Transaction";
+            root.confirm-delete-type-label = "TRANSACTION";
+            root.confirm-delete-consequence = "• This transaction record will be permanently deleted.\n• The associated account balance will be automatically recalculated.\n• Reports and category totals will update immediately.\n• This action is permanent and cannot be undone.";
+        }
+        root.show-confirm-delete-modal = true;
+    }
 
     in-out property <bool> show-add-tx-modal: false;
     in-out property <bool> modal-tx-is-editing: false;
@@ -182,6 +229,7 @@ export component MainWindow inherits Window {
     in-out property <int> today-hour: 12;
     in-out property <int> today-minute: 0;
     in-out property <string> modal-error: "";
+    in-out property <string> modal-currency-symbol: "$";
 
     in-out property <bool> show-tx-detail-modal: false;
     in-out property <TransactionItem> detail-tx;
@@ -213,6 +261,8 @@ export component MainWindow inherits Window {
     in-out property <string> modal-budget-name: "";
     in-out property <string> modal-budget-amount: "";
     in-out property <string> modal-budget-category-id: "";
+    in-out property <[BudgetCategoryOption]> modal-budget-categories: [];
+    in-out property <int> modal-budget-selected-count: 0;
 
     in-out property <bool> show-add-bill-modal: false;
     in-out property <bool> modal-bill-is-editing: false;
@@ -240,6 +290,7 @@ export component MainWindow inherits Window {
     in-out property <string> modal-repay-amount: "";
 
     // Callbacks to Rust
+    callback toggle-sidebar-collapsed(bool);
     callback toggle-privacy();
     callback set-theme(int);
     callback switch-tab(int);
@@ -248,14 +299,17 @@ export component MainWindow inherits Window {
     callback modal-tx-type-changed(int);
     callback open-edit-tx(string);
     callback open-tx-details(string);
+    callback open-new-budget();
     callback open-edit-account(string);
     callback open-edit-budget(string);
     callback open-edit-bill(string);
     callback open-edit-debt(string);
     callback close-all-modals();
+    callback toggle-modal-budget-category(string);
+    callback select-all-budget-categories(bool);
     callback submit-save-tx(bool, string, int, string, string, string, string, string, string, string, string);
     callback submit-save-account(bool, string, string, int, string, string, string);
-    callback submit-save-budget(bool, string, string, string, string);
+    callback submit-save-budget(bool, string, string, string);
     callback submit-save-bill(bool, string, string, string, string, string, string, int, string);
     callback submit-save-debt(bool, string, string, int, string, string, string);
     callback submit-repay-debt(string, string);
@@ -303,6 +357,10 @@ export component MainWindow inherits Window {
                 toggle-privacy => { root.toggle-privacy(); }
                 set-theme(mode) => { root.set-theme(mode); }
                 gdrive-backup-now => { root.gdrive-backup-now(); }
+                toggle-collapsed(c) => {
+                    root.sidebar-collapsed = c;
+                    root.toggle-sidebar-collapsed(c);
+                }
             }
 
             // MAIN CONTENT VIEW
@@ -361,11 +419,18 @@ export component MainWindow inherits Window {
                     open-add-tx(t) => { root.open-add-tx(t); }
                     open-tx-details(id) => { root.open-tx-details(id); }
                     open-edit-tx(id) => { root.open-edit-tx(id); }
-                    delete-transaction(id) => { root.delete-transaction(id); }
+                    request-delete-tx(id, name, info) => { root.open-delete-dialog("transaction", id, name, info); }
                     toggle-tx-selection(id) => { root.toggle-tx-selection(id); }
                     select-all-txs(all) => { root.select-all-txs(all); }
                     clear-tx-selection => { root.clear-tx-selection(); }
-                    bulk-delete-selected => { root.bulk-delete-selected(); }
+                    request-bulk-delete(count) => {
+                        root.open-delete-dialog(
+                            "transactions_bulk",
+                            "",
+                            "Delete " + count + " Selected Transactions",
+                            count + " transactions"
+                        );
+                    }
                 }
 
                 // TAB 2: ACCOUNTS & VAULTS
@@ -391,7 +456,7 @@ export component MainWindow inherits Window {
                         root.show-acc-detail-modal = true;
                     }
                     open-edit-account(id) => { root.open-edit-account(id); }
-                    delete-account(id) => { root.delete-account(id); }
+                    request-delete-account(id, name, info) => { root.open-delete-dialog("account", id, name, info); }
                 }
 
                 // TAB 3: BUDGETS & PACING
@@ -400,19 +465,13 @@ export component MainWindow inherits Window {
                     safe-days-left: root.safe-days-left;
                     budgets: root.budgets;
 
-                    open-new-budget => {
-                        root.modal-budget-is-editing = false;
-                        root.modal-budget-id = "";
-                        root.modal-budget-name = "";
-                        root.modal-budget-amount = "";
-                        root.show-add-budget-modal = true;
-                    }
+                    open-new-budget => { root.open-new-budget(); }
                     select-budget(b) => {
                         root.detail-budget = b;
                         root.show-budget-detail-modal = true;
                     }
                     open-edit-budget(id) => { root.open-edit-budget(id); }
-                    delete-budget(id) => { root.delete-budget(id); }
+                    request-delete-budget(id, name, info) => { root.open-delete-dialog("budget", id, name, info); }
                 }
 
                 // TAB 4: RECURRING BILLS & SUBSCRIPTIONS
@@ -434,7 +493,7 @@ export component MainWindow inherits Window {
                     }
                     execute-bill-payment(id) => { root.execute-bill-payment(id); }
                     open-edit-bill(id) => { root.open-edit-bill(id); }
-                    delete-bill(id) => { root.delete-bill(id); }
+                    request-delete-bill(id, name, info) => { root.open-delete-dialog("bill", id, name, info); }
                 }
 
                 // TAB 5: DEBTS & LOANS
@@ -463,7 +522,7 @@ export component MainWindow inherits Window {
                         root.show-repay-debt-modal = true;
                     }
                     open-edit-debt(id) => { root.open-edit-debt(id); }
-                    delete-debt(id) => { root.delete-debt(id); }
+                    request-delete-debt(id, person, info) => { root.open-delete-dialog("debt", id, person, info); }
                 }
 
                 // TAB 6: REPORTS & ANALYTICS
@@ -555,6 +614,8 @@ export component MainWindow inherits Window {
             tx-id: root.modal-tx-id;
             tx-type <=> root.modal-tx-type;
             amount: root.modal-amount;
+            base-currency: root.base-currency;
+            currency-symbol <=> root.modal-currency-symbol;
             account-id <=> root.modal-account-id;
             account-name <=> root.modal-account-name;
             to-account-id <=> root.modal-to-account-id;
@@ -599,7 +660,7 @@ export component MainWindow inherits Window {
             detail-tx: root.detail-tx;
             close => { root.close-all-modals(); }
             open-edit-tx(id) => { root.open-edit-tx(id); }
-            delete-transaction(id) => { root.delete-transaction(id); }
+            request-delete-tx(id, name, info) => { root.open-delete-dialog("transaction", id, name, info); }
         }
 
         // MODAL 3: ADD / EDIT ACCOUNT
@@ -622,7 +683,7 @@ export component MainWindow inherits Window {
             detail-acc: root.detail-acc;
             close => { root.close-all-modals(); root.show-acc-detail-modal = false; }
             open-edit-account(id) => { root.open-edit-account(id); }
-            delete-account(id) => { root.delete-account(id); }
+            request-delete-account(id, name, info) => { root.open-delete-dialog("account", id, name, info); }
         }
 
         // MODAL 4: ADD / EDIT BUDGET
@@ -631,11 +692,15 @@ export component MainWindow inherits Window {
             budget-id: root.modal-budget-id;
             budget-name: root.modal-budget-name;
             budget-amount: root.modal-budget-amount;
-            budget-category-id: root.modal-budget-category-id;
+            currency-symbol: CurrencyModel.get-symbol(root.base-currency);
+            categories: root.modal-budget-categories;
+            selected-category-count: root.modal-budget-selected-count;
 
             close => { root.close-all-modals(); }
-            submit(is_ed, id, name, amt, cat) => {
-                root.submit-save-budget(is_ed, id, name, amt, cat);
+            toggle-category(cat_id) => { root.toggle-modal-budget-category(cat_id); }
+            select-all-categories(all) => { root.select-all-budget-categories(all); }
+            submit(is_ed, id, name, amt) => {
+                root.submit-save-budget(is_ed, id, name, amt);
             }
         }
 
@@ -644,7 +709,7 @@ export component MainWindow inherits Window {
             detail-budget: root.detail-budget;
             close => { root.close-all-modals(); root.show-budget-detail-modal = false; }
             open-edit-budget(id) => { root.open-edit-budget(id); }
-            delete-budget(id) => { root.delete-budget(id); }
+            request-delete-budget(id, name, info) => { root.open-delete-dialog("budget", id, name, info); }
         }
 
         // MODAL 5: ADD / EDIT BILL
@@ -657,6 +722,7 @@ export component MainWindow inherits Window {
             bill-category-id: root.modal-bill-category-id;
             bill-payee: root.modal-bill-payee;
             bill-next-date: root.modal-bill-next-date;
+            currency-symbol: CurrencyModel.get-symbol(root.base-currency);
 
             close => { root.close-all-modals(); }
             submit(is_ed, id, name, amt, acc, cat, payee, freq, date) => {
@@ -668,7 +734,7 @@ export component MainWindow inherits Window {
         if root.show-bill-detail-modal: BillDetailModal {
             detail-bill: root.detail-bill;
             close => { root.close-all-modals(); root.show-bill-detail-modal = false; }
-            delete-bill(id) => { root.delete-bill(id); }
+            request-delete-bill(id, name, info) => { root.open-delete-dialog("bill", id, name, info); }
             open-edit-bill(id) => { root.open-edit-bill(id); }
             execute-bill-payment(id) => { root.execute-bill-payment(id); }
         }
@@ -681,6 +747,7 @@ export component MainWindow inherits Window {
             debt-type <=> root.modal-debt-type;
             amount: root.modal-debt-amount;
             notes: root.modal-debt-notes;
+            currency-symbol: CurrencyModel.get-symbol(root.base-currency);
 
             close => { root.close-all-modals(); }
             submit(is_ed, id, person, type, amt, date, notes) => {
@@ -692,6 +759,7 @@ export component MainWindow inherits Window {
         if root.show-repay-debt-modal: RepayDebtModal {
             debt-id: root.modal-repay-debt-id;
             person: root.modal-repay-person;
+            currency-symbol: CurrencyModel.get-symbol(root.base-currency);
 
             close => { root.close-all-modals(); }
             submit(id, amt) => { root.submit-repay-debt(id, amt); }
@@ -701,7 +769,7 @@ export component MainWindow inherits Window {
         if root.show-debt-detail-modal: DebtDetailModal {
             detail-debt: root.detail-debt;
             close => { root.close-all-modals(); root.show-debt-detail-modal = false; }
-            delete-debt(id) => { root.delete-debt(id); }
+            request-delete-debt(id, person, info) => { root.open-delete-dialog("debt", id, person, info); }
             open-edit-debt(id) => { root.open-edit-debt(id); }
             open-repay-debt(id, person) => {
                 root.modal-repay-debt-id = id;
@@ -761,6 +829,38 @@ export component MainWindow inherits Window {
         if root.is-locked: PinLockOverlay {
             pin-error: root.pin-error;
             unlock-pin(pin) => { root.unlock-pin(pin); }
+        }
+
+        // POPUP CONFIRMATION WINDOW BEFORE DELETING ACCOUNTS, BUDGETS, DEBTS & BILLS
+        if root.show-confirm-delete-modal: ConfirmDeleteModal {
+            title: root.confirm-delete-title;
+            item-name: root.confirm-delete-item-name;
+            item-info: root.confirm-delete-item-info;
+            item-type-label: root.confirm-delete-type-label;
+            consequence-text: root.confirm-delete-consequence;
+
+            close => { root.show-confirm-delete-modal = false; }
+            confirm => {
+                if root.confirm-delete-type == "account" {
+                    root.delete-account(root.confirm-delete-id);
+                    root.show-acc-detail-modal = false;
+                } else if root.confirm-delete-type == "budget" {
+                    root.delete-budget(root.confirm-delete-id);
+                    root.show-budget-detail-modal = false;
+                } else if root.confirm-delete-type == "bill" {
+                    root.delete-bill(root.confirm-delete-id);
+                    root.show-bill-detail-modal = false;
+                } else if root.confirm-delete-type == "debt" {
+                    root.delete-debt(root.confirm-delete-id);
+                    root.show-debt-detail-modal = false;
+                } else if root.confirm-delete-type == "transactions_bulk" {
+                    root.bulk-delete-selected();
+                } else if root.confirm-delete-type == "transaction" {
+                    root.delete-transaction(root.confirm-delete-id);
+                    root.show-tx-detail-modal = false;
+                }
+                root.show-confirm-delete-modal = false;
+            }
         }
     }
 }

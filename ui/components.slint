@@ -1060,17 +1060,32 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
     in property <color> accent-color: Theme.primary;
 
-    property <int> current-hour: root.selected-hour;
-    property <int> current-minute: root.selected-minute;
+    pure function to-12h(h24: int) -> int {
+        if h24 == 0 { return 12; }
+        if h24 > 12 { return h24 - 12; }
+        return h24;
+    }
 
-    callback accepted(int, int);
-
-    close-policy: close-on-click-outside;
-    width: 260px;
+    pure function to-24h(h12: int, pm: bool) -> int {
+        if pm {
+            return h12 == 12 ? 12 : h12 + 12;
+        } else {
+            return h12 == 12 ? 0 : h12;
+        }
+    }
 
     pure function pad(n: int) -> string {
         n < 10 ? ("0" + n) : ("" + n)
     }
+
+    property <int> current-hour-12: to-12h(root.selected-hour);
+    property <int> current-minute: root.selected-minute;
+    property <bool> is-pm: root.selected-hour >= 12;
+
+    callback accepted(int, int);
+
+    close-policy: close-on-click-outside;
+    width: 270px;
 
     Rectangle {
         background: Theme.surface;
@@ -1086,13 +1101,32 @@ export component ModernTimePickerPopup inherits PopupWindow {
             // Header
             HorizontalLayout {
                 alignment: space-between;
-                VerticalLayout {
+                HorizontalLayout {
+                    spacing: 8px;
                     alignment: center;
                     Text {
                         text: "Select Time";
                         font-size: 13px;
                         font-weight: 700;
                         color: Theme.text-primary;
+                        vertical-alignment: center;
+                    }
+                    Rectangle {
+                        height: 20px;
+                        border-radius: 4px;
+                        background: root.accent-color.transparentize(85%);
+                        HorizontalLayout {
+                            padding-left: 6px;
+                            padding-right: 6px;
+                            alignment: center;
+                            Text {
+                                text: root.pad(root.current-hour-12) + ":" + root.pad(root.current-minute) + (root.is-pm ? " PM" : " AM");
+                                font-size: 11px;
+                                font-weight: 700;
+                                color: root.accent-color;
+                                vertical-alignment: center;
+                            }
+                        }
                     }
                 }
 
@@ -1107,8 +1141,9 @@ export component ModernTimePickerPopup inherits PopupWindow {
                     now-touch := TouchArea {
                         mouse-cursor: MouseCursor.pointer;
                         clicked => {
-                            root.current-hour = root.today-hour;
+                            root.current-hour-12 = root.to-12h(root.today-hour);
                             root.current-minute = root.today-minute;
+                            root.is-pm = root.today-hour >= 12;
                             root.accepted(root.today-hour, root.today-minute);
                             root.close();
                         }
@@ -1134,14 +1169,14 @@ export component ModernTimePickerPopup inherits PopupWindow {
                 alignment: center;
                 spacing: 8px;
 
-                // Hour Column
+                // Hour Column (1..12)
                 VerticalLayout {
                     spacing: 4px;
                     alignment: center;
 
                     // Hour Up
                     Rectangle {
-                        width: 56px;
+                        width: 52px;
                         height: 24px;
                         border-radius: 4px;
                         background: h-up-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
@@ -1151,7 +1186,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
                         h-up-touch := TouchArea {
                             mouse-cursor: MouseCursor.pointer;
                             clicked => {
-                                root.current-hour = root.current-hour >= 23 ? 0 : root.current-hour + 1;
+                                root.current-hour-12 = root.current-hour-12 >= 12 ? 1 : root.current-hour-12 + 1;
                             }
                         }
 
@@ -1167,7 +1202,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Hour Value
                     Rectangle {
-                        width: 56px;
+                        width: 52px;
                         height: 42px;
                         border-radius: 6px;
                         background: Theme.input-background;
@@ -1175,7 +1210,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
                         border-color: Theme.input-border;
 
                         Text {
-                            text: root.pad(root.current-hour);
+                            text: root.pad(root.current-hour-12);
                             font-size: 22px;
                             font-weight: 700;
                             color: Theme.text-primary;
@@ -1186,7 +1221,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Hour Down
                     Rectangle {
-                        width: 56px;
+                        width: 52px;
                         height: 24px;
                         border-radius: 4px;
                         background: h-dn-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
@@ -1196,7 +1231,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
                         h-dn-touch := TouchArea {
                             mouse-cursor: MouseCursor.pointer;
                             clicked => {
-                                root.current-hour = root.current-hour <= 0 ? 23 : root.current-hour - 1;
+                                root.current-hour-12 = root.current-hour-12 <= 1 ? 12 : root.current-hour-12 - 1;
                             }
                         }
 
@@ -1231,7 +1266,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Minute Up
                     Rectangle {
-                        width: 56px;
+                        width: 52px;
                         height: 24px;
                         border-radius: 4px;
                         background: m-up-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
@@ -1257,7 +1292,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Minute Value
                     Rectangle {
-                        width: 56px;
+                        width: 52px;
                         height: 42px;
                         border-radius: 6px;
                         background: Theme.input-background;
@@ -1276,7 +1311,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
 
                     // Minute Down
                     Rectangle {
-                        width: 56px;
+                        width: 52px;
                         height: 24px;
                         border-radius: 4px;
                         background: m-dn-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
@@ -1295,6 +1330,64 @@ export component ModernTimePickerPopup inherits PopupWindow {
                             font-size: 11px;
                             font-weight: 700;
                             color: Theme.text-primary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // AM / PM Column
+                VerticalLayout {
+                    spacing: 6px;
+                    alignment: center;
+
+                    // AM Toggle Button
+                    Rectangle {
+                        width: 48px;
+                        height: 46px;
+                        border-radius: 6px;
+                        background: !root.is-pm ? root.accent-color : (am-touch.has-hover ? Theme.surface-hover : Theme.input-background);
+                        border-width: 1px;
+                        border-color: !root.is-pm ? root.accent-color : Theme.input-border;
+
+                        am-touch := TouchArea {
+                            mouse-cursor: MouseCursor.pointer;
+                            clicked => {
+                                root.is-pm = false;
+                            }
+                        }
+
+                        Text {
+                            text: "AM";
+                            font-size: 13px;
+                            font-weight: !root.is-pm ? 800 : 600;
+                            color: !root.is-pm ? #FFFFFF : Theme.text-secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // PM Toggle Button
+                    Rectangle {
+                        width: 48px;
+                        height: 46px;
+                        border-radius: 6px;
+                        background: root.is-pm ? root.accent-color : (pm-touch.has-hover ? Theme.surface-hover : Theme.input-background);
+                        border-width: 1px;
+                        border-color: root.is-pm ? root.accent-color : Theme.input-border;
+
+                        pm-touch := TouchArea {
+                            mouse-cursor: MouseCursor.pointer;
+                            clicked => {
+                                root.is-pm = true;
+                            }
+                        }
+
+                        Text {
+                            text: "PM";
+                            font-size: 13px;
+                            font-weight: root.is-pm ? 800 : 600;
+                            color: root.is-pm ? #FFFFFF : Theme.text-secondary;
                             horizontal-alignment: center;
                             vertical-alignment: center;
                         }
@@ -1372,7 +1465,7 @@ export component ModernTimePickerPopup inherits PopupWindow {
                     set-touch := TouchArea {
                         mouse-cursor: MouseCursor.pointer;
                         clicked => {
-                            root.accepted(root.current-hour, root.current-minute);
+                            root.accepted(root.to-24h(root.current-hour-12, root.is-pm), root.current-minute);
                             root.close();
                         }
                     }

@@ -6,8 +6,8 @@ use urpwallet::db::models::{AccountType, DebtType, TransactionFilter, Transactio
 use urpwallet::db::Database;
 use urpwallet::logic::{
     calculate_cash_flow, calculate_category_breakdown, calculate_monthly_trends,
-    calculate_net_worth, calculate_safe_to_spend, calculate_weekly_flow, format_currency,
-    format_date,
+    calculate_net_worth, calculate_safe_to_spend, calculate_weekly_flow, convert_currency,
+    format_currency, format_date,
 };
 
 use crate::{
@@ -26,7 +26,7 @@ pub fn refresh_accounts(ui: &MainWindow, db: &Database) -> Vec<AccountItem> {
         .unwrap_or_else(|| "BDT".to_string());
 
     let accounts = db.list_accounts(false).unwrap_or_default();
-    let net_worth = calculate_net_worth(&accounts);
+    let net_worth = calculate_net_worth(&accounts, &base_currency);
 
     let mut total_assets = 0.0;
     let mut total_liabilities = 0.0;
@@ -36,10 +36,11 @@ pub fn refresh_accounts(ui: &MainWindow, db: &Database) -> Vec<AccountItem> {
         .map(|acc| {
             let is_liability =
                 acc.account_type == AccountType::CreditCard || acc.account_type == AccountType::Loan;
+            let converted_balance = convert_currency(acc.balance, &acc.currency, &base_currency);
             if is_liability {
-                total_liabilities += acc.balance.abs();
+                total_liabilities += converted_balance.abs();
             } else {
-                total_assets += acc.balance.max(0.0);
+                total_assets += converted_balance.max(0.0);
             }
 
             AccountItem {
@@ -299,7 +300,7 @@ pub fn refresh_transactions(
         ..Default::default()
     };
     let all_txs = db.list_transactions(&default_filter).unwrap_or_default();
-    let cash_flow = calculate_cash_flow(&all_txs, &current_month);
+    let cash_flow = calculate_cash_flow(&all_txs, &current_month, &base_currency);
 
     ui.set_monthly_income(format_currency(cash_flow.income, &base_currency, privacy).into());
     ui.set_monthly_expense(format_currency(cash_flow.expense, &base_currency, privacy).into());
@@ -369,7 +370,7 @@ pub fn refresh_ui(ui: &MainWindow, db: &Database) {
     let (_, all_txs) = refresh_transactions(ui, db);
 
     // 3. Budgets & Dynamic Safe-to-Spend
-    let budget_progress = db.list_budgets_with_progress().unwrap_or_default();
+    let budget_progress = db.list_budgets_with_progress(Some(&base_currency)).unwrap_or_default();
     let safe_result = calculate_safe_to_spend(&budget_progress, current_date);
 
     ui.set_safe_to_spend(format_currency(safe_result.daily_safe_to_spend, &base_currency, privacy).into());
@@ -422,8 +423,8 @@ pub fn refresh_ui(ui: &MainWindow, db: &Database) {
     refresh_debts(ui, db);
 
     // 6. Reports View Metrics: Category Breakdown, Weekly Flow, Monthly Trends
-    let cash_flow = calculate_cash_flow(&all_txs, &current_month);
-    let breakdown = calculate_category_breakdown(&all_txs, &current_month);
+    let cash_flow = calculate_cash_flow(&all_txs, &current_month, &base_currency);
+    let breakdown = calculate_category_breakdown(&all_txs, &current_month, &base_currency);
     let top_category_name = breakdown.first().map(|c| c.category_name.clone()).unwrap_or_else(|| "None".to_string());
     let top_category_amount = breakdown.first().map(|c| format_currency(c.total, &base_currency, privacy)).unwrap_or_else(|| format_currency(0.0, &base_currency, privacy));
 
@@ -444,7 +445,7 @@ pub fn refresh_ui(ui: &MainWindow, db: &Database) {
     let current_day = now_utc.day();
 
     // Weekly Flow
-    let weekly = calculate_weekly_flow(&all_txs, current_year, current_month_num);
+    let weekly = calculate_weekly_flow(&all_txs, current_year, current_month_num, &base_currency);
     let weekly_items: Vec<WeeklyFlowItem> = weekly
         .into_iter()
         .map(|w| {
@@ -465,7 +466,7 @@ pub fn refresh_ui(ui: &MainWindow, db: &Database) {
     ui.set_weekly_flow(ModelRc::from(Rc::new(VecModel::from(weekly_items))));
 
     // Monthly Trends (Past 4 months)
-    let monthly_trends = calculate_monthly_trends(&all_txs, current_year, current_month_num, 4);
+    let monthly_trends = calculate_monthly_trends(&all_txs, current_year, current_month_num, 4, &base_currency);
     let monthly_trend_items: Vec<MonthlyTrendItem> = monthly_trends
         .into_iter()
         .map(|m| {

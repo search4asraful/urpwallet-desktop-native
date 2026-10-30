@@ -19,13 +19,19 @@ pub fn map_tx_item(item: &TransactionWithDetails, privacy: bool, date_format: &s
         _ => cat_name.into(),
     };
 
+    let tx_curr = match item.account_currency.as_deref() {
+        Some(c) if !c.is_empty() => c,
+        _ if !tx.currency.is_empty() => &tx.currency,
+        _ => "BDT",
+    };
+
     TransactionItem {
         id: tx.id.as_str().into(),
         date: format_date(tx.date.as_str(), date_format).into(),
         time: tx.time.as_deref().unwrap_or("").into(),
         title,
         subtitle: acc_name.into(),
-        amount: format!("{}{}", prefix, format_currency(tx.amount, &tx.currency, privacy)).into(),
+        amount: format!("{}{}", prefix, format_currency(tx.amount, tx_curr, privacy)).into(),
         raw_amount: tx.amount.to_string().into(),
         is_income,
         is_transfer,

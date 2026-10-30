@@ -331,7 +331,7 @@ export component ReportsView inherits ScrollView {
                 }
 
                 // Empty state when no transactions in current month
-                if root.monthly-income == "$0.00" && root.monthly-expense == "$0.00": Rectangle {
+                if root.weekly-flow.length == 0: Rectangle {
                     height: 72px;
                     background: Theme.surface-subtle;
                     border-color: Theme.border;
@@ -361,7 +361,7 @@ export component ReportsView inherits ScrollView {
                 }
 
                 // Weekly Flow Chart Columns
-                if root.monthly-income != "$0.00" || root.monthly-expense != "$0.00": HorizontalLayout {
+                if root.weekly-flow.length > 0: HorizontalLayout {
                     spacing: 8px;
 
                     for week in root.weekly-flow: Rectangle {

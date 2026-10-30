@@ -1,0 +1,166 @@
+import { Theme } from "../theme.slint";
+import { AppButton, CloseButton, Badge } from "../components.slint";
+
+export component ConfirmDeleteModal inherits Rectangle {
+    width: 100%;
+    height: 100%;
+    background: #000000.transparentize(30%);
+
+    in property <string> title: "Confirm Deletion";
+    in property <string> item-name: "";
+    in property <string> item-info: "";
+    in property <string> item-type-label: "";
+    in property <string> consequence-text: "";
+
+    callback close();
+    callback confirm();
+
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.close(); }
+    }
+
+    Rectangle {
+        width: 440px;
+        height: round(min(self.preferred-height, parent.height - 40px) / 1px) * 1px;
+        x: round((parent.width - self.width) / 2 / 1px) * 1px;
+        y: round((parent.height - self.height) / 2 / 1px) * 1px;
+        background: Theme.surface;
+        border-color: Theme.border-strong;
+        border-width: 1px;
+        border-radius: 12px;
+
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        VerticalLayout {
+            padding: 20px;
+            spacing: 14px;
+
+            // Header: Warning Icon + Title + Close Button
+            HorizontalLayout {
+                alignment: space-between;
+                HorizontalLayout {
+                    spacing: 10px;
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 16px;
+                        background: Theme.danger.transparentize(85%);
+                        Image {
+                            width: 18px;
+                            height: 18px;
+                            source: @image-url("../../assets/icons/alert-triangle.svg");
+                            colorize: Theme.danger;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: root.title;
+                            color: Theme.text-primary;
+                            font-size: 15px;
+                            font-weight: 800;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+                CloseButton {
+                    clicked => { root.close(); }
+                }
+            }
+
+            // Target Item Summary Box
+            Rectangle {
+                background: Theme.surface-subtle;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: 8px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 4px;
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text {
+                            text: root.item-name;
+                            color: Theme.text-primary;
+                            font-size: 14px;
+                            font-weight: 700;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+                        if root.item-type-label != "": Badge {
+                            text: root.item-type-label;
+                            badge-color: Theme.danger;
+                        }
+                    }
+                    if root.item-info != "": Text {
+                        text: root.item-info;
+                        color: Theme.text-secondary;
+                        font-size: 12px;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Warning: What will happen if deleted
+            Rectangle {
+                background: Theme.danger.transparentize(92%);
+                border-color: Theme.danger.transparentize(70%);
+                border-width: 1px;
+                border-radius: 8px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 6px;
+                    HorizontalLayout {
+                        spacing: 6px;
+                        Image {
+                            width: 14px;
+                            height: 14px;
+                            source: @image-url("../../assets/icons/alert-triangle.svg");
+                            colorize: Theme.danger;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: "WHAT WILL HAPPEN IF DELETED:";
+                            color: Theme.danger;
+                            font-size: 11px;
+                            font-weight: 800;
+                            letter-spacing: 0.5px;
+                            vertical-alignment: center;
+                        }
+                    }
+                    Text {
+                        text: root.consequence-text;
+                        color: Theme.text-primary;
+                        font-size: 12px;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // Footer Actions: Cancel and Confirm Delete
+            HorizontalLayout {
+                spacing: 10px;
+                alignment: end;
+                AppButton {
+                    text: "Cancel";
+                    btn-color: Theme.surface-hover;
+                    text-color: Theme.text-primary;
+                    clicked => { root.close(); }
+                }
+                AppButton {
+                    icon: @image-url("../../assets/icons/trash.svg");
+                    text: "Yes, Delete";
+                    btn-color: Theme.danger;
+                    clicked => { root.confirm(); }
+                }
+            }
+        }
+    }
+}

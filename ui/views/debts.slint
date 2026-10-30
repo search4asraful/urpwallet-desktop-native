@@ -14,7 +14,7 @@ export component DebtsView inherits VerticalLayout {
     callback select-debt(DebtItem);
     callback open-repay-debt(string, string);
     callback open-edit-debt(string);
-    callback delete-debt(string);
+    callback request-delete-debt(string, string, string);
     callback filter-debts(int);
 
     HorizontalLayout {
@@ -163,7 +163,13 @@ export component DebtsView inherits VerticalLayout {
                                 btn-color: Theme.danger;
                                 icon-color: Theme.danger;
                                 tooltip: "Delete";
-                                clicked => { root.delete-debt(d.id); }
+                                clicked => {
+                                    root.request-delete-debt(
+                                        d.id,
+                                        d.person,
+                                        "Total: " + d.amount + " • Remaining: " + d.remaining + (d.is_loan ? " (You Borrowed)" : " (You Lent)")
+                                    );
+                                }
                             }
                         }
                     }

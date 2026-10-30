@@ -15,6 +15,7 @@ export component AddBillModal inherits Rectangle {
     in property <string> bill-category-id: "";
     in property <string> bill-payee: "";
     in property <string> bill-next-date: "";
+    in property <string> currency-symbol: "$";
 
     in-out property <int> selected-freq: 2; // 0: Daily, 1: Weekly, 2: Monthly, 3: Yearly
 
@@ -69,6 +70,7 @@ export component AddBillModal inherits Rectangle {
             Text { text: "Recurring Amount:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-bill-amt := AppInput {
                 placeholder-text: "19.99";
+                prefix-text: root.currency-symbol;
                 text: root.bill-amount;
             }
 
@@ -156,7 +158,7 @@ export component BillDetailModal inherits Rectangle {
     in property <BillItem> detail-bill;
 
     callback close();
-    callback delete-bill(string);
+    callback request-delete-bill(string, string, string);
     callback open-edit-bill(string);
     callback execute-bill-payment(string);
 
@@ -275,8 +277,11 @@ export component BillDetailModal inherits Rectangle {
                     btn-color: Theme.danger;
                     outline: true;
                     clicked => {
-                        root.delete-bill(root.detail-bill.id);
-                        root.close();
+                        root.request-delete-bill(
+                            root.detail-bill.id,
+                            root.detail-bill.name,
+                            "Amount: " + root.detail-bill.amount + " (" + root.detail-bill.frequency + ") • Next: " + root.detail-bill.due_date
+                        );
                     }
                 }
 

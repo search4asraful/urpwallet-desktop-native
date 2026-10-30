@@ -11,17 +11,15 @@ export component TransactionsView inherits VerticalLayout {
     in property <[TransactionItem]> all-transactions: [];
     in property <int> selected-tx-count: 0;
 
-    property <bool> confirm-bulk-delete: false;
-
     callback search-transactions(string, int);
     callback open-add-tx(int);
     callback open-tx-details(string);
     callback open-edit-tx(string);
-    callback delete-transaction(string);
+    callback request-delete-tx(string, string, string);
     callback toggle-tx-selection(string);
     callback select-all-txs(bool);
     callback clear-tx-selection();
-    callback bulk-delete-selected();
+    callback request-bulk-delete(int);
 
     // Search & Filters Bar
     HorizontalLayout {
@@ -97,7 +95,6 @@ export component TransactionsView inherits VerticalLayout {
                             height: 100%;
                             mouse-cursor: MouseCursor.pointer;
                             clicked => {
-                                root.confirm-bulk-delete = false;
                                 if root.selected-tx-count > 0 {
                                     root.clear-tx-selection();
                                 } else {
@@ -155,7 +152,6 @@ export component TransactionsView inherits VerticalLayout {
                         width: 95px;
                         mouse-cursor: MouseCursor.pointer;
                         clicked => {
-                            root.confirm-bulk-delete = false;
                             root.clear-tx-selection();
                         }
                         Text {
@@ -167,7 +163,7 @@ export component TransactionsView inherits VerticalLayout {
                         }
                     }
 
-                    if root.selected-tx-count > 0 && !root.confirm-bulk-delete && root.selected-tx-count < root.all-transactions.length: AppButton {
+                    if root.selected-tx-count > 0 && root.selected-tx-count < root.all-transactions.length: AppButton {
                         text: "Select All (" + root.all-transactions.length + ")";
                         small: true;
                         outline: true;
@@ -175,44 +171,13 @@ export component TransactionsView inherits VerticalLayout {
                         clicked => { root.select-all-txs(true); }
                     }
 
-                    if root.selected-tx-count > 0 && !root.confirm-bulk-delete: AppButton {
+                    if root.selected-tx-count > 0: AppButton {
+                        icon: @image-url("../../assets/icons/trash.svg");
                         text: "Delete Selected (" + root.selected-tx-count + ")";
                         small: true;
                         btn-color: Theme.danger;
-                        clicked => { root.confirm-bulk-delete = true; }
-                    }
-
-                    if root.selected-tx-count > 0 && root.confirm-bulk-delete: HorizontalLayout {
-                        spacing: 8px;
-                        alignment: center;
-
-                        Text {
-                            text: "Permanently delete " + root.selected-tx-count + " transactions?";
-                            font-size: 12px;
-                            font-weight: 700;
-                            color: Theme.danger;
-                            vertical-alignment: center;
-                        }
-
-                        AppButton {
-                            text: "Confirm Delete";
-                            small: true;
-                            btn-color: Theme.danger;
-                            clicked => {
-                                root.confirm-bulk-delete = false;
-                                root.bulk-delete-selected();
-                            }
-                        }
-
-                        AppButton {
-                            text: "Cancel";
-                            small: true;
-                            outline: true;
-                            btn-color: Theme.border;
-                            text-color: Theme.text-primary;
-                            clicked => {
-                                root.confirm-bulk-delete = false;
-                            }
+                        clicked => {
+                            root.request-bulk-delete(root.selected-tx-count);
                         }
                     }
                 }
@@ -240,7 +205,7 @@ export component TransactionsView inherits VerticalLayout {
             }
 
             for tx in root.all-transactions: Rectangle {
-                height: 56px;
+                height: 70px;
                 background: tx.selected ? Theme.primary-subtle : Theme.surface;
                 border-color: tx.selected ? Theme.primary : Theme.border;
                 border-width: 1px;
@@ -270,7 +235,6 @@ export component TransactionsView inherits VerticalLayout {
                                     height: 100%;
                                     mouse-cursor: MouseCursor.pointer;
                                     clicked => {
-                                        root.confirm-bulk-delete = false;
                                         root.toggle-tx-selection(tx.id);
                                     }
                                 }
@@ -289,12 +253,6 @@ export component TransactionsView inherits VerticalLayout {
                             }
                         }
 
-                        Text {
-                            text: tx.date;
-                            color: Theme.text-muted;
-                            font-size: 12px;
-                            vertical-alignment: center;
-                        }
                         VerticalLayout {
                             alignment: center;
                             spacing: 2px;
@@ -315,8 +273,18 @@ export component TransactionsView inherits VerticalLayout {
                                     text: tx.category_name;
                                     badge-color: Theme.accent;
                                 }
+                            }
+                            HorizontalLayout {
+                                alignment: start;
+                                spacing: 6px;
+                                Text {
+                                    text: tx.date;
+                                    color: Theme.text-muted;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                }
                                 if tx.note != "": Text {
-                                    text: tx.note;
+                                    text: "(" + tx.note + ")";
                                     color: Theme.text-muted;
                                     font-size: 11px;
                                     vertical-alignment: center;
@@ -359,7 +327,13 @@ export component TransactionsView inherits VerticalLayout {
                                 btn-color: Theme.danger;
                                 icon-color: Theme.danger;
                                 tooltip: "Delete";
-                                clicked => { root.delete-transaction(tx.id); }
+                                clicked => {
+                                    root.request-delete-tx(
+                                        tx.id,
+                                        tx.title != "" ? tx.title : "Transaction",
+                                        tx.amount + " • " + tx.date + (tx.category_name != "" ? (" • " + tx.category_name) : "")
+                                    );
+                                }
                             }
                         }
                     }

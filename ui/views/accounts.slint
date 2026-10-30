@@ -16,7 +16,7 @@ export component AccountsView inherits VerticalLayout {
     callback open-new-account();
     callback select-account(AccountItem);
     callback open-edit-account(string);
-    callback delete-account(string);
+    callback request-delete-account(string, string, string);
     callback filter-accounts(int);
 
     // Summary Strip
@@ -155,7 +155,6 @@ export component AccountsView inherits VerticalLayout {
                         HorizontalLayout {
                             spacing: 8px;
                             Text {
-                                width: 110px;
                                 horizontal-alignment: right;
                                 vertical-alignment: center;
                                 text: acc.balance;
@@ -187,7 +186,13 @@ export component AccountsView inherits VerticalLayout {
                                 btn-color: Theme.danger;
                                 icon-color: Theme.danger;
                                 tooltip: "Delete";
-                                clicked => { root.delete-account(acc.id); }
+                                clicked => {
+                                    root.request-delete-account(
+                                        acc.id,
+                                        acc.name,
+                                        "Balance: " + acc.balance + " (" + acc.currency + ")"
+                                    );
+                                }
                             }
                         }
                     }

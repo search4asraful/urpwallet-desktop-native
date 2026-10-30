@@ -464,7 +464,7 @@ export component DashboardView inherits ScrollView {
                 }
 
                 for tx in root.recent-transactions: Rectangle {
-                    height: 52px;
+                    height: 70px;
                     background: tx-dash-touch.has-hover ? Theme.surface-hover : Theme.surface-subtle;
                     border-color: tx-dash-touch.has-hover ? Theme.primary : Theme.border;
                     border-width: 1px;
@@ -479,12 +479,6 @@ export component DashboardView inherits ScrollView {
                         HorizontalLayout {
                             alignment: center;
                             spacing: 12px;
-                            Text {
-                                text: tx.date;
-                                color: Theme.text-muted;
-                                font-size: 12px;
-                                vertical-alignment: center;
-                            }
                             VerticalLayout {
                                 alignment: center;  
                                 spacing: 2px;
@@ -505,6 +499,12 @@ export component DashboardView inherits ScrollView {
                                         text: tx.category_name;
                                         badge-color: Theme.accent;
                                     }
+                                }
+                                Text {
+                                    text: tx.date;
+                                    color: Theme.text-muted;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
                                 }
                             }
                         }

@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS budgets (
     amount REAL NOT NULL,
     period TEXT NOT NULL DEFAULT 'monthly',
     category_id TEXT,
+    category_ids TEXT,
     start_date TEXT NOT NULL,
     end_date TEXT NOT NULL,
     created_at TEXT NOT NULL,
@@ -162,6 +163,26 @@ pub fn run_migrations(conn: &mut Connection) -> DbResult<()> {
         tx.execute(
             "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?1, ?2, ?3)",
             params![2, "drop_legacy_multiuser_and_migrate_bills", Utc::now().to_rfc3339()],
+        )?;
+        tx.commit()?;
+    }
+
+    // Migration 3: Add category_ids column to budgets table for multiple category tracking
+    if !applied.contains(&3) {
+        let tx = conn.transaction()?;
+        let has_category_ids: bool = tx
+            .prepare("PRAGMA table_info(budgets)")?
+            .query_map([], |row| row.get::<_, String>(1))?
+            .filter_map(|r| r.ok())
+            .any(|col| col == "category_ids");
+
+        if !has_category_ids {
+            tx.execute_batch("ALTER TABLE budgets ADD COLUMN category_ids TEXT;")?;
+        }
+
+        tx.execute(
+            "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?1, ?2, ?3)",
+            params![3, "add_budget_category_ids", Utc::now().to_rfc3339()],
         )?;
         tx.commit()?;
     }

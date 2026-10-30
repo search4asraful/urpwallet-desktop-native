@@ -11,7 +11,7 @@ export component BudgetsView inherits ScrollView {
     callback open-new-budget();
     callback select-budget(BudgetItem);
     callback open-edit-budget(string);
-    callback delete-budget(string);
+    callback request-delete-budget(string, string, string);
 
     VerticalLayout {
         spacing: 10px;
@@ -85,7 +85,7 @@ export component BudgetsView inherits ScrollView {
 
         // Budget Items Grid
         for b in root.budgets: Rectangle {
-            height: 76px;
+            height: 100px;
             background: Theme.surface;
             border-color: Theme.border;
             border-width: 1px;
@@ -111,16 +111,14 @@ export component BudgetsView inherits ScrollView {
                                 font-weight: 700;
                                 vertical-alignment: center;
                             }
-                            Badge {
-                                text: b.is_over ? "OVER BUDGET" : "ON TRACK";
-                                badge-color: b.is_over ? Theme.danger : Theme.primary;
+                            VerticalLayout {
+                                alignment: center;
+                                width: 95px;
+                                Badge {
+                                    text: b.is_over ? "OVER BUDGET" : "ON TRACK";
+                                    badge-color: b.is_over ? Theme.danger : Theme.primary;
+                                }
                             }
-                        }
-                        Text {
-                            text: "Spent: " + b.spent + " of " + b.total + " • Safe pacing: " + b.daily_safe + "/day";
-                            color: Theme.text-secondary;
-                            font-size: 12px;
-                            vertical-alignment: center;
                         }
                     }
                     VerticalLayout {
@@ -160,9 +158,26 @@ export component BudgetsView inherits ScrollView {
                                 btn-color: Theme.danger;
                                 icon-color: Theme.danger;
                                 tooltip: "Delete";
-                                clicked => { root.delete-budget(b.id); }
+                                clicked => {
+                                    root.request-delete-budget(
+                                        b.id,
+                                        b.name,
+                                        "Monthly Limit: " + b.total
+                                    );
+                                }
                             }
                         }
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        text: "Spent: " + b.spent + " of " + b.total + " • Safe pacing: " + b.daily_safe + "/day \nCategories: " + (b.category_name != "" ? b.category_name : "All");
+                        color: Theme.text-secondary;
+                        font-size: 12px;
+                        overflow: elide;
+                        vertical-alignment: center;
                     }
                 }
 

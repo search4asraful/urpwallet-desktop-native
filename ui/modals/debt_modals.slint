@@ -10,6 +10,7 @@ export component AddDebtModal inherits Rectangle {
     in property <bool> is-editing: false;
     in property <string> debt-id: "";
     in property <string> person: "";
+    in property <string> currency-symbol: "$";
     in-out property <int> debt-type: 0;
     in property <string> amount: "";
     in property <string> notes: "";
@@ -84,6 +85,7 @@ export component AddDebtModal inherits Rectangle {
             Text { text: "Total Principal Amount:"; font-size: 12px; font-weight: 600; color: Theme.text-muted; }
             input-debt-amt := AppInput {
                 placeholder-text: "150.00";
+                prefix-text: root.currency-symbol;
                 text: root.amount;
             }
 
@@ -131,6 +133,7 @@ export component RepayDebtModal inherits Rectangle {
 
     in property <string> debt-id: "";
     in property <string> person: "";
+    in property <string> currency-symbol: "$";
 
     callback close();
     callback submit(string, string);
@@ -183,6 +186,7 @@ export component RepayDebtModal inherits Rectangle {
 
             input-repay-amt := AppInput {
                 placeholder-text: "50.00";
+                prefix-text: root.currency-symbol;
             }
 
             HorizontalLayout {
@@ -216,7 +220,7 @@ export component DebtDetailModal inherits Rectangle {
     in property <DebtItem> detail-debt;
 
     callback close();
-    callback delete-debt(string);
+    callback request-delete-debt(string, string, string);
     callback open-edit-debt(string);
     callback open-repay-debt(string, string);
 
@@ -341,8 +345,11 @@ export component DebtDetailModal inherits Rectangle {
                     btn-color: Theme.danger;
                     outline: true;
                     clicked => {
-                        root.delete-debt(root.detail-debt.id);
-                        root.close();
+                        root.request-delete-debt(
+                            root.detail-debt.id,
+                            root.detail-debt.person,
+                            "Total: " + root.detail-debt.amount + " • Remaining: " + root.detail-debt.remaining + (root.detail-debt.is_loan ? " (You Borrowed)" : " (You Lent)")
+                        );
                     }
                 }
 

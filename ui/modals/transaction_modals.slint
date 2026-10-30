@@ -1,5 +1,5 @@
 import { Theme } from "../theme.slint";
-import { AccountItem, CategoryItem, TransactionItem } from "../models.slint";
+import { AccountItem, CategoryItem, TransactionItem, CurrencyModel } from "../models.slint";
 import { AppButton, Badge, AppInput, AppTextEdit, CloseButton, ModernDatePickerPopup, ModernTimePickerPopup } from "../components.slint";
 
 export component AddTransactionModal inherits Rectangle {
@@ -11,7 +11,8 @@ export component AddTransactionModal inherits Rectangle {
     in property <string> tx-id: "";
     in-out property <int> tx-type: 0;
     in property <string> amount: "";
-    in property <string> currency-symbol: "$";
+    in-out property <string> currency-symbol: "$";
+    in property <string> base-currency: "BDT";
     in-out property <string> account-id: "";
     in-out property <string> account-name: "";
     in-out property <string> to-account-id: "";
@@ -150,6 +151,7 @@ export component AddTransactionModal inherits Rectangle {
                 // Column 1: Financial Inputs & Details
                 VerticalLayout {
                     width: 294px;
+                    height: 36px;
                     spacing: 8px;
                     alignment: start;
 
@@ -198,7 +200,7 @@ export component AddTransactionModal inherits Rectangle {
 
                                 Rectangle {
                                     width: 32px;
-                                    height: 32px;
+                                    height: 36px;
                                     border-radius: 6px;
                                     background: cal-touch.has-hover ? Theme.surface-hover : Theme.input-background;
                                     border-width: 1px;
@@ -213,25 +215,11 @@ export component AddTransactionModal inherits Rectangle {
                                         }
                                     }
 
-                                    Path {
+                                    Image {
+                                        source: @image-url("../../assets/icons/calendar.svg");
                                         width: 14px;
                                         height: 14px;
-                                        x: round((parent.width - self.width) / 2 / 1px) * 1px;
-                                        y: round((parent.height - self.height) / 2 / 1px) * 1px;
-                                        stroke: cal-touch.has-hover ? root.active-type-color : Theme.text-muted;
-                                        stroke-width: 1.5px;
-
-                                        MoveTo { x: 1; y: 3; }
-                                        LineTo { x: 13; y: 3; }
-                                        LineTo { x: 13; y: 13; }
-                                        LineTo { x: 1; y: 13; }
-                                        Close {}
-                                        MoveTo { x: 1; y: 6; }
-                                        LineTo { x: 13; y: 6; }
-                                        MoveTo { x: 4; y: 1; }
-                                        LineTo { x: 4; y: 4; }
-                                        MoveTo { x: 10; y: 1; }
-                                        LineTo { x: 10; y: 4; }
+                                        colorize: cal-touch.has-hover ? root.active-type-color : Theme.text-muted;
                                     }
 
                                     date-picker := ModernDatePickerPopup {
@@ -283,7 +271,7 @@ export component AddTransactionModal inherits Rectangle {
 
                                 Rectangle {
                                     width: 32px;
-                                    height: 32px;
+                                    height: 36px;
                                     border-radius: 6px;
                                     background: time-touch.has-hover ? Theme.surface-hover : Theme.input-background;
                                     border-width: 1px;
@@ -298,39 +286,15 @@ export component AddTransactionModal inherits Rectangle {
                                         }
                                     }
 
-                                    // Vector Clock Icon
-                                    Rectangle {
+                                    Image {
+                                        source: @image-url("../../assets/icons/clock.svg");
                                         width: 14px;
                                         height: 14px;
-                                        x: round((parent.width - self.width) / 2 / 1px) * 1px;
-                                        y: round((parent.height - self.height) / 2 / 1px) * 1px;
-                                        border-radius: 7px;
-                                        border-width: 1.5px;
-                                        border-color: time-touch.has-hover ? root.active-type-color : Theme.text-muted;
-
-                                        Path {
-                                            width: 14px;
-                                            height: 14px;
-                                            stroke: time-touch.has-hover ? root.active-type-color : Theme.text-muted;
-                                            stroke-width: 1.5px;
-
-                                            MoveTo { x: 7; y: 3.5; }
-                                            LineTo { x: 7; y: 7; }
-                                            LineTo { x: 9.5; y: 7; }
-                                        }
-
-                                        Rectangle {
-                                            x: 6px;
-                                            y: 6px;
-                                            width: 2px;
-                                            height: 2px;
-                                            border-radius: 1px;
-                                            background: time-touch.has-hover ? root.active-type-color : Theme.text-muted;
-                                        }
+                                        colorize: time-touch.has-hover ? root.active-type-color : Theme.text-muted;
                                     }
 
                                     time-picker := ModernTimePickerPopup {
-                                        x: -218px;
+                                        x: -228px;
                                         y: parent.height + 6px;
                                         accent-color: root.active-type-color;
                                         selected-hour: root.time-hour;
@@ -428,6 +392,7 @@ export component AddTransactionModal inherits Rectangle {
                                     clicked => {
                                         root.account-id = acc.id;
                                         root.account-name = acc.name;
+                                        root.currency-symbol = CurrencyModel.get-symbol(acc.currency);
                                     }
                                 }
                                 VerticalLayout {
@@ -664,7 +629,7 @@ export component TransactionDetailModal inherits Rectangle {
 
     callback close();
     callback open-edit-tx(string);
-    callback delete-transaction(string);
+    callback request-delete-tx(string, string, string);
 
     TouchArea {
         width: 100%;
@@ -787,8 +752,11 @@ export component TransactionDetailModal inherits Rectangle {
                     btn-color: Theme.danger;
                     outline: true;
                     clicked => {
-                        root.delete-transaction(root.detail-tx.id);
-                        root.close();
+                        root.request-delete-tx(
+                            root.detail-tx.id,
+                            root.detail-tx.title != "" ? root.detail-tx.title : "Transaction",
+                            root.detail-tx.amount + " • " + root.detail-tx.date + (root.detail-tx.category_name != "" ? (" • " + root.detail-tx.category_name) : "")
+                        );
                     }
                 }
 
